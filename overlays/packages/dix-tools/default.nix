@@ -171,7 +171,7 @@ in {
       sha256 =
         if stdenv.isDarwin
         then "sha256-boapVKukjKknqQmEdcZAuRSZ+C6BoD7UfKRTSkvH/X0="
-        else "sha256-m1+uCwWJXdVH3VHBed8tgPjdH1K05UkM9Um9Vglgxww="; # lib.fakeSha256;
+        else "sha256-nKPmBkAGRvi3l0Wb+avmnb2Gql2VhdqsVz7zS7IXfcA="; # lib.fakeSha256;
     };
 
     dontUnpack = true;
