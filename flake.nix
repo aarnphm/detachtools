@@ -3,9 +3,9 @@
 
   inputs = {
     # system
-    nixpkgs.url = "github:NixOS/nixpkgs/master";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2505.*";
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/master";
+      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
