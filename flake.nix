@@ -3,9 +3,9 @@
 
   inputs = {
     # system
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2505.*";
+    nixpkgs.url = "github:NixOS/nixpkgs/master";
     nix-darwin = {
-      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
+      url = "github:LnL7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -27,12 +27,6 @@
     };
 
     # packages
-    atuin = {
-      url = "github:atuinsh/atuin";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
-    };
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
@@ -45,11 +39,6 @@
     };
   };
 
-  nixConfig = {
-    trusted-substituters = ["https://nix-community.cachix.org" "https://cache.nixos.org" "https://cuda-maintainers.cachix.org"];
-    trusted-public-keys = ["nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="];
-  };
-
   # meta function: https://github.com/NixOS/nixpkgs/blob/master/lib/meta.nix
   outputs = {
     self,
@@ -59,8 +48,6 @@
     home-manager,
     git-hooks,
     neovim,
-    atuin,
-    fh,
     ...
   } @ inputs: let
     overlays =
@@ -68,18 +55,6 @@
       [
         neovim.overlays.default
         nix-darwin.overlays.default
-        atuin.overlays.default
-        fh.overlays.default
-        (final: prev: {
-          determinate-nixd = prev.determinate-nixd.overrideAttrs (oldAttrs: {
-            postInstall = ''
-              installShellCompletion --cmd determinate-nixd \
-                --bash <("$out/bin/fh" completion bash) \
-                --zsh <("$out/bin/fh" completion zsh) \
-                --fish <("$out/bin/fh" completion fish)
-            '';
-          });
-        })
       ]
       # custom overlays
       ++ (import ./overlays {inherit self;});

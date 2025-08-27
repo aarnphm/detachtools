@@ -17,7 +17,7 @@
             owner = "bitwarden";
             repo = "clients";
             tag = "cli-v${version}";
-            hash = "sha256-sWphSdxh07GS7GPlNVxK7zoXMTGLjT7qTLfH1nsIiQQ=";
+            hash = "sha256-8jVKwqKhTfhur226SER4sb1i4dY+TjJRYmOY8YtO6CY=";
           };
         }
   );

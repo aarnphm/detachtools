@@ -17,14 +17,24 @@ with lib; {
     programs.ssh =
       {
         enable = true;
-        compression = true;
-        addKeysToAgent = "yes";
+        enableDefaultConfig = false;
         extraOptionOverrides = {
           Ciphers = "aes128-ctr,aes192-ctr,aes256-ctr";
           ForwardX11 = "yes";
         };
         matchBlocks =
           {
+            "*" = {
+              forwardAgent = lib.mkDefault false;
+              addKeysToAgent = lib.mkDefault "yes";
+              compression = lib.mkDefault true;
+              serverAliveInterval = lib.mkDefault 0;
+              serverAliveCountMax = lib.mkDefault 3;
+              hashKnownHosts = lib.mkDefault false;
+              userKnownHostsFile = lib.mkDefault "~/.ssh/known_hosts";
+              controlMaster = lib.mkDefault "no";
+              controlPersist = lib.mkDefault "no";
+            };
             "github.com" = {
               identityFile = ''${config.home.homeDirectory}/.ssh/id_ed25519-github'';
             };

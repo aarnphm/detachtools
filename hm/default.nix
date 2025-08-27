@@ -13,7 +13,7 @@
     bun
     uv
     ty
-    fh
+    # fh
 
     # kubernetes and container
     kubernetes-helm
