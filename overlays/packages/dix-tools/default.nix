@@ -17,7 +17,6 @@
   nix,
   git,
   jq,
-  bitwarden-cli,
   apt,
   perl,
   perl540Packages,
@@ -34,7 +33,6 @@ in {
       replacements = {
         inherit (stdenv) shell;
         inherit pname;
-        bw = getExe bitwarden-cli;
         jq = getExe jq;
       };
     }
@@ -154,7 +152,7 @@ in {
 
   nebius = stdenv.mkDerivation (finalAttrs: let
     pname = "nebius";
-    version = "0.12.102";
+    version = "0.12.107";
     os =
       if stdenv.isDarwin
       then "darwin"
@@ -170,7 +168,7 @@ in {
       url = "https://storage.eu-north1.nebius.cloud/cli/release/${version}/${os}/${arch}/${pname}";
       sha256 =
         if stdenv.isDarwin
-        then "sha256-2ATAp38SuwU3I3wq4H4P7TOVDwgmRZvkYIFXWb2Vm4s="
+        then "sha256-Pfy7vqpf5zRb0omGdZHQmbxr3X66x6csDCFImJV2GJo="
         else ""; # lib.fakeSha256;
     };
 

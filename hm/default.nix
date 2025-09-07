@@ -107,7 +107,6 @@
     alejandra
     ueberzugpp
     google-cloud-sdk
-    bitwarden-cli
 
     # packages overlays
     git-forest

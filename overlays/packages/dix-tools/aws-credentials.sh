@@ -23,10 +23,10 @@ fi
 # Assign the profile argument to a variable
 PROFILE="$1"
 
-@bw@ unlock --check &>/dev/null || export BW_SESSION=${BW_SESSION:-"$(@bw@ unlock --passwordenv BW_MASTER --raw)"}
+bw unlock --check &>/dev/null || export BW_SESSION=${BW_SESSION:-"$(bw unlock --passwordenv BW_MASTER --raw)"}
 
-ACCESS_KEY_ID=$(@bw@ get item aws-${PROFILE}-access-key-id | @jq@ -r '.notes')
-SECRET_ACCESS_KEY=$(@bw@ get item aws-${PROFILE}-secret-access-key | @jq@ -r '.notes')
+ACCESS_KEY_ID=$(bw get item aws-${PROFILE}-access-key-id | @jq@ -r '.notes')
+SECRET_ACCESS_KEY=$(bw get item aws-${PROFILE}-secret-access-key | @jq@ -r '.notes')
 
 cat <<EOF
 {
