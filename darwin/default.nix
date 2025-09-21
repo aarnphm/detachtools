@@ -28,6 +28,7 @@
       "plantuml"
       "ddclient"
       "mas"
+      "codex"
       "bitwarden-cli"
     ];
     casks = [

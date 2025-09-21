@@ -21,8 +21,8 @@ with lib; {
         settings = {
           theme =
             if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
-            then "flexoki-dark"
-            else "flexoki-light";
+            then "Flexoki Dark"
+            else "Flexoki Light";
           font-family = "Berkeley Mono";
           font-size = 14;
           window-inherit-font-size = true;
@@ -40,7 +40,8 @@ with lib; {
           scrollback-limit = 51200;
           auto-update-channel = "tip";
           term = "xterm-256color";
-          quick-terminal-position = "right";
+          quick-terminal-position = "center";
+          quick-terminal-size = "20%";
           quick-terminal-screen = "mouse";
           quick-terminal-animation-duration = 0;
         };

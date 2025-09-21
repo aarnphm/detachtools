@@ -39,10 +39,6 @@ in {
               y = 600;
             };
           };
-          env = {
-            TERM = "xterm-256color";
-            XDG_SYSTEM_THEME = "dark";
-          };
           scrolling = {
             history = 30000;
           };
@@ -54,13 +50,15 @@ in {
             };
             bold = {
               inherit family;
+              style = "Book";
             };
             italic = {
               inherit family;
+              style = "Italic";
             };
             offset = {
-              x = 0;
-              y = 2;
+              x = 1;
+              y = 1;
             };
             glyph_offset = {
               x = -1;

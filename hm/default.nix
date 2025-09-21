@@ -156,6 +156,7 @@
       BENTOML_BUNDLE_LOCAL_BUILD = "True";
 
       UV_NO_PROGRESS = 1;
+      PNPM_HOME = "${config.home.sessionVariables.XDG_BIN_HOME}";
 
       # Editors
       WORKSPACE = "${config.home.homeDirectory}/workspace";
