@@ -169,7 +169,7 @@ in {
       sha256 =
         if stdenv.isDarwin
         then "sha256-Pfy7vqpf5zRb0omGdZHQmbxr3X66x6csDCFImJV2GJo="
-        else ""; # lib.fakeSha256;
+        else "sha256-TW9plKjDuJpPIEktYgxNiJ9wuBT/6EJ93s6d7DspWJQ="; # lib.fakeSha256;
     };
 
     dontUnpack = true;

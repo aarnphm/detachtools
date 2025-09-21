@@ -395,7 +395,7 @@ in {
         ghostty =
           if pkgs.stdenv.isDarwin
           then ''$GHOSTTY_BIN_DIR/ghostty''
-          else lib.getExe pkgs.ghostty;
+          else "poggers";
 
         # useful
         bwpass = ''[[ -f ${config.home.homeDirectory}/bw.master ]] && cat ${config.home.homeDirectory}/bw.master | sed -n 1p | ${lib.getExe pkgs.unicopy}'';
@@ -416,7 +416,6 @@ in {
       // lib.optionalAttrs pkgs.stdenv.isLinux
       {
         cuda-checkpoint = ''${config.home.sessionVariables.WORKSPACE}/cuda-checkpoint/bin/x86_64_Linux/cuda-checkpoint'';
-        criu = ''${config.home.sessionVariables.WORKSPACE}/criu/criu/criu'';
       };
   };
 }
