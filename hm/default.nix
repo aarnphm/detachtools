@@ -259,7 +259,8 @@ in {
     packages = filterNone (packages ++ (lib.optionals pkgs.stdenv.isDarwin darwinPackages) ++ (lib.optionals pkgs.stdenv.isLinux linuxPackages));
     username = user;
     homeDirectory = pkgs.lib.mkForce (
-      if pkgs.stdenv.isLinux
+      if user == "root" then "/root"
+      else if pkgs.stdenv.isLinux
       then "/home/${user}"
       else "/Users/${user}"
     );
