@@ -17,6 +17,7 @@
   nix,
   git,
   jq,
+  zsh,
   apt,
   perl,
   perl540Packages,
@@ -89,6 +90,44 @@ in {
       };
     }
     ./gvim.sh;
+
+  worktree-manager =
+    let
+      script =
+        writeProgram "w" {
+          inherit version;
+          replacements = {
+            shell = getExe zsh;
+            pname = "w";
+            git = getExe git;
+          };
+        }
+        ./worktree-manager.zsh;
+    in
+      stdenv.mkDerivation {
+        pname = "w";
+        inherit version;
+
+        dontUnpack = true;
+
+        installPhase = ''
+          runHook preInstall
+
+          install -Dm755 ${script}/bin/w $out/bin/w
+          install -Dm644 ${./worktree-manager-completion.zsh} \
+            $out/share/zsh/site-functions/_w
+
+          runHook postInstall
+        '';
+
+        meta = with lib; {
+          description = "Git worktree helper";
+          homepage = "https://github.com/aarnphm/detachtools";
+          maintainers = with maintainers; [aarnphm];
+          platforms = platforms.unix;
+          mainProgram = "w";
+        };
+      };
 
   unicopy =
     writeProgram "unicopy" {

@@ -16,20 +16,14 @@
     # fh
 
     # kubernetes and container
-    kubernetes-helm
     kubectl
-    k9s
     buildkit
     qemu
     pplatex
-    eksctl
     ratchet
     krew
-    k9s
-    lazydocker
     kind
     skopeo
-    earthly
     buildifier
     awscli2
     atuin
@@ -37,8 +31,6 @@
 
     # git
     git
-    gitui
-    lazygit
     git-lfs
     delta
 
@@ -113,6 +105,7 @@
     unicopy
     lambda
     nebius
+    worktree-manager
   ];
   darwinPackages = with pkgs; [
     # for some reason they don't have flock on darwin :(
@@ -259,7 +252,8 @@ in {
     packages = filterNone (packages ++ (lib.optionals pkgs.stdenv.isDarwin darwinPackages) ++ (lib.optionals pkgs.stdenv.isLinux linuxPackages));
     username = user;
     homeDirectory = pkgs.lib.mkForce (
-      if user == "root" then "/root"
+      if user == "root"
+      then "/root"
       else if pkgs.stdenv.isLinux
       then "/home/${user}"
       else "/Users/${user}"

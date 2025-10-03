@@ -81,6 +81,7 @@ in {
       profileExtra = let
         sites =
           [
+            "${pkgs.worktree-manager}/share/zsh/site-functions"
             "${pkgs.zsh-dix}/share/zsh/site-functions"
             "${pkgs.zsh-completions}/share/zsh/site-functions"
           ]

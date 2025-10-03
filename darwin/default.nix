@@ -38,7 +38,7 @@
       "discord"
       "zoom"
       "obs"
-      "ollama"
+      "ollama-app"
       "gather"
       "obsidian"
       "rectangle"
