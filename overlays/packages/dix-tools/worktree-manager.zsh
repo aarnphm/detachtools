@@ -4,6 +4,9 @@ set -euo pipefail
 
 GIT="@git@"
 
+# Extra directories copied from the source repo into freshly created worktrees.
+EXTRA_WORKTREE_DIRS=(.claude .cursor)
+
 usage() {
 	cat <<'USAGE'
 Usage:
@@ -168,6 +171,23 @@ sync_worktree_branch() {
 		warn "could not fast-forward $branch_name in $target"
 }
 
+copy_extra_directories() {
+	local repo_dir="$1"
+	local target="$2"
+	local dir
+
+	for dir in "${EXTRA_WORKTREE_DIRS[@]}"; do
+		local src="$repo_dir/$dir"
+		local dest="$target/$dir"
+
+		[ -e "$src" ] || continue
+		[ -e "$dest" ] && continue
+
+		cp -a "$src" "$target/" 2>/dev/null ||
+			warn "failed to copy $dir from $repo_dir to $target"
+	}
+}
+
 enter_worktree_or_execute() {
 	local target="$1"
 	shift || true
@@ -318,6 +338,11 @@ main() {
 	local target="$worktree_root/$worktree"
 	local branch_prefix="${WORKTREE_BRANCH_PREFIX:-${USER:-feat}}"
 	local branch_name="$branch_prefix/$worktree"
+	local created_target=0
+
+	if [ ! -d "$target" ]; then
+		created_target=1
+	fi
 
 	remote=$(prepare_repository "$project" "$remote" "$base_branch") || exit 1
 
@@ -331,6 +356,10 @@ main() {
 	if [ ! -d "$target" ]; then
 		echo "Worktree directory missing: $target" >&2
 		exit 1
+	fi
+
+	if [ "$created_target" -eq 1 ]; then
+		copy_extra_directories "$repo_dir" "$target"
 	fi
 
 	sync_worktree_branch "$repo_dir" "$target" "$branch_name" "$remote"
