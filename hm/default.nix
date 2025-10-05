@@ -21,12 +21,12 @@
     qemu
     pplatex
     ratchet
-    krew
     kind
     skopeo
     buildifier
     awscli2
     atuin
+    just
     nodejs_24
 
     # git
@@ -41,6 +41,8 @@
     zulu17
     xz
     age
+    eternal-terminal
+    lean4
 
     # tools for language, lsp, linter, etc.
     tree-sitter
