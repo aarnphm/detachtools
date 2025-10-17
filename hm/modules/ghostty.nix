@@ -41,7 +41,7 @@ with lib; {
           auto-update-channel = "tip";
           term = "xterm-256color";
           quick-terminal-position = "center";
-          quick-terminal-size = "50%,500px";
+          quick-terminal-size = "1080px,1080px";
           quick-terminal-screen = "mouse";
           quick-terminal-animation-duration = 0;
         };

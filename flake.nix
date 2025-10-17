@@ -22,9 +22,6 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
-    fh = {
-      url = "https://flakehub.com/f/DeterminateSystems/fh/*";
-    };
 
     # packages
     nix-homebrew = {

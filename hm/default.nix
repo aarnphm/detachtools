@@ -13,7 +13,6 @@
     bun
     uv
     ty
-    # fh
 
     # kubernetes and container
     kubectl
