@@ -12,9 +12,6 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    determinate = {
-      url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
-    };
     # utilities
     git-hooks = {
       url = "github:cachix/git-hooks.nix/master";
@@ -39,7 +36,6 @@
   # meta function: https://github.com/NixOS/nixpkgs/blob/master/lib/meta.nix
   outputs = {
     self,
-    determinate,
     nix-darwin,
     nixpkgs,
     home-manager,
