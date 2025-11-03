@@ -28,7 +28,6 @@
       url = "github:nix-community/neovim-nightly-overlay";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        git-hooks.follows = "git-hooks";
       };
     };
   };

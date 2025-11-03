@@ -22,7 +22,7 @@ with lib; {
       withPython3 = true;
       defaultEditor = true;
       extraPackages = [pkgs.imagemagick];
-      extraPython3Packages = ps: with ps; [mypy jupyter_client];
+      extraPython3Packages = ps: with ps; [mypy jupyter-client];
     };
   };
 }
