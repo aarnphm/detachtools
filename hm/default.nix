@@ -110,7 +110,6 @@
   ];
   darwinPackages = with pkgs; [
     # for some reason they don't have flock on darwin :(
-    flock
     undmg
     xar
     rustup
@@ -118,7 +117,7 @@
     mas
     mactop
     imagemagick
-    # texliveFull
+    texliveFull
     mermaid-cli
     ghostscript
     # apps

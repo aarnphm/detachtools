@@ -91,43 +91,42 @@ in {
     }
     ./gvim.sh;
 
-  worktree-manager =
-    let
-      script =
-        writeProgram "w" {
-          inherit version;
-          replacements = {
-            shell = getExe zsh;
-            pname = "w";
-            git = getExe git;
-          };
-        }
-        ./worktree-manager.zsh;
-    in
-      stdenv.mkDerivation {
-        pname = "w";
+  worktree-manager = let
+    script =
+      writeProgram "w" {
         inherit version;
-
-        dontUnpack = true;
-
-        installPhase = ''
-          runHook preInstall
-
-          install -Dm755 ${script}/bin/w $out/bin/w
-          install -Dm644 ${./worktree-manager-completion.zsh} \
-            $out/share/zsh/site-functions/_w
-
-          runHook postInstall
-        '';
-
-        meta = with lib; {
-          description = "Git worktree helper";
-          homepage = "https://github.com/aarnphm/detachtools";
-          maintainers = with maintainers; [aarnphm];
-          platforms = platforms.unix;
-          mainProgram = "w";
+        replacements = {
+          shell = getExe zsh;
+          pname = "w";
+          git = getExe git;
         };
+      }
+      ./worktree-manager.zsh;
+  in
+    stdenv.mkDerivation {
+      pname = "w";
+      inherit version;
+
+      dontUnpack = true;
+
+      installPhase = ''
+        runHook preInstall
+
+        install -Dm755 ${script}/bin/w $out/bin/w
+        install -Dm644 ${./worktree-manager-completion.zsh} \
+          $out/share/zsh/site-functions/_w
+
+        runHook postInstall
+      '';
+
+      meta = with lib; {
+        description = "Git worktree helper";
+        homepage = "https://github.com/aarnphm/detachtools";
+        maintainers = with maintainers; [aarnphm];
+        platforms = platforms.unix;
+        mainProgram = "w";
       };
+    };
 
   unicopy =
     writeProgram "unicopy" {
@@ -191,7 +190,7 @@ in {
 
   nebius = stdenv.mkDerivation (finalAttrs: let
     pname = "nebius";
-    version = "0.12.107";
+    version = "0.12.128";
     os =
       if stdenv.isDarwin
       then "darwin"
@@ -207,8 +206,8 @@ in {
       url = "https://storage.eu-north1.nebius.cloud/cli/release/${version}/${os}/${arch}/${pname}";
       sha256 =
         if stdenv.isDarwin
-        then "sha256-Pfy7vqpf5zRb0omGdZHQmbxr3X66x6csDCFImJV2GJo="
-        else "sha256-TW9plKjDuJpPIEktYgxNiJ9wuBT/6EJ93s6d7DspWJQ="; # lib.fakeSha256;
+        then "sha256-a4zsxS5Mwf97BjHC6KaWsR89CB5LJtmlJkG8KBeJw9o="
+        else ""; # lib.fakeSha256;
     };
 
     dontUnpack = true;

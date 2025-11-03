@@ -28,7 +28,7 @@
       "plantuml"
       "ddclient"
       "mas"
-      "codex"
+      "gemini-cli"
       "bitwarden-cli"
     ];
     casks = [
@@ -39,6 +39,7 @@
       "zoom"
       "obs"
       "ollama-app"
+      "codex"
       "gather"
       "obsidian"
       "rectangle"
