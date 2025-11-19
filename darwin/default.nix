@@ -30,6 +30,7 @@
       "mas"
       "gemini-cli"
       "bitwarden-cli"
+      "monolith"
     ];
     casks = [
       "arc"
