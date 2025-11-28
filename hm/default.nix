@@ -221,11 +221,15 @@ in {
     configFile = {
       "gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
       "oh-my-posh/config.toml".source = ./modules/config/oh-my-posh/config.toml;
-      "karabiner/karabiner.json".source = ./modules/config/karabiner/karabiner.json;
+      "karabiner/karabiner.json" = {
+        source = ./modules/config/karabiner/karabiner.json;
+        force = true;
+      };
       "zed/keymap.json".source = ./modules/config/zed/keymap.json;
       "zed/settings.json".source = ./modules/config/zed/settings.json;
     };
   };
+
   editorconfig = {
     enable = true;
     settings = {
