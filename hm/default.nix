@@ -13,6 +13,8 @@
     bun
     uv
     ty
+    opam
+    lua
 
     # kubernetes and container
     kubectl
@@ -214,6 +216,7 @@ in {
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
+  opam.enable = true;
 
   # include neovim, vimrc, and oh-my-posh symlink
   xdg = {
