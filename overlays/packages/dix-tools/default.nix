@@ -190,7 +190,7 @@ in {
 
   nebius = stdenv.mkDerivation (finalAttrs: let
     pname = "nebius";
-    version = "0.12.128";
+    version = "0.12.145";
     os =
       if stdenv.isDarwin
       then "darwin"
@@ -206,7 +206,7 @@ in {
       url = "https://storage.eu-north1.nebius.cloud/cli/release/${version}/${os}/${arch}/${pname}";
       sha256 =
         if stdenv.isDarwin
-        then "sha256-a4zsxS5Mwf97BjHC6KaWsR89CB5LJtmlJkG8KBeJw9o="
+        then "sha256-fBA5qeXt5Rbe0zp/OqyiEsQm4SZkbKsOf5OEXCgUDXw="
         else "sha256-ictaw27KxOZ8T9aAH6YKE9JjVQ7Lfg0LNNINB1Ze2sI="; # lib.fakeSha256;
     };
 
