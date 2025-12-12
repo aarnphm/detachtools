@@ -44,6 +44,7 @@
     age
     eternal-terminal
     lean4
+    zig
 
     # tools for language, lsp, linter, etc.
     tree-sitter
