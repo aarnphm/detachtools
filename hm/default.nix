@@ -43,7 +43,7 @@
     xz
     age
     eternal-terminal
-    lean4
+    elan
     zig
 
     # tools for language, lsp, linter, etc.
@@ -158,7 +158,6 @@
       WORKSPACE = "${config.home.homeDirectory}/workspace";
       TABFS = "${config.home.sessionVariables.WORKSPACE}/TabFS/fs/mnt";
       SHELL = getExe zsh;
-      VISUAL = getExe neovim;
       MANPAGER = "${getExe neovim} +Man!";
 
       # Fzf
