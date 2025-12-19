@@ -18,7 +18,7 @@ type = "prompt"
   foreground = "lightBlue"
   foreground_templates = ["{{ if .Root }}lightRed{{ end }}"]
   style = "plain"
-  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>┌──(</>{{ .UserName }}{{ if .Root }}💀{{ else }}@{{ end }}{{ .HostName }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>)</>"
+  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>┌─(</>{{ .UserName }}{{ if .Root }}💀{{ else }}@{{ end }}{{ .HostName }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>)</>"
   type = "session"
 
     [blocks.segments.properties]
@@ -27,7 +27,7 @@ type = "prompt"
   [[blocks.segments]]
   foreground = "yellow"
   style = "plain"
-  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>"
+  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>"
   type = "python"
 
     [blocks.segments.properties]
@@ -37,7 +37,7 @@ type = "prompt"
   [[blocks.segments]]
   foreground = "magenta"
   style = "plain"
-  template = '''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if eq .Type "unknown" }}native{{ else }}nix-{{ .Type }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'''
+  template = '''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if eq .Type "unknown" }}{{ else }}nix-{{ .Type }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'''
   type = "nix-shell"
 
   [[blocks.segments]]
@@ -53,7 +53,7 @@ type = "prompt"
   [[blocks.segments]]
   foreground = "white"
   style = "plain"
-  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if .IsWorkTree }}{{ .CommitIcon }}{{ .WorkTreeCount }}{{ else }}{{ .HEAD }}{{ end }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>"
+  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if .IsWorkTree }}{{ .CommitIcon }}{{ .WorkTreeCount }}{{ else }}{{ .HEAD }}{{ end }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}{{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}{{ .StashCount }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>"
   type = "git"
 
     [blocks.segments.properties]
@@ -74,5 +74,5 @@ type = "prompt"
     "{{if eq .Code 0}}lightBlue{{end}}",
   ]
   style = "plain"
-  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>└─</> {{ if .Root }}<lightRed>#</>{{ else }}${{ end }}"
+  template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>└</> {{ if .Root }}<lightRed>#</>{{ else }}~{{ end }}"
   type = "text"
