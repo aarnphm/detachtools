@@ -47,7 +47,6 @@
     zig
 
     # tools for language, lsp, linter, etc.
-    tree-sitter
     grpcurl
     taplo
     stylua
@@ -121,7 +120,6 @@
     mactop
     imagemagick
     texliveFull
-    mermaid-cli
     ghostscript
     # apps
     pinentry_mac
