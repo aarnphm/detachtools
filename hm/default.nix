@@ -154,6 +154,7 @@
 
       # Editors
       WORKSPACE = "${config.home.homeDirectory}/workspace";
+      GARDEN = "${config.home.sessionVariables.WORKSPACE}/garden";
       TABFS = "${config.home.sessionVariables.WORKSPACE}/TabFS/fs/mnt";
       SHELL = getExe zsh;
       MANPAGER = "${getExe neovim} +Man!";
@@ -202,7 +203,7 @@ in {
     enableBashIntegration = true;
   };
 
-  alacritty.enable = true;
+  alacritty.enable = false;
   bat.enable = true;
   broot.enable = true;
   btop.enable = true;
@@ -325,6 +326,11 @@ in {
 
       # safe rm
       rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
+
+      # ai
+      c = "claude --allow-dangerously-skip-permissions";
+      ge = "gemini --approval-mode=yolo";
+      ch = "codex --dangerously-bypass-approvals-and-sandbox --enable web_search_request";
 
       # git
       g = lib.getExe pkgs.git;
