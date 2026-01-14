@@ -179,10 +179,20 @@ else
 fi
 
 _venv_auto_activate() {
-  if [[ "$VIRTUAL_ENV" != "" ]]; then
+  emulate -L zsh
+
+  local venvPath
+  local venvWrapperActivate
+  local venvName
+  local currentVenv="${VIRTUAL_ENV-}"
+  local projectDir="${PROJECT_DIR-}"
+  local debugFlag="${DEBUG-}"
+  local venvWrapper="${VENV_WRAPPER-false}"
+
+  if [[ -n "$currentVenv" ]]; then
     # Check if the current directory is inside the project directory
-    if [[ "$PWD" != "$PROJECT_DIR"* ]]; then
-      [ -n "$DEBUG" ] && echo -e "\n\e[1;33mDeactivating venv...\e[0m"
+    if [[ -n "$projectDir" && "$PWD" != "$projectDir"* ]]; then
+      [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mDeactivating venv...\e[0m"
       deactivate
       unset PROJECT_DIR
     fi
@@ -191,29 +201,29 @@ _venv_auto_activate() {
 
   if [[ -e ".venv" ]]; then
     # Check for symlink pointing to virtualenv
-    if [ -L ".venv" ]; then
-      _VENV_PATH=$(readlink .venv)
-      _VENV_WRAPPER_ACTIVATE=false
+    if [[ -L ".venv" ]]; then
+      venvPath="$(readlink .venv)"
+      venvWrapperActivate=false
     # Check for directory containing virtualenv
-    elif [ -d ".venv" ]; then
-      _VENV_PATH=$(pwd -P)/.venv
-      _VENV_WRAPPER_ACTIVATE=false
+    elif [[ -d ".venv" ]]; then
+      venvPath="$(pwd -P)/.venv"
+      venvWrapperActivate=false
     # Check for file containing name of virtualenv
-    elif [ -f ".venv" -a $VENV_WRAPPER = "true" ]; then
-      _VENV_PATH=$WORKON_HOME/$(cat .venv)
-      _VENV_WRAPPER_ACTIVATE=true
+    elif [[ -f ".venv" && "$venvWrapper" == "true" && -n "${WORKON_HOME-}" ]]; then
+      venvPath="$WORKON_HOME/$(cat .venv)"
+      venvWrapperActivate=true
     else
       return
     fi
 
     # Check to see if already activated to avoid redundant activating
-    if [ "$VIRTUAL_ENV" != $_VENV_PATH ]; then
-      [ -n "$DEBUG" ] && echo -e "\n\e[1;33mActivating venv...\e[0m"
-      if $_VENV_WRAPPER_ACTIVATE; then
-        _VENV_NAME=$(basename $_VENV_PATH)
-        workon $_VENV_NAME
+    if [[ "$currentVenv" != "$venvPath" ]]; then
+      [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mActivating venv...\e[0m"
+      if $venvWrapperActivate; then
+        venvName="$(basename "$venvPath")"
+        workon "$venvName"
       else
-        _VENV_NAME=$(basename $(pwd))
+        venvName="$(basename "$(pwd)")"
         VIRTUAL_ENV_DISABLE_PROMPT=1
         source .venv/bin/activate
       fi

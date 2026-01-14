@@ -45,6 +45,38 @@ in {
         eval "$(${lib.getExe pkgs.oh-my-posh} init zsh --config ${config.xdg.configHome}/oh-my-posh/config.toml)"
         source ${pkgs.zsh-dix}/share/zsh/dix.plugin.zsh
         [[ -d ${config.home.homeDirectory}/.ghcup ]] && source ${config.home.homeDirectory}/.ghcup/env
+
+        gardep() {
+          emulate -L zsh
+          set -e
+          set -u
+          set -o pipefail
+
+          local commitMessage="''${*:-}"
+          if [[ -z "$commitMessage" ]]; then
+            print -u2 'usage: gardep "fix: message"'
+            return 2
+          fi
+
+          ${lib.getExe pkgs.git} add .
+          ${lib.getExe pkgs.git} commit -S --signoff -svm "$commitMessage"
+          ${lib.getExe pkgs.git} push
+
+          local siteRepo="$HOME/workspace/aarnphm.github.io"
+          if [[ ! -d "$siteRepo" ]]; then
+            print -u2 "gardep: missing repo at $siteRepo"
+            return 1
+          fi
+
+          pushd "$siteRepo" >/dev/null
+          {
+            ${lib.getExe pkgs.git} pull
+            ${lib.getExe pkgs.pnpm} upgrade
+            command bash deploy.sh
+          } always {
+            popd >/dev/null
+          }
+        }
       '';
       plugins = [
         {

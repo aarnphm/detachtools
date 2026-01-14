@@ -20,7 +20,7 @@
   zsh,
   apt,
   perl,
-  perl540Packages,
+  perl5Packages,
   pkg-config,
   installShellFiles,
 }: let
@@ -68,7 +68,7 @@ in {
       chmod +x $out/bin/git-forest
       wrapProgram $out/bin/git-forest \
         --prefix PATH : ${makeBinPath [git perl]} \
-        --prefix PERL5LIB : "${with perl540Packages; makePerlPath [Git Error]}"
+        --prefix PERL5LIB : "${with perl5Packages; makePerlPath [Git Error]}"
 
       runHook postInstall
     '';

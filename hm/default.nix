@@ -117,7 +117,6 @@
     rustup
     cpio
     mas
-    mactop
     imagemagick
     texliveFull
     ghostscript
@@ -328,9 +327,9 @@ in {
       rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
 
       # ai
-      c = "claude --allow-dangerously-skip-permissions";
-      ge = "gemini --approval-mode=yolo";
-      ch = "codex --dangerously-bypass-approvals-and-sandbox --enable web_search_request";
+      c = "claude --allow-dangerously-skip-permissions --model claude-opus-4-5-20251101";
+      ge = "gemini --approval-mode=yolo --model gemini-3-pro-preview";
+      ch = "codex --dangerously-bypass-approvals-and-sandbox --enable web_search_request -m gpt-5.2-codex";
 
       # git
       g = lib.getExe pkgs.git;
