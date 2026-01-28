@@ -45,6 +45,7 @@ in {
         eval "$(${lib.getExe pkgs.oh-my-posh} init zsh --config ${config.xdg.configHome}/oh-my-posh/config.toml)"
         source ${pkgs.zsh-dix}/share/zsh/dix.plugin.zsh
         [[ -d ${config.home.homeDirectory}/.ghcup ]] && source ${config.home.homeDirectory}/.ghcup/env
+        [[ -d ${config.home.sessionVariables.WORKSPACE}/modular ]] && source ${config.home.sessionVariables.WORKSPACE}/modular/utils/start-modular.sh
 
         gardep() {
           emulate -L zsh
@@ -110,6 +111,8 @@ in {
         fi
 
         source ${fzfComplete}/fzf_complete_realpath.zsh
+        export ZEROBREW_DIR=${config.home.homeDirectory}/.zerobrew
+        export ZEROBREW_BIN=${config.home.homeDirectory}/.local/bin
       '';
       profileExtra = let
         sites =

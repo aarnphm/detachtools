@@ -60,6 +60,7 @@
     enchant
     python313Packages.pylatexenc
     pastel
+    pscale
 
     # terminal
     any-nix-shell
@@ -95,6 +96,9 @@
     dtach
     zstd
     gnused
+    cmake
+    wget
+    gzip
     hyperfine
     gnupg
     gpg-tui
@@ -117,6 +121,7 @@
     rustup
     cpio
     mas
+    ninja
     imagemagick
     texliveFull
     ghostscript
@@ -127,6 +132,7 @@
   linuxPackages = with pkgs; [
     colima
     lima
+    ninja-build
     pinentry-all
     # NOTE: on darwin we need to use Apple provided from xcrun
     coreutils-full
@@ -157,6 +163,7 @@
       TABFS = "${config.home.sessionVariables.WORKSPACE}/TabFS/fs/mnt";
       SHELL = getExe zsh;
       MANPAGER = "${getExe neovim} +Man!";
+      DISABLE_CHDIR = "1";
 
       # Fzf
       FZF_CTRL_T_COMMAND = "${getExe fd} --hidden --follow --exclude .git";
@@ -170,7 +177,13 @@
       # Language
       GOPATH = "${config.home.homeDirectory}/go";
       PATH = concatStringsSep ":" [
-        (makeBinPath ["${config.home.homeDirectory}/.cargo" pkgs.protobuf "${config.home.homeDirectory}/.local" "/opt/homebrew/opt/ruby"])
+        (makeBinPath [
+          "${config.home.homeDirectory}/.cargo"
+          pkgs.protobuf
+          "${config.home.homeDirectory}/.local"
+          "/opt/homebrew/opt/ruby"
+          "/opt/zerobrew/prefix"
+        ])
         "$PATH"
       ];
     }
@@ -210,7 +223,7 @@ in {
   git.enable = true;
   ghostty.enable = true;
   gpg.enable = true;
-  ssh.enable = true;
+  ssh.enable = false;
   zsh.enable = true;
   atuin.enable = true;
   zoxide.enable = true;
@@ -327,7 +340,7 @@ in {
       rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
 
       # ai
-      c = "claude --allow-dangerously-skip-permissions --model claude-opus-4-5-20251101";
+      c = "claude --allow-dangerously-skip-permissions --model claude-opus-4-5-20251101 --chrome";
       ge = "gemini --approval-mode=yolo --model gemini-3-pro-preview";
       ch = "codex --dangerously-bypass-approvals-and-sandbox --enable web_search_request -m gpt-5.2-codex";
 
@@ -385,7 +398,6 @@ in {
 
       # aliases
       pip = ''${lib.getExe pkgs.uv} pip'';
-      b = ''bentoml'';
       k = lib.getExe pkgs.kubectl;
       cat = lib.getExe pkgs.bat;
       jupytertext = ''${lib.getExe' pkgs.uv "uvx"} jupytertext'';

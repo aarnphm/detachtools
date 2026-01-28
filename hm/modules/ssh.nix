@@ -35,9 +35,6 @@ with lib; {
               controlMaster = lib.mkDefault "no";
               controlPersist = lib.mkDefault "no";
             };
-            "github.com" = {
-              identityFile = ''${config.home.homeDirectory}/.ssh/id_ed25519-github'';
-            };
           }
           // lib.optionalAttrs pkgs.stdenv.isDarwin {
             "sam-wafer" = {
