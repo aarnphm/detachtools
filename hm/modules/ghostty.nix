@@ -25,7 +25,7 @@ with lib; {
             then "Flexoki Dark"
             else "Flexoki Light";
           font-family = "Berkeley Mono";
-          font-size = 13;
+          font-size = 12;
           window-inherit-font-size = true;
           window-width = 120;
           window-height = 120;
