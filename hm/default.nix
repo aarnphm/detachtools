@@ -106,6 +106,7 @@
     alejandra
     ueberzugpp
     google-cloud-sdk
+    ninja
 
     # packages overlays
     git-forest
@@ -121,7 +122,6 @@
     rustup
     cpio
     mas
-    ninja
     imagemagick
     texliveFull
     ghostscript
@@ -132,7 +132,6 @@
   linuxPackages = with pkgs; [
     colima
     lima
-    ninja-build
     pinentry-all
     # NOTE: on darwin we need to use Apple provided from xcrun
     coreutils-full
