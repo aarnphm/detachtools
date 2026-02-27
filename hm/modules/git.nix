@@ -117,7 +117,7 @@ in {
             autocrlf = "input";
           };
 
-          aliases = {
+          alias = {
             # quick commit
             ci = "commit";
 
