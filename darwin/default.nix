@@ -47,6 +47,7 @@
       "rectangle"
       "steam"
       "orbstack"
+      "alt-tab"
       "raycast"
       "karabiner-elements"
       "zed@preview"
