@@ -78,6 +78,10 @@ in {
             popd >/dev/null
           }
         }
+
+        if [ -d ${config.home.sessionVariables.WORKSPACE}/garden ]; then
+          cd ${config.home.sessionVariables.WORKSPACE}/garden || return
+        fi
       '';
       plugins = [
         {

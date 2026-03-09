@@ -213,6 +213,9 @@ in {
     enable = true;
     nix-direnv.enable = false;
     enableBashIntegration = true;
+    config = {
+      hide_env_diff = true;
+    };
   };
 
   alacritty.enable = false;
@@ -341,9 +344,10 @@ in {
         rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
 
         # ai
-        c = "claude --allow-dangerously-skip-permissions --model claude-opus-4-6 --chrome";
+        cl = "claude --allow-dangerously-skip-permissions --model claude-opus-4-6 --chrome";
         ge = "gemini --approval-mode=yolo --model gemini-3-pro-preview";
         ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.3-codex";
+        ki = "kimi --thinking --yolo";
 
         # git
         g = lib.getExe pkgs.git;

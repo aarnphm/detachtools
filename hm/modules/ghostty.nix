@@ -69,6 +69,7 @@ with lib; {
           macos-icon-frame = "chrome";
           macos-titlebar-style = "tabs";
           scrollback-limit = 51200;
+          auto-update = "download";
           auto-update-channel = "tip";
           term = "xterm-256color";
           quick-terminal-position = "center";
