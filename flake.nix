@@ -19,6 +19,7 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
 
     # packages
     nix-homebrew = {
@@ -39,6 +40,7 @@
     nixpkgs,
     home-manager,
     git-hooks,
+    fh,
     neovim,
     ...
   } @ inputs: let
@@ -115,6 +117,7 @@
       builtins.map (
         system: let
           pkgs = forPackages system;
+          fhPackage = fh.packages.${system}.default;
           mkApp = {
             drv,
             name ? drv.pname or drv.name,
@@ -148,6 +151,7 @@
 
           packages.${system} = with pkgs; {
             inherit lambda aws-credentials gvim;
+            fh = fhPackage;
           };
 
           checks.${system} = {

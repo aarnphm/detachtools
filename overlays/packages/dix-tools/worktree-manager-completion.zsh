@@ -35,6 +35,20 @@ _w_list_projects() {
     print -l -- $projects
 }
 
+_w_list_worktree_projects() {
+    local worktrees_dir="$1"
+    local -a projects
+
+    if [[ -d "$worktrees_dir" ]]; then
+        local dir
+        for dir in "$worktrees_dir"/*(N/); do
+            projects+=(${dir:t})
+        done
+    fi
+
+    print -l -- $projects
+}
+
 _w_list_worktrees() {
     local worktrees_root="$1"
     local project="$2"
@@ -86,7 +100,7 @@ _w_collect_positionals() {
 }
 
 _w_is_rm() {
-    (( ${words[(I)--rm]} <= $#words ))
+    (( ${words[(I)--rm]} ))
 }
 
 _w_command_start_index() {
@@ -203,6 +217,8 @@ _w() {
                 '--list:list all worktrees'
                 '--rm:remove a worktree'
                 '--help:show usage'
+                'cd:cd into existing worktree'
+                'sync:fetch and rebase onto base branch'
             )
             _describe -t actions 'action' actions && ret=0
             projects=($(_w_list_projects "$projects_dir"))
@@ -216,6 +232,17 @@ _w() {
             positional=($(_w_collect_positionals))
             local project=${positional[1]}
             if [[ -z $project ]]; then
+                return 0
+            fi
+
+            if [[ $project == "cd" ]]; then
+                local -a cd_projects
+                cd_projects=($(_w_list_worktree_projects "$worktrees_dir"))
+                if (( ${#cd_projects} )); then
+                    _describe -t projects 'worktree project' cd_projects
+                else
+                    _message 'no worktree projects found'
+                fi
                 return 0
             fi
 
@@ -237,6 +264,18 @@ _w() {
             ;;
         command)
             if _w_is_rm; then
+                return 0
+            fi
+            local -a positional_cmd
+            positional_cmd=($(_w_collect_positionals))
+            if [[ ${positional_cmd[1]} == "cd" && -n ${positional_cmd[2]} ]]; then
+                local -a cd_worktrees
+                cd_worktrees=($(_w_list_worktrees "$worktrees_dir" "${positional_cmd[2]}"))
+                if (( ${#cd_worktrees} )); then
+                    _describe -t worktrees 'worktree' cd_worktrees
+                else
+                    _message "no worktrees found for ${positional_cmd[2]}"
+                fi
                 return 0
             fi
             local -a options commands

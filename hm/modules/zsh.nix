@@ -49,9 +49,7 @@ in {
 
         gardep() {
           emulate -L zsh
-          set -e
-          set -u
-          set -o pipefail
+          set -euo pipefail
 
           local commitMessage="''${*:-}"
           if [[ -z "$commitMessage" ]]; then
@@ -79,8 +77,24 @@ in {
           }
         }
 
+        gcmmp() {
+          emulate -L zsh
+          set -euo pipefail
+
+          local commitMessage="''${*:-}"
+          if [[ -z "$commitMessage" ]]; then
+            print -u2 'usage: gcmmp "fix: message"'
+            return 2
+          fi
+
+          ${lib.getExe pkgs.git} commit -S --signoff -svm "$commitMessage"
+          ${lib.getExe pkgs.git} push
+        }
+
         if [ -d ${config.home.sessionVariables.WORKSPACE}/garden ]; then
-          cd ${config.home.sessionVariables.WORKSPACE}/garden || return
+          if [ -z "$DISABLE_CHDIR" ]; then
+            cd ${config.home.sessionVariables.WORKSPACE}/garden || return
+          fi
         fi
       '';
       plugins = [

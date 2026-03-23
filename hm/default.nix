@@ -2,10 +2,12 @@
   config,
   pkgs,
   lib,
+  inputs,
   user,
   ...
 }: let
   filterNone = value: builtins.filter (x: x != null) value;
+  fhPackage = inputs.fh.packages.${pkgs.stdenv.hostPlatform.system}.default;
   packages = with pkgs; [
     # editor
     vim
@@ -66,6 +68,7 @@
     any-nix-shell
     zsh-completions
     oh-my-posh
+    fhPackage
     direnv
     curl
     jq
@@ -119,7 +122,6 @@
     # for some reason they don't have flock on darwin :(
     undmg
     xar
-    rustup
     cpio
     mas
     imagemagick
@@ -344,9 +346,10 @@ in {
         rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
 
         # ai
-        cl = "claude --allow-dangerously-skip-permissions --model claude-opus-4-6 --chrome";
-        ge = "gemini --approval-mode=yolo --model gemini-3-pro-preview";
-        ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.3-codex";
+        cl = "claude --allow-dangerously-skip-permissions --model claude-opus-4-6 --chrome --effort max";
+        cl1m = ''claude --allow-dangerously-skip-permissions --model "opus[1m]" --chrome --effort max'';
+        ge = "gemini --approval-mode=yolo --model gemini-3.1-pro-preview";
+        ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.4";
         ki = "kimi --thinking --yolo";
 
         # git

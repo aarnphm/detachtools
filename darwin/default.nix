@@ -52,6 +52,7 @@
       "karabiner-elements"
       "zed@preview"
       "middleclick"
+      "sioyek"
     ];
     # nix run nixpkgs#mas -- search <apps>
     masApps = {

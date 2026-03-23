@@ -12,6 +12,8 @@ usage() {
 Usage:
   @pname@ --list
   @pname@ --rm <project> <worktree>
+  @pname@ cd <project> <worktree>
+  @pname@ sync
   @pname@ <project> <worktree> [--remote URL] [--base BRANCH] [command ...]
 
 Environment overrides:
@@ -49,8 +51,6 @@ warn() {
 list_worktrees() {
     local worktrees="$(worktrees_dir)"
     local found=0
-
-    echo "=== All Worktrees ==="
 
     if [ -d "$worktrees" ]; then
         for project in "$worktrees"/*; do
@@ -94,6 +94,64 @@ remove_worktree() {
     fi
 
     (cd "$repo_dir" && "$GIT" worktree remove "$target")
+}
+
+cd_worktree() {
+    local project="${1:-}"
+    local worktree="${2:-}"
+
+    if [ -z "$project" ] || [ -z "$worktree" ]; then
+        echo "Usage: @pname@ cd <project> <worktree>" >&2
+        return 1
+    fi
+
+    local target="$(worktrees_dir)/$project/$worktree"
+    if [ ! -d "$target" ]; then
+        echo "Worktree not found: $target" >&2
+        return 1
+    fi
+
+    printf 'Launching shell in %s\n' "$target"
+    cd "$target"
+    exec "${SHELL:-/bin/sh}"
+}
+
+sync_worktree() {
+    local base_branch="${WORKTREE_BASE_BRANCH:-main}"
+    local worktrees
+    worktrees="$(worktrees_dir)"
+    local cwd
+    cwd="$(pwd)"
+
+    case "$cwd" in
+        "$worktrees"/*)
+            ;;
+        *)
+            echo "Not inside a worktree directory ($worktrees)" >&2
+            return 1
+            ;;
+    esac
+
+    local rel="${cwd#"$worktrees"/}"
+    local project="${rel%%/*}"
+    local repo_dir="$(projects_dir)/$project"
+
+    if [ ! -d "$repo_dir/.git" ]; then
+        echo "Project repo not found: $repo_dir" >&2
+        return 1
+    fi
+
+    echo "Fetching origin/$base_branch..."
+    "$GIT" fetch origin "$base_branch" || {
+        echo "Failed to fetch origin/$base_branch" >&2
+        return 1
+    }
+
+    echo "Rebasing onto origin/$base_branch..."
+    "$GIT" rebase "origin/$base_branch" --autosquash --ff || {
+        echo "Rebase failed. Resolve conflicts then 'git rebase --continue'" >&2
+        return 1
+    }
 }
 
 ensure_base_branch() {
@@ -272,6 +330,15 @@ main() {
                 exit 1
             fi
             remove_worktree "$1" "$2"
+            exit $?
+            ;;
+        cd)
+            shift
+            cd_worktree "${1:-}" "${2:-}"
+            exit $?
+            ;;
+        sync)
+            sync_worktree
             exit $?
             ;;
     esac
