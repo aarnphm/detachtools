@@ -11,10 +11,12 @@ usage() {
     cat <<'USAGE'
 Usage:
   @pname@ --list
-  @pname@ --rm <project> <worktree>
+  @pname@ --rm <project> <worktree> [-- <git-args>...]
   @pname@ cd <project> <worktree>
-  @pname@ sync
-  @pname@ <project> <worktree> [--remote URL] [--base BRANCH] [command ...]
+  @pname@ sync [-- <git-args>...]
+  @pname@ <project> <worktree> [--remote URL] [--base BRANCH] [-- <git-args>...] [command ...]
+
+Arguments after -- are passed directly to the underlying git command.
 
 Environment overrides:
   WORKTREE_BASE_DIR         Base directory containing projects (default: $HOME/workspace)
@@ -74,12 +76,14 @@ list_worktrees() {
 remove_worktree() {
     local project="$1"
     local worktree="$2"
+    shift 2 || true
+    local git_args=("$@")
     local repo_dir="$(projects_dir)/$project"
     local worktrees="$(worktrees_dir)"
     local target="$worktrees/$project/$worktree"
 
     if [ -z "$project" ] || [ -z "$worktree" ]; then
-        echo "Usage: w --rm <project> <worktree>" >&2
+        echo "Usage: w --rm <project> <worktree> [-- <git-args>...]" >&2
         return 1
     fi
 
@@ -93,7 +97,7 @@ remove_worktree() {
         return 1
     fi
 
-    (cd "$repo_dir" && "$GIT" worktree remove "$target")
+    (cd "$repo_dir" && "$GIT" worktree remove "${git_args[@]}" "$target")
 }
 
 cd_worktree() {
@@ -117,6 +121,7 @@ cd_worktree() {
 }
 
 sync_worktree() {
+    local git_args=("$@")
     local base_branch="${WORKTREE_BASE_BRANCH:-main}"
     local worktrees
     worktrees="$(worktrees_dir)"
@@ -148,7 +153,7 @@ sync_worktree() {
     }
 
     echo "Rebasing onto origin/$base_branch..."
-    "$GIT" rebase "origin/$base_branch" --autosquash --ff || {
+    "$GIT" rebase "origin/$base_branch" --autosquash --ff "${git_args[@]}" || {
         echo "Rebase failed. Resolve conflicts then 'git rebase --continue'" >&2
         return 1
     }
@@ -185,6 +190,8 @@ create_worktree_if_missing() {
     local branch_name="$3"
     local base_branch="$4"
     local remote="$5"
+    shift 5 || true
+    local git_args=("$@")
 
     if [ -d "$target" ]; then
         return 0
@@ -197,16 +204,16 @@ create_worktree_if_missing() {
     fi
 
     if "$GIT" -C "$repo_dir" rev-parse --verify --quiet "$branch_name" >/dev/null 2>&1; then
-        "$GIT" -C "$repo_dir" worktree add "$target" "$branch_name"
+        "$GIT" -C "$repo_dir" worktree add "${git_args[@]}" "$target" "$branch_name"
         return $?
     fi
 
     if [ -n "$remote" ] && "$GIT" -C "$repo_dir" ls-remote --exit-code origin "$branch_name" >/dev/null 2>&1; then
-        "$GIT" -C "$repo_dir" worktree add --track -b "$branch_name" "$target" "origin/$branch_name"
+        "$GIT" -C "$repo_dir" worktree add --track -b "$branch_name" "${git_args[@]}" "$target" "origin/$branch_name"
         return $?
     fi
 
-    "$GIT" -C "$repo_dir" worktree add -b "$branch_name" "$target" "$base_branch"
+    "$GIT" -C "$repo_dir" worktree add -b "$branch_name" "${git_args[@]}" "$target" "$base_branch"
 }
 
 sync_worktree_branch() {
@@ -326,10 +333,17 @@ main() {
         --rm)
             shift
             if [ $# -lt 2 ]; then
-                echo "Usage: w --rm <project> <worktree>" >&2
+                echo "Usage: w --rm <project> <worktree> [-- <git-args>...]" >&2
                 exit 1
             fi
-            remove_worktree "$1" "$2"
+            local rm_project="$1" rm_worktree="$2"
+            shift 2
+            local rm_git_args=()
+            if [ "${1:-}" = "--" ]; then
+                shift
+                rm_git_args=("$@")
+            fi
+            remove_worktree "$rm_project" "$rm_worktree" "${rm_git_args[@]}"
             exit $?
             ;;
         cd)
@@ -338,7 +352,13 @@ main() {
             exit $?
             ;;
         sync)
-            sync_worktree
+            shift
+            local sync_git_args=()
+            if [ "${1:-}" = "--" ]; then
+                shift
+                sync_git_args=("$@")
+            fi
+            sync_worktree "${sync_git_args[@]}"
             exit $?
             ;;
     esac
@@ -355,6 +375,7 @@ main() {
     local remote="${WORKTREE_REMOTE:-}"
     local base_branch="${WORKTREE_BASE_BRANCH:-main}"
     local command=()
+    local git_args=()
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -380,7 +401,7 @@ main() {
                 ;;
             --)
                 shift
-                command=("$@")
+                git_args=("$@")
                 set --
                 break
                 ;;
@@ -415,7 +436,7 @@ main() {
 
     mkdir -p "$worktree_root"
 
-    if ! create_worktree_if_missing "$repo_dir" "$target" "$branch_name" "$base_branch" "$remote"; then
+    if ! create_worktree_if_missing "$repo_dir" "$target" "$branch_name" "$base_branch" "$remote" "${git_args[@]}"; then
         echo "Failed to create worktree at $target" >&2
         exit 1
     fi
