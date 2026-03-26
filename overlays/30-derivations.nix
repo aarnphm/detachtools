@@ -8,5 +8,6 @@
 in {
   inherit (prev.callPackage ./packages/dix-tools {}) bootstrap gvim worktree-manager unicopy pinentry-touchid ubuntu-nvidia aws-credentials git-forest nebius;
   zsh-dix = prev.callPackage ./packages/zsh-dix {};
+  bash-dix = prev.callPackage ./packages/bash-dix {};
   lambda = prev.callPackage ./packages/lambda {version = lambdaVersion;};
 }

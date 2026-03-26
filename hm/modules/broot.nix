@@ -92,6 +92,7 @@ in
       home.packages = [package];
 
       programs.zsh.initContent = shellInit "zsh";
+      programs.bash.initExtra = shellInit "bash";
 
       xdg.configFile.broot = {
         recursive = true;

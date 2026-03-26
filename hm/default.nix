@@ -229,6 +229,7 @@ in {
   gpg.enable = true;
   ssh.enable = false;
   zsh.enable = true;
+  bash.enable = true;
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
