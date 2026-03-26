@@ -19,6 +19,7 @@ with lib; {
         package = null;
         systemd.enable = false;
         enableZshIntegration = true;
+        enableBashIntegration = true;
         settings = {
           theme =
             if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"

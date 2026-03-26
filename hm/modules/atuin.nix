@@ -19,6 +19,7 @@ with lib; {
       package = pkgs.atuin;
       flags = ["--disable-up-arrow"];
       enableZshIntegration = true;
+      enableBashIntegration = true;
       settings = {
         keymap_mode = "vim-insert";
         auto_sync = true;

@@ -17,6 +17,7 @@ with lib; {
       opam = {
         enable = true;
         enableZshIntegration = true;
+        enableBashIntegration = true;
       };
     };
   };

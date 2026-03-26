@@ -15,7 +15,6 @@
     bun
     uv
     ty
-    opam
     lua
 
     # kubernetes and container
@@ -233,7 +232,7 @@ in {
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
-  opam.enable = true;
+  opam.enable = pkgs.stdenv.isDarwin;
 
   # include neovim, vimrc, and oh-my-posh symlink
   xdg = {
@@ -273,7 +272,11 @@ in {
 
   home = {
     inherit sessionVariables;
-    packages = filterNone (packages ++ (lib.optionals pkgs.stdenv.isDarwin darwinPackages) ++ (lib.optionals pkgs.stdenv.isLinux linuxPackages));
+    packages =
+      filterNone
+      (packages
+        ++ (lib.optionals pkgs.stdenv.isDarwin ([pkgs.opam] ++ darwinPackages))
+        ++ (lib.optionals pkgs.stdenv.isLinux linuxPackages));
     username = user;
     homeDirectory = pkgs.lib.mkForce (
       if user == "root"
