@@ -49,6 +49,7 @@
       "orbstack"
       "alt-tab"
       "raycast"
+      "nvidia-nsight-systems"
       "karabiner-elements"
       "zed@preview"
       "middleclick"
