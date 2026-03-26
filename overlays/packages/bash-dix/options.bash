@@ -18,8 +18,6 @@ stty stop undef
 set -o vi
 
 bind 'set show-mode-in-prompt on'
-bind 'set vi-cmd-mode-string \1\e[31m\2[N]\1\e[0m\2 '
-bind 'set vi-ins-mode-string \1\e[36m\2[I]\1\e[0m\2 '
 
 bind 'set skip-completed-text on'
 

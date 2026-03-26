@@ -32,7 +32,7 @@ type = "prompt"
     "{{ if eq .Env.DIX_VI_MODE \"I\" }}cyan{{ end }}",
   ]
   style = "plain"
-  template = '''{{ if and .Env.DIX_VI_MODE (ne .Shell "bash") }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ .Env.DIX_VI_MODE }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>{{ end }}'''
+  template = '''{{ if eq .Shell "bash" }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> <{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>{{ else if .Env.DIX_VI_MODE }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ .Env.DIX_VI_MODE }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>{{ end }}'''
   type = "text"
 
   [[blocks.segments]]
