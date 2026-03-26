@@ -29,6 +29,7 @@ in {
     programs.zsh = {
       enable = true;
       enableVteIntegration = true;
+      shellAliases.sudo = "nocorrect sudo";
       history = {
         expireDuplicatesFirst = true;
         ignoreDups = true;

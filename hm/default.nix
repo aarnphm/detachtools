@@ -343,7 +343,6 @@ in {
         ls = lib.getExe pkgs.eza;
         ll = "${lib.getExe pkgs.eza} -Ml --almost-all --group-directories-first -sName --icons=always";
         mtree = "${lib.getExe pkgs.eza} --almost-all -Ml --group-directories-first --tree";
-        sudo = "nocorrect sudo";
         tree = ''${lib.getExe pkgs.broot} $@'';
 
         # safe rm
