@@ -48,6 +48,7 @@ in {
       initExtra = ''
         eval "$(${lib.getExe pkgs.oh-my-posh} init bash --config ${config.xdg.configHome}/oh-my-posh/config.toml)"
 
+        source ${pkgs.bash-completion}/share/bash-completion/bash_completion
         source ${pkgs.fzf}/share/fzf/key-bindings.bash
         source ${pkgs.fzf}/share/fzf/completion.bash
         source ${pkgs.bash-dix}/share/bash/dix.plugin.bash

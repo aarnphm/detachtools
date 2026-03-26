@@ -25,6 +25,17 @@ type = "prompt"
     display_host = true
 
   [[blocks.segments]]
+  foreground = "cyan"
+  foreground_templates = [
+    "{{ if eq .Env.DIX_VI_MODE \"N\" }}red{{ end }}",
+    "{{ if eq .Env.DIX_VI_MODE \"V\" }}magenta{{ end }}",
+    "{{ if eq .Env.DIX_VI_MODE \"I\" }}cyan{{ end }}",
+  ]
+  style = "plain"
+  template = '''{{ if .Env.DIX_VI_MODE }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ .Env.DIX_VI_MODE }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>{{ end }}'''
+  type = "text"
+
+  [[blocks.segments]]
   foreground = "yellow"
   style = "plain"
   template = "<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>"

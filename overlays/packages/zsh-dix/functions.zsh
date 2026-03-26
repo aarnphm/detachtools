@@ -232,6 +232,34 @@ _venv_auto_activate() {
   fi
 }
 
+__dix_set_posh_vi_mode() {
+  emulate -L zsh
+
+  case "${KEYMAP:-main}" in
+    vicmd) export DIX_VI_MODE=N ;;
+    visual) export DIX_VI_MODE=V ;;
+    *) export DIX_VI_MODE=I ;;
+  esac
+}
+
+set_poshcontext() {
+  __dix_set_posh_vi_mode
+}
+
+__dix_zle_line_init() {
+  __dix_set_posh_vi_mode
+}
+
+__dix_zle_keymap_select() {
+  __dix_set_posh_vi_mode
+  zle .reset-prompt
+}
+
+if typeset -f _omp_create_widget >/dev/null; then
+  _omp_create_widget zle-line-init __dix_zle_line_init
+  _omp_create_widget zle-keymap-select __dix_zle_keymap_select
+fi
+
 chpwd_functions+=(_venv_auto_activate)
 precmd_functions=(_venv_auto_activate $precmd_functions)
 

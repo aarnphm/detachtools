@@ -208,6 +208,22 @@ _venv_auto_activate() {
   fi
 }
 
+__dix_set_posh_vi_mode() {
+  local keymap
+
+  keymap=$(bind -v 2>/dev/null | awk '/^set keymap / { print $3; exit }')
+
+  case "$keymap" in
+    vi | vi-command) export DIX_VI_MODE=N ;;
+    visual) export DIX_VI_MODE=V ;;
+    *) export DIX_VI_MODE=I ;;
+  esac
+}
+
+set_poshcontext() {
+  __dix_set_posh_vi_mode
+}
+
 __dix_prompt_command() {
   local exit_code=$?
   history -a
