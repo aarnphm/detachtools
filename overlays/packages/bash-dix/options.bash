@@ -17,6 +17,10 @@ stty susp '^Z'
 stty stop undef
 set -o vi
 
+bind 'set show-mode-in-prompt on'
+bind 'set vi-cmd-mode-string \1\e[31m\2[N]\1\e[0m\2 '
+bind 'set vi-ins-mode-string \1\e[36m\2[I]\1\e[0m\2 '
+
 bind 'set skip-completed-text on'
 
 ## delete ##
@@ -45,6 +49,9 @@ bind '"\e[1;5D": backward-word'
 
 ## history ##
 bind '"\C-s": forward-search-history'
+bind -m vi-command '"\C-l": clear-screen'
+bind -m vi-insert '"\C-l": clear-screen'
+bind -m emacs-standard '"\C-l": clear-screen'
 
 ## edit: prepend sudo ##
 bind '"\C-a": "\e0isudo \e$a"'

@@ -115,6 +115,8 @@ in {
         install -Dm755 ${script}/bin/w $out/bin/w
         install -Dm644 ${./worktree-manager-completion.zsh} \
           $out/share/zsh/site-functions/_w
+        install -Dm644 ${./worktree-manager-completion.bash} \
+          $out/share/bash-completion/completions/w
 
         runHook postInstall
       '';
