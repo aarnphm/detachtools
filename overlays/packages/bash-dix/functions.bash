@@ -208,50 +208,6 @@ _venv_auto_activate() {
   fi
 }
 
-__dix_set_posh_vi_mode() {
-  local keymap
-
-  keymap=$(bind -v 2>/dev/null | awk '/^set keymap / { print $3; exit }')
-
-  case "$keymap" in
-    vi | vi-command) export DIX_VI_MODE=N ;;
-    visual) export DIX_VI_MODE=V ;;
-    *) export DIX_VI_MODE=I ;;
-  esac
-}
-
-set_poshcontext() {
-  __dix_set_posh_vi_mode
-}
-
-__dix_configure_vi_mode_prompt() {
-  local promptConfig promptPreview promptFirstLine placeholderColumn moveRight
-  local cmdModeString insModeString
-
-  promptConfig="${XDG_CONFIG_HOME:-$HOME/.config}/oh-my-posh/config.toml"
-  promptPreview=$(
-    DIX_VI_MODE=' ' oh-my-posh print primary \
-      --config "$promptConfig" \
-      --shell=bash \
-      --shell-version="$BASH_VERSION" \
-      --plain \
-      --pwd "${PWD:-$HOME}" 2>/dev/null
-  )
-  promptFirstLine=${promptPreview%%$'\n'*}
-  placeholderColumn=$(printf '%s\n' "$promptFirstLine" | awk 'match($0, /-\[ \]/) { print RSTART + 2; exit }')
-
-  if [[ -z "$placeholderColumn" ]]; then
-    return
-  fi
-
-  moveRight=$((placeholderColumn - 1))
-  cmdModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[31m\\2N\\1\\e[0m\\e[u\\2' "$moveRight")
-  insModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[36m\\2I\\1\\e[0m\\e[u\\2' "$moveRight")
-
-  bind "set vi-cmd-mode-string $cmdModeString"
-  bind "set vi-ins-mode-string $insModeString"
-}
-
 __dix_prompt_command() {
   local exit_code=$?
   history -a
@@ -259,8 +215,6 @@ __dix_prompt_command() {
   return $exit_code
 }
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__dix_prompt_command"
-
-__dix_configure_vi_mode_prompt
 
 show_keymaps() {
   local selected_command
