@@ -245,8 +245,8 @@ __dix_configure_vi_mode_prompt() {
   fi
 
   moveRight=$((placeholderColumn - 1))
-  cmdModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[31m\\2[N]\\1\\e[0m\\e[u\\2' "$moveRight")
-  insModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[36m\\2[I]\\1\\e[0m\\e[u\\2' "$moveRight")
+  cmdModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[31m\\2N\\1\\e[0m\\e[u\\2' "$moveRight")
+  insModeString=$(printf '\\1\\e[s\\2\\1\\e[1A\\e[%sC\\e[36m\\2I\\1\\e[0m\\e[u\\2' "$moveRight")
 
   bind "set vi-cmd-mode-string $cmdModeString"
   bind "set vi-ins-mode-string $insModeString"
