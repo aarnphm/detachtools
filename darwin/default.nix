@@ -32,6 +32,7 @@
       "bitwarden-cli"
       "monolith"
       "mole"
+      "stripe/stripe-cli/stripe"
     ];
     casks = [
       "arc"

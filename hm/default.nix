@@ -14,7 +14,7 @@
     gvim
     bun
     uv
-    ty
+    # ty
     lua
 
     # kubernetes and container

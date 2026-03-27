@@ -139,6 +139,7 @@ in {
             "${pkgs.worktree-manager}/share/zsh/site-functions"
             "${pkgs.zsh-dix}/share/zsh/site-functions"
             "${pkgs.zsh-completions}/share/zsh/site-functions"
+            "${config.home.homeDirectory}/.stripe"
           ]
           ++ optionals pkgs.stdenv.isDarwin ["/Applications/OrbStack.app/Contents/Resources/completions/zsh"];
       in
