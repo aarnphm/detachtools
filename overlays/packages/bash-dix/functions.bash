@@ -216,6 +216,10 @@ __dix_prompt_command() {
 }
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__dix_prompt_command"
 
+set_poshcontext() {
+  export DIX_VI_MODE=I
+}
+
 show_keymaps() {
   local selected_command
   selected_command=$(bind -P | grep -v '^#' | fzf --preview 'echo {}' --preview-window up:50% --bind 'enter:execute(echo {1})+accept')

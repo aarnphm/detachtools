@@ -252,6 +252,9 @@ __dix_zle_line_init() {
 
 __dix_zle_keymap_select() {
   __dix_set_posh_vi_mode
+  if typeset -f _omp_get_prompt >/dev/null; then
+    eval "$(_omp_get_prompt primary --eval)"
+  fi
   zle .reset-prompt
 }
 

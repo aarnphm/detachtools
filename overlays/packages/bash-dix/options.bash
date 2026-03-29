@@ -16,6 +16,9 @@ stty intr '^C'
 stty susp '^Z'
 stty stop undef
 set -o vi
+bind 'set show-mode-in-prompt on'
+bind 'set vi-ins-mode-string \1\e[5 q\2'
+bind 'set vi-cmd-mode-string \1\e[1 q\2'
 
 bind 'set skip-completed-text on'
 

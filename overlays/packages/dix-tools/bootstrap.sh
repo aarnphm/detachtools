@@ -149,20 +149,20 @@ if command -v gh &>/dev/null; then
 		log_info "setup with gh"
 		gh auth login -p ssh
 	fi
+fi
 
-	if command -v nvim &>/dev/null; then
-		NVIM_DIR="$HOME/.config/nvim"
-		if [ ! -d "$NVIM_DIR" ]; then
-			log_info "default nvim setup"
-			gh repo clone aarnphm/editor "$NVIM_DIR"
-			nvim --headless "+Lazy! sync" +qa
-			nvim --headless -c 'lua require("nvim-treesitter.install").update({ with_sync = true }); vim.cmd("quitall")'
-		fi
+if command -v nvim &>/dev/null; then
+	NVIM_DIR="$HOME/.config/nvim"
+	if [ ! -d "$NVIM_DIR" ]; then
+		log_info "default nvim setup"
+		gh repo clone aarnphm/editor "$NVIM_DIR"
+		nvim --headless "+Lazy! sync" +qa
+		nvim --headless -c 'lua require("nvim-treesitter.install").update({ with_sync = true }); vim.cmd("quitall")'
+	fi
 
-		if [ ! -f "$HOME/.vimrc" ] && [ ! -L "$NVIM_DIR/.vimrc" ]; then
-			log_info "link .vimrc config"
-			ln -s "$NVIM_DIR/.vimrc" "$HOME/.vimrc"
-		fi
+	if [ ! -f "$HOME/.vimrc" ] && [ ! -L "$NVIM_DIR/.vimrc" ]; then
+		log_info "link .vimrc config"
+		ln -s "$NVIM_DIR/.vimrc" "$HOME/.vimrc"
 	fi
 fi
 
