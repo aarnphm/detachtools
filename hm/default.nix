@@ -165,7 +165,6 @@
       MANPAGER = "${getExe neovim} +Man!";
       DISABLE_CHDIR = "1";
       WORKTREE_BRANCH_PREFIX = "aarnphm";
-      MODULAR_CACHE_DIR = "${config.home.homeDirectory}/.cache/modular";
 
       # Fzf
       FZF_CTRL_T_COMMAND = "${getExe fd} --hidden --follow --exclude .git";
