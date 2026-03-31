@@ -25,6 +25,8 @@ with lib; {
         auto_sync = true;
         sync_frequency = "30m";
         style = "compact";
+        history_filter = ["^gaa" "^gst" "^gcmm"];
+        enter_accept = true;
       };
     };
   };
