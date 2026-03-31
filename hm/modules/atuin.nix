@@ -18,9 +18,8 @@ with lib; {
       programs.atuin = {
         enable = true;
         package = pkgs.atuin;
-        flags = ["--disable-up-arrow"];
         enableZshIntegration = true;
-        enableBashIntegration = true;
+        enableBashIntegration = false;
         settings = {
           keymap_mode = "vim-insert";
           auto_sync = true;
@@ -33,8 +32,14 @@ with lib; {
     }
     (mkIf config.bash.enable {
       programs.bash.initExtra = mkAfter ''
-        if [[ $- == *i* ]] && declare -F atuin-bind >/dev/null; then
-          atuin-bind -m vi-command '\C-r' atuin-search-vicmd
+        if [[ $- == *i* ]] && [[ :$SHELLOPTS: =~ :(vi|emacs): ]]; then
+          source ${pkgs.bash-preexec}/share/bash/bash-preexec.sh
+          eval "$(${lib.getExe pkgs.atuin} init bash)"
+          __bp_install
+
+          if declare -F atuin-bind >/dev/null; then
+            atuin-bind -m vi-command '\C-r' atuin-search-vicmd
+          fi
         fi
       '';
     })
