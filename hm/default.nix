@@ -30,6 +30,7 @@
     atuin
     just
     nodejs_24
+    go-task
 
     # git
     git

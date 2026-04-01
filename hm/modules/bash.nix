@@ -26,6 +26,8 @@ in {
   };
 
   config = mkIf config.bash.enable {
+    home.packages = [pkgs.bash-completion];
+
     programs.bash = {
       enable = true;
       historySize = 100000;
