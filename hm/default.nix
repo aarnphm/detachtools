@@ -166,6 +166,7 @@
       MANPAGER = "${getExe neovim} +Man!";
       DISABLE_CHDIR = "1";
       WORKTREE_BRANCH_PREFIX = "aarnphm";
+      CLAUDE_CODE_NO_FLICKER = "1";
 
       # Fzf
       FZF_CTRL_T_COMMAND = "${getExe fd} --hidden --follow --exclude .git";
