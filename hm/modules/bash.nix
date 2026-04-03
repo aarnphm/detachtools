@@ -57,6 +57,7 @@ in {
         source ${fzfComplete}/fzf_complete_realpath.bash
       '';
       initExtra = ''
+        export HISTFILE
         eval "$(${lib.getExe pkgs.oh-my-posh} init bash --config ${config.xdg.configHome}/oh-my-posh/config.toml)"
 
         source ${pkgs.bash-completion}/share/bash-completion/bash_completion

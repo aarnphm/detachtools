@@ -32,14 +32,10 @@ with lib; {
     }
     (mkIf config.bash.enable {
       programs.bash.initExtra = mkAfter ''
-        if [[ $- == *i* ]] && [[ :$SHELLOPTS: =~ :(vi|emacs): ]]; then
-          source ${pkgs.bash-preexec}/share/bash/bash-preexec.sh
-          eval "$(${lib.getExe pkgs.atuin} init bash)"
-          __bp_install
-
-          if declare -F atuin-bind >/dev/null; then
-            atuin-bind -m vi-command '\C-r' atuin-search-vicmd
-          fi
+        source ${pkgs.bash-preexec}/share/bash/bash-preexec.sh
+        eval "$(${lib.getExe pkgs.atuin} init bash)"
+        if declare -F atuin-bind >/dev/null; then
+          atuin-bind -m vi-command '\C-r' atuin-search-vicmd
         fi
       '';
     })
