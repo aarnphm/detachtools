@@ -232,8 +232,8 @@ log_info "setup atuin and install relevant tools"
 atuin account login -u aarnphm -p '{{ .RemoteGpgPassphrase }}' -k "$(cat ~/atuin.key)"
 atuin sync
 
-log_info "update default shell to zsh for {{ .RemoteUser }}"
-echo "{{ .RemotePassword }}" | sudo chsh -s /usr/bin/zsh {{ .RemoteUser }}
+log_info "update default shell to bash for {{ .RemoteUser }}"
+echo "{{ .RemotePassword }}" | sudo chsh -s /bin/bash {{ .RemoteUser }}
 
 {{ end }}
 

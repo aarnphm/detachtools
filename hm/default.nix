@@ -140,8 +140,12 @@
   ];
 
   sessionVariables = let
-    inherit (pkgs) fd git neovim ripgrep zsh;
+    inherit (pkgs) bash fd git neovim ripgrep zsh;
     inherit (lib) concatStringsSep getExe makeBinPath;
+    defaultShell =
+      if pkgs.stdenv.isLinux
+      then bash
+      else zsh;
   in
     {
       # custom envvar to control theme from one spot
@@ -162,7 +166,7 @@
       WORKSPACE = "${config.home.homeDirectory}/workspace";
       GARDEN = "${config.home.sessionVariables.WORKSPACE}/garden";
       TABFS = "${config.home.sessionVariables.WORKSPACE}/TabFS/fs/mnt";
-      SHELL = getExe zsh;
+      SHELL = getExe defaultShell;
       MANPAGER = "${getExe neovim} +Man!";
       DISABLE_CHDIR = "1";
       WORKTREE_BRANCH_PREFIX = "aarnphm";
