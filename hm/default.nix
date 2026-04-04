@@ -204,6 +204,9 @@
     // lib.optionalAttrs pkgs.stdenv.isLinux
     {
       GPG_TTY = "$(tty)";
+      UCX_TLS = "all";
+      UCX_NET_DEVICES = "all";
+      MODULAR_NIXL_PLUGIN_DIR = "${config.home.sessionVariables.WORKSPACE}/modular/bazel-bin/MLRT/Driver";
     };
 
   tomlFormat = pkgs.formats.toml {};
