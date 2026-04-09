@@ -111,6 +111,7 @@
     ueberzugpp
     google-cloud-sdk
     ninja
+    buildkite-cli
 
     # packages overlays
     git-forest
@@ -172,7 +173,7 @@
       DISABLE_CHDIR = "1";
       WORKTREE_BRANCH_PREFIX = "aarnphm";
       CLAUDE_CODE_NO_FLICKER = "1";
-      CLAUDE_CODE_AUTO_COMPACT_WINDOW = 200000;
+      CLAUDE_CODE_AUTO_COMPACT_WINDOW = 220000;
 
       # Fzf
       FZF_CTRL_T_COMMAND = "${getExe fd} --hidden --follow --exclude .git";
