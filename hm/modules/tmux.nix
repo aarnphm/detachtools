@@ -29,12 +29,16 @@ in {
       extraConfig = ''
         bind-key n last-window
         bind-key m send-prefix
+        bind-key h split-window -hb -c "#{pane_current_path}"
+        bind-key j split-window -v -c "#{pane_current_path}"
+        bind-key k split-window -vb -c "#{pane_current_path}"
+        bind-key l split-window -h -c "#{pane_current_path}"
         bind-key '"' split-window -v -c "#{pane_current_path}"
         bind-key % split-window -h -c "#{pane_current_path}"
         bind-key c new-window -c "#{pane_current_path}"
 
         set -g status-position bottom
-        set -g status-justify centre
+        set -g status-justify left
         set -g status-interval 1
         set -g status-left ""
         set -g status-left-length 0
