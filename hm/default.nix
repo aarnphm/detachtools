@@ -241,6 +241,7 @@ in {
   ghostty.enable = true;
   gpg.enable = true;
   ssh.enable = false;
+  tmux.enable = true;
   zsh.enable = true;
   bash.enable = true;
   atuin.enable = true;

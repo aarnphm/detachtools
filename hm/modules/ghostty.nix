@@ -3,7 +3,9 @@
   lib,
   ...
 }:
-with lib; {
+with lib; let
+  terminalTheme = import ../lib/terminal-theme.nix {inherit config;};
+in {
   options.ghostty = {
     enable = mkOption {
       type = types.bool;
@@ -21,10 +23,7 @@ with lib; {
         enableZshIntegration = true;
         enableBashIntegration = true;
         settings = {
-          theme =
-            if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
-            then "Flexoki Dark"
-            else "Flexoki Light";
+          theme = terminalTheme.ghosttyTheme;
           font-family = "Berkeley Mono";
           font-size = 12;
           window-inherit-font-size = true;
