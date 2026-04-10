@@ -137,7 +137,7 @@ fi
 
 case "$SYSTEM_TYPE" in
 darwin)
-	sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake "$flake#$flakeAttr" "${extraBuildFlags[@]}" "${extraLockFlags[@]}" --option accept-flake-config true
+	sudo -H nix run nix-darwin/master#darwin-rebuild -- switch --flake "$flake#$flakeAttr" "${extraBuildFlags[@]}" "${extraLockFlags[@]}" --option accept-flake-config true
 	;;
 linux)
 	nix run home-manager/master -- switch --flake "$flake#$flakeAttr" "${extraBuildFlags[@]}" "${extraLockFlags[@]}" --option accept-flake-config true
