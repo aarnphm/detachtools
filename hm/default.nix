@@ -142,12 +142,13 @@
   ];
 
   sessionVariables = let
-    inherit (pkgs) bash fd git neovim ripgrep zsh;
+    inherit (pkgs) fd git neovim ripgrep zsh;
     inherit (lib) concatStringsSep getExe makeBinPath;
-    defaultShell =
-      if pkgs.stdenv.isLinux
-      then bash
-      else zsh;
+    defaultShell = zsh;
+    # defaultShell =
+    #   if pkgs.stdenv.isLinux
+    #   then bash
+    #   else zsh;
   in
     {
       # custom envvar to control theme from one spot
