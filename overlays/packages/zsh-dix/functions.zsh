@@ -35,8 +35,6 @@ cl() {
     "$@"
 }
 
-alias cl='noglob cl'
-
 where-is-program() {
   readlink -f $(which "$@")
 }
