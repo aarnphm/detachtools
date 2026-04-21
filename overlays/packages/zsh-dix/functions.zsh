@@ -6,6 +6,37 @@ path() {
   fi
 }
 
+cl() {
+  emulate -L zsh
+
+  local model="opus[1m]"
+
+  if (( $# > 0 )); then
+    if [[ "$1" == "--" ]]; then
+      shift
+    else
+      model="$1"
+      shift
+      if (( $# > 0 )); then
+        if [[ "$1" != "--" ]]; then
+          print -u2 'usage: cl [optional_model_id] -- [claude args]'
+          return 2
+        fi
+        shift
+      fi
+    fi
+  fi
+
+  command claude \
+    --allow-dangerously-skip-permissions \
+    --model "$model" \
+    --chrome \
+    --effort max \
+    "$@"
+}
+
+alias cl='noglob cl'
+
 where-is-program() {
   readlink -f $(which "$@")
 }

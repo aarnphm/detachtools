@@ -382,8 +382,7 @@ in {
         rm = "${lib.getExe pkgs.rm-improved} --graveyard ${config.home.homeDirectory}/.local/share/Trash";
 
         # ai
-        cl = "claude --allow-dangerously-skip-permissions --model claude-opus-4-6 --chrome --effort max";
-        cl1m = ''claude --allow-dangerously-skip-permissions --model "opus[1m]" --chrome --effort max'';
+        cl1m = "cl opus[1m]";
         ge = "gemini --approval-mode=yolo --model gemini-3.1-pro-preview";
         ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.4";
         ki = "kimi --thinking --yolo";
