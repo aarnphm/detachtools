@@ -190,6 +190,7 @@
       PATH = concatStringsSep ":" [
         (makeBinPath [
           "${config.home.homeDirectory}/.cargo"
+          "${config.home.homeDirectory}/.wasmtime"
           pkgs.protobuf
           "${config.home.homeDirectory}/.local"
           "/opt/homebrew/opt/ruby"
@@ -338,6 +339,23 @@ in {
     in
       {
         ".fzfrc".source = fzfConfig;
+        ".bazelrc".text = ''
+          # Share downloaded external dependencies across all workspaces
+          common --repository_cache=${config.home.sessionVariables.XDG_CACHE_HOME}/bazel-repo-cache
+
+          # Share build artifacts via local disk cache (content-addressable, concurrent-safe)
+          common --disk_cache=~/.cache/bazel-disk-cache
+
+          # Use hardlinks for repository cache to save space (APFS-friendly)
+          common --experimental_repository_cache_hardlinks
+
+          # Reduce idle server timeout (default 3 hours is too long for multi-worktree)
+          startup --max_idle_secs=900
+
+          # Disk cache garbage collection
+          common --experimental_disk_cache_gc_max_size=30G
+          common --experimental_disk_cache_gc_max_age=14d
+        '';
       }
       // lib.optionalAttrs pkgs.stdenv.isDarwin {
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;

@@ -21,5 +21,7 @@ with lib; {
       withPython3 = true;
       defaultEditor = true;
     };
+
+    xdg.configFile."nvim/init.lua".enable = mkForce false;
   };
 }
