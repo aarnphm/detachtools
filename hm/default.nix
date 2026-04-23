@@ -245,7 +245,7 @@ in {
   ssh.enable = false;
   tmux.enable = true;
   zsh.enable = true;
-  bash.enable = true;
+  bash.enable = false;
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
