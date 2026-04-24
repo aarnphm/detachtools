@@ -68,7 +68,6 @@
     # terminal
     any-nix-shell
     zsh-completions
-    oh-my-posh
     fhPackage
     direnv
     curl
@@ -250,13 +249,13 @@ in {
   zoxide.enable = true;
   neovim.enable = true;
   opam.enable = pkgs.stdenv.isDarwin;
+  oh-my-posh.enable = true;
 
-  # include neovim, vimrc, and oh-my-posh symlink
+  # include neovim and vimrc symlinks
   xdg = {
     enable = true;
     configFile = {
       "gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
-      "oh-my-posh/config.toml".source = ./modules/config/oh-my-posh/config.toml;
       "karabiner/karabiner.json" = {
         source = ./modules/config/karabiner/karabiner.json;
         force = true;
