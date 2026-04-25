@@ -16,8 +16,8 @@ with lib; {
     programs = {
       oh-my-posh = {
         enable = true;
-        enableBashIntegration = config.bash.enable;
-        enableZshIntegration = config.zsh.enable;
+        enableBashIntegration = true;
+        enableZshIntegration = true;
         enableFishIntegration = false;
         enableNushellIntegration = false;
         settings = {
