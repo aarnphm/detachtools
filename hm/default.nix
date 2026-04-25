@@ -69,7 +69,6 @@
     any-nix-shell
     zsh-completions
     fhPackage
-    direnv
     curl
     jq
     yq-go
@@ -111,6 +110,7 @@
     google-cloud-sdk
     ninja
     buildkite-cli
+    cloudflared
 
     # packages overlays
     git-forest
@@ -223,15 +223,6 @@
   };
 in {
   imports = [./modules];
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = false;
-    enableBashIntegration = true;
-    config = {
-      hide_env_diff = true;
-    };
-  };
 
   alacritty.enable = false;
   bat.enable = true;
