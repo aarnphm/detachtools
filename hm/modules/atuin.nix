@@ -23,9 +23,9 @@ with lib; {
         settings = {
           keymap_mode = "vim-insert";
           auto_sync = true;
-          sync_frequency = "30m";
+          sync_frequency = "10m";
           style = "compact";
-          history_filter = ["^gaa" "^gst" "^gcmm"];
+          history_filter = ["^gaa" "^gst" "^gcmm" "^v"];
           enter_accept = true;
         };
       };

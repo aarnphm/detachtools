@@ -36,6 +36,7 @@
     git
     git-lfs
     delta
+    tree
 
     # languages
     go
