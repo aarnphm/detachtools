@@ -23,8 +23,11 @@ Environment overrides:
   WORKTREE_PROJECTS_DIR     Overrides project directory (defaults to WORKTREE_BASE_DIR)
   WORKTREE_WORKTREES_DIR    Overrides worktree storage (default: <projects>/worktrees)
   WORKTREE_BRANCH_PREFIX    Branch prefix when creating new worktrees (default: $USER)
-  WORKTREE_REMOTE           Default git remote URL when bootstrapping a project
+  WORKTREE_REMOTE           Default git remote URL when bootstrapping a missing project
   WORKTREE_BASE_BRANCH      Base branch used when creating new worktrees (default: main)
+
+Existing projects are kept offline by default. Use `@pname@ sync` from inside a
+worktree when you want to fetch and rebase.
 USAGE
 }
 
@@ -159,38 +162,36 @@ sync_worktree() {
     }
 }
 
-ensure_base_branch() {
+resolve_base_ref() {
     local repo_dir="$1"
-    local remote="$2"
-    local base_branch="$3"
+    local base_branch="$2"
 
-    if [ -n "$remote" ]; then
-        "$GIT" -C "$repo_dir" fetch origin "$base_branch" >/dev/null 2>&1 ||
-        warn "origin/$base_branch not fetched; continuing with local state"
+    if "$GIT" -C "$repo_dir" rev-parse --verify --quiet "$base_branch" >/dev/null 2>&1; then
+        printf '%s\n' "$base_branch"
+        return 0
     fi
 
-    if ! "$GIT" -C "$repo_dir" rev-parse --verify --quiet "$base_branch" >/dev/null 2>&1; then
-        if [ -n "$remote" ] && "$GIT" -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$base_branch"; then
-            "$GIT" -C "$repo_dir" checkout -B "$base_branch" "origin/$base_branch" >/dev/null 2>&1
-        else
-            "$GIT" -C "$repo_dir" checkout -B "$base_branch" >/dev/null 2>&1
-        fi
-    else
-        "$GIT" -C "$repo_dir" checkout "$base_branch" >/dev/null 2>&1 || true
-        if [ -n "$remote" ]; then
-            "$GIT" -C "$repo_dir" pull --ff-only origin "$base_branch" >/dev/null 2>&1 ||
-            warn "could not fast-forward $base_branch in $repo_dir"
-        fi
+    if "$GIT" -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$base_branch"; then
+        printf '%s\n' "origin/$base_branch"
+        return 0
     fi
+
+    if "$GIT" -C "$repo_dir" rev-parse --verify --quiet HEAD >/dev/null 2>&1; then
+        warn "$base_branch not found in $repo_dir; creating new worktrees from HEAD"
+        printf '%s\n' HEAD
+        return 0
+    fi
+
+    echo "Base branch not found: $base_branch" >&2
+    return 1
 }
 
 create_worktree_if_missing() {
     local repo_dir="$1"
     local target="$2"
     local branch_name="$3"
-    local base_branch="$4"
-    local remote="$5"
-    shift 5 || true
+    local base_ref="$4"
+    shift 4 || true
     local git_args=("$@")
 
     if [ -d "$target" ]; then
@@ -199,41 +200,17 @@ create_worktree_if_missing() {
 
     mkdir -p "$(dirname "$target")"
 
-    if [ -n "$remote" ]; then
-        "$GIT" -C "$repo_dir" fetch origin "$branch_name" >/dev/null 2>&1 || true
-    fi
-
     if "$GIT" -C "$repo_dir" rev-parse --verify --quiet "$branch_name" >/dev/null 2>&1; then
         "$GIT" -C "$repo_dir" worktree add "${git_args[@]}" "$target" "$branch_name"
         return $?
     fi
 
-    if [ -n "$remote" ] && "$GIT" -C "$repo_dir" ls-remote --exit-code origin "$branch_name" >/dev/null 2>&1; then
+    if "$GIT" -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$branch_name"; then
         "$GIT" -C "$repo_dir" worktree add --track -b "$branch_name" "${git_args[@]}" "$target" "origin/$branch_name"
         return $?
     fi
 
-    "$GIT" -C "$repo_dir" worktree add -b "$branch_name" "${git_args[@]}" "$target" "$base_branch"
-}
-
-sync_worktree_branch() {
-    local repo_dir="$1"
-    local target="$2"
-    local branch_name="$3"
-    local remote="$4"
-
-    if [ -z "$remote" ]; then
-        return
-    fi
-
-    if ! "$GIT" -C "$repo_dir" ls-remote --exit-code origin "$branch_name" >/dev/null 2>&1; then
-        return
-    fi
-
-    (cd "$target" &&
-        "$GIT" fetch origin "$branch_name" >/dev/null 2>&1 &&
-    "$GIT" pull --ff-only origin "$branch_name" >/dev/null 2>&1) ||
-    warn "could not fast-forward $branch_name in $target"
+    "$GIT" -C "$repo_dir" worktree add -b "$branch_name" "${git_args[@]}" "$target" "$base_ref"
 }
 
 copy_extra_directories() {
@@ -269,7 +246,8 @@ enter_worktree_or_execute() {
 prepare_repository() {
     local project="$1"
     local remote="$2"
-    local base_branch="$3"
+    local remote_explicit="$3"
+    local base_branch="$4"
 
     local base_dir
     base_dir=$(projects_dir)
@@ -297,7 +275,7 @@ prepare_repository() {
     local current_remote
     current_remote=$("$GIT" -C "$repo_dir" remote get-url origin 2>/dev/null || true)
 
-    if [ -n "$remote" ]; then
+    if [ "$remote_explicit" -eq 1 ] && [ -n "$remote" ]; then
         if [ -z "$current_remote" ]; then
             "$GIT" -C "$repo_dir" remote add origin "$remote"
         elif [ "$current_remote" != "$remote" ]; then
@@ -306,13 +284,7 @@ prepare_repository() {
         fi
     fi
 
-    if [ -z "$remote" ]; then
-        remote="$current_remote"
-    fi
-
-    ensure_base_branch "$repo_dir" "$remote" "$base_branch"
-
-    printf '%s\n' "$remote"
+    resolve_base_ref "$repo_dir" "$base_branch"
 }
 
 main() {
@@ -373,6 +345,7 @@ main() {
     shift 2
 
     local remote="${WORKTREE_REMOTE:-}"
+    local remote_explicit=0
     local base_branch="${WORKTREE_BASE_BRANCH:-main}"
     local command=()
     local git_args=()
@@ -385,9 +358,11 @@ main() {
                     exit 1
                 }
                 remote="$1"
+                remote_explicit=1
                 ;;
             --remote=*)
                 remote="${1#--remote=}"
+                remote_explicit=1
                 ;;
             --base)
                 shift || {
@@ -432,11 +407,12 @@ main() {
         created_target=1
     fi
 
-    remote=$(prepare_repository "$project" "$remote" "$base_branch") || exit 1
+    local base_ref
+    base_ref=$(prepare_repository "$project" "$remote" "$remote_explicit" "$base_branch") || exit 1
 
     mkdir -p "$worktree_root"
 
-    if ! create_worktree_if_missing "$repo_dir" "$target" "$branch_name" "$base_branch" "$remote" "${git_args[@]}"; then
+    if ! create_worktree_if_missing "$repo_dir" "$target" "$branch_name" "$base_ref" "${git_args[@]}"; then
         echo "Failed to create worktree at $target" >&2
         exit 1
     fi
@@ -449,8 +425,6 @@ main() {
     if [ "$created_target" -eq 1 ]; then
         copy_extra_directories "$repo_dir" "$target"
     fi
-
-    sync_worktree_branch "$repo_dir" "$target" "$branch_name" "$remote"
 
     if [ ${#command[@]} -eq 0 ]; then
         enter_worktree_or_execute "$target"
