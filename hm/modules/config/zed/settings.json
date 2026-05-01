@@ -10,7 +10,7 @@
   "use_autoclose": false,
   "buffer_font_size": 15,
   "preferred_line_length": 119,
-  "relative_line_numbers": true,
+  "relative_line_numbers": "enabled",
   "ensure_final_newline_on_save": false,
   "inlay_hints": {
     "enabled": true
@@ -115,7 +115,7 @@
     "path": "/Users/aarnphm/workspace/garden/content"
   },
   "tab_size": 2,
-  "language_overrides": {
+  "languages": {
     "Markdown": {
       "format_on_save": "off"
     },

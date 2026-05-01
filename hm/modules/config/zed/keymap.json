@@ -3,7 +3,7 @@
     "context": "menu",
     "bindings": {
       "ctrl-j": "menu::SelectNext",
-      "ctrl-k": "menu::SelectPrev"
+      "ctrl-k": "menu::SelectPrevious"
     }
   },
   {
@@ -26,7 +26,7 @@
     }
   },
   {
-    "context": "Pane && !VimWaiting",
+    "context": "Pane && !Editor",
     "bindings": {
       ", v s": "pane::SplitRight"
     }
@@ -38,9 +38,9 @@
     }
   },
   {
-    "context": "Editor && vim_mode == normal && !VimWaiting &&!menu",
+    "context": "Editor && vim_mode == normal && !menu",
     "bindings": {
-      "J": "editor::JoinLines"
+      "shift-j": "editor::JoinLines"
     }
   },
   {
@@ -51,35 +51,33 @@
     }
   },
   {
-    "context": "Editor && VimControl && !VimWaiting && !menu",
+    "context": "Editor && VimControl && !menu",
     "bindings": {
       ";": "command_palette::Toggle",
       ":": "vim::RepeatFind",
-      "K": "editor::Hover",
+      "shift-k": "editor::Hover",
       "ctrl-x": "pane::CloseActiveItem",
       "g r": "editor::Rename",
-      "g R": "editor::FindAllReferences",
+      "g shift-r": "editor::FindAllReferences",
       ">": "editor::Indent",
       "<": "editor::Outdent",
       "] d": "editor::GoToDiagnostic",
-      "[ d": "editor::GoToPrevDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic",
       "space space f": "editor::Format",
       ", v s": "editor::SplitSelectionIntoLines",
       "space v": "editor::ToggleComments",
-      "F": [
-        "vim::PushOperator",
+      "shift-f": [
+        "vim::PushFindBackward",
         {
-          "FindBackward": {
-            "after": false
-          }
+          "after": false,
+          "multiline": false
         }
       ],
-      "T": [
-        "vim::PushOperator",
+      "shift-t": [
+        "vim::PushFindBackward",
         {
-          "FindBackward": {
-            "after": true
-          }
+          "after": true,
+          "multiline": false
         }
       ]
     }
@@ -87,17 +85,17 @@
   {
     "context": "Editor && vim_mode == visual && !menu",
     "bindings": {
-      "J": "editor::MoveLineDown",
-      "K": "editor::MoveLineUp"
+      "shift-j": "editor::MoveLineDown",
+      "shift-k": "editor::MoveLineUp"
     }
   },
   {
-    "context": "Dock && VimControl",
+    "context": "Dock",
     "bindings": {
-      "ctrl-w h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-w l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-w k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-w j": ["workspace::ActivatePaneInDirection", "Down"]
+      "ctrl-w h": "workspace::ActivatePaneLeft",
+      "ctrl-w l": "workspace::ActivatePaneRight",
+      "ctrl-w k": "workspace::ActivatePaneUp",
+      "ctrl-w j": "workspace::ActivatePaneDown"
     }
   },
   {
@@ -111,7 +109,7 @@
       "escape": "project_panel::ToggleFocus",
       "h": "project_panel::CollapseSelectedEntry",
       "j": "menu::SelectNext",
-      "k": "menu::SelectPrev",
+      "k": "menu::SelectPrevious",
       "l": "project_panel::ExpandSelectedEntry",
       "shift-l": "project_panel::Open",
       "shift-d": "project_panel::Delete",

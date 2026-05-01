@@ -37,6 +37,7 @@
     git-lfs
     delta
     tree
+    mise
 
     # languages
     go
@@ -375,7 +376,7 @@ in {
         # ai
         cl1m = ''cl "opus[1m]"'';
         ge = "gemini --approval-mode=yolo --model gemini-3.1-pro-preview";
-        ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.4";
+        ch = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.5";
         ki = "kimi --thinking --yolo";
 
         # git
