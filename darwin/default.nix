@@ -54,6 +54,7 @@
       "nvidia-nsight-systems"
       "karabiner-elements"
       "zed@preview"
+      "zed"
       "middleclick"
       "sioyek"
     ];

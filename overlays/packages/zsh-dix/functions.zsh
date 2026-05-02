@@ -1,94 +1,94 @@
 path() {
-  if [[ -n "$PATH" ]]; then
-    echo "$PATH" | tr ':' '\n'
-  else
-    echo "PATH unset"
-  fi
+    if [[ -n "$PATH" ]]; then
+        echo "$PATH" | tr ':' '\n'
+    else
+        echo "PATH unset"
+    fi
 }
 
 cl() {
-  emulate -L zsh
+    emulate -L zsh
 
-  local model="opus[1m]"
+    local model="opus[1m]"
 
-  if (( $# > 0 )); then
-    if [[ "$1" == "--" ]]; then
-      shift
-    else
-      model="$1"
-      shift
-      if (( $# > 0 )); then
-        if [[ "$1" != "--" ]]; then
-          print -u2 'usage: cl [optional_model_id] -- [claude args]'
-          return 2
+    if (( $# > 0 )); then
+        if [[ "$1" == "--" ]]; then
+            shift
+        else
+            model="$1"
+            shift
+            if (( $# > 0 )); then
+                if [[ "$1" != "--" ]]; then
+                    print -u2 'usage: cl [optional_model_id] -- [claude args]'
+                    return 2
+                fi
+                shift
+            fi
         fi
-        shift
-      fi
     fi
-  fi
 
-  command claude \
-    --allow-dangerously-skip-permissions \
-    --model "$model" \
-    --chrome \
-    --effort max \
-    "$@"
+    command claude \
+        --allow-dangerously-skip-permissions \
+        --model "$model" \
+        --chrome \
+        --effort max \
+        "$@"
 }
 
 where-is-program() {
-  readlink -f $(which "$@")
+    readlink -f $(which "$@")
 }
 
 get-derivation() {
-  nix-store --query --deriver $(readlink -f $(which "$@"))
+    nix-store --query --deriver $(readlink -f $(which "$@"))
 }
 
 fpath() {
-  if [[ -n "$FPATH" ]]; then
-    echo "$FPATH" | tr ':' '\n'
-  else
-    echo "FPATH unset"
-  fi
+    if [[ -n "$FPATH" ]]; then
+        echo "$FPATH" | tr ':' '\n'
+    else
+        echo "FPATH unset"
+    fi
 }
 
 __exec_command_with_tmux() {
-  local cmd="$@"
-  if [[ "$(ps -p $(ps -p $$ -o ppid=) -o comm= 2>/dev/null)" =~ tmux ]]; then
-    if [[ $(tmux show-window-options -v automatic-rename) != "off" ]]; then
-      local title=$(echo "$cmd" | cut -d ' ' -f 2- | tr ' ' '\n' | grep -v '^-' | sed '/^$/d' | tail -n 1)
-      if [ -n "$title" ]; then
-        tmux rename-window -- "$title"
-      else
-        tmux rename-window -- "$cmd"
-      fi
-      trap 'tmux set-window-option automatic-rename on 1>/dev/null' 2
-      eval command "$cmd"
-      local ret="$?"
-      tmux set-window-option automatic-rename on 1>/dev/null
-      return $ret
+    local cmd="$@"
+    if [[ "$(ps -p $(ps -p $$ -o ppid=) -o comm= 2>/dev/null)" =~ tmux ]]; then
+        if [[ $(tmux show-window-options -v automatic-rename) != "off" ]]; then
+            local title=$(echo "$cmd" | cut -d ' ' -f 2- | tr ' ' '\n' | grep -v '^-' | sed '/^$/d' | tail -n 1)
+            if [ -n "$title" ]; then
+                tmux rename-window -- "$title"
+            else
+                tmux rename-window -- "$cmd"
+            fi
+            trap 'tmux set-window-option automatic-rename on 1>/dev/null' 2
+            eval command "$cmd"
+            local ret="$?"
+            tmux set-window-option automatic-rename on 1>/dev/null
+            return $ret
+        fi
     fi
-  fi
-  eval command "$cmd"
+    eval command "$cmd"
 }
 
 ssh() {
-  local args=$(printf ' %q' "$@")
-  local ppid=$(ps -p $$ -o ppid= 2>/dev/null | tr -d ' ')
-  if [[ "$@" =~ .*BatchMode=yes.*ls.*-d1FL.* ]]; then
-    command ssh "$args"
-    return
-  fi
+    local args=$(printf ' %q' "$@")
+    local ppid=$(ps -p $$ -o ppid= 2>/dev/null | tr -d ' ')
+    if [[ "$@" =~ .*BatchMode=yes.*ls.*-d1FL.* ]]; then
+        command ssh "$args"
+        return
+    fi
 
-  __exec_command_with_tmux "ssh $args"
+    __exec_command_with_tmux "ssh $args"
 }
 
 nebius-vm() {
-  local NAME="$1"
-  local USER="${2:-$USER}"
+    local NAME="$1"
+    local USER="${2:-$USER}"
 
-  # pull the public IP for the requested instance
-  local IP
-  IP=$(jq -r --arg name "$NAME" '
+    # pull the public IP for the requested instance
+    local IP
+    IP=$(jq -r --arg name "$NAME" '
       .items[]
       | select(.metadata.id == $name)
       | .status.network_interfaces[0].public_ip_address.address
@@ -96,212 +96,212 @@ nebius-vm() {
       | .[0]
   ' -)
 
-  if [[ -z "$IP" || "$IP" == "null" ]]; then
-      printf "❌  No public IP found for \"%s\" in %s\n" "$NAME" "$CLOUD_JSON" >&2
-      return 1
-  fi
+    if [[ -z "$IP" || "$IP" == "null" ]]; then
+        printf "❌  No public IP found for \"%s\" in %s\n" "$NAME" "$CLOUD_JSON" >&2
+        return 1
+    fi
 
-  printf "%s@%s" "$USER" "$IP"
+    printf "%s@%s" "$USER" "$IP"
 }
 
 comment() {
-  sed -i "$1"' s/^/#/' "$2"
+    sed -i "$1"' s/^/#/' "$2"
 }
 
 ltrim() {
-  local input
-  input=$(get_stdin_and_args "$@")
-  printf "%s" "$(expr "$input" : "^[[:space:]]*\(.*[^[:space:]]\)")"
+    local input
+    input=$(get_stdin_and_args "$@")
+    printf "%s" "$(expr "$input" : "^[[:space:]]*\(.*[^[:space:]]\)")"
 }
 
 rtrim() {
-  local input
-  input=$(get_stdin_and_args "$@")
-  printf "%s" "$(expr "$input" : "^\(.*[^[:space:]]\)[[:space:]]*$")"
+    local input
+    input=$(get_stdin_and_args "$@")
+    printf "%s" "$(expr "$input" : "^\(.*[^[:space:]]\)[[:space:]]*$")"
 }
 
 trim() {
-  local input
-  input=$(get_stdin_and_args "$@")
-  printf "%s" "$(rtrim "$(ltrim "$input")")"
+    local input
+    input=$(get_stdin_and_args "$@")
+    printf "%s" "$(rtrim "$(ltrim "$input")")"
 }
 
 trim_whitespace() {
-  local input
-  input=$(get_stdin_and_args "$@")
-  echo "$input" | tr -d ' '
+    local input
+    input=$(get_stdin_and_args "$@")
+    echo "$input" | tr -d ' '
 }
 
 timeshell() {
-  TIMESHELL=1 zsh -c 'for i in $(seq 1 10); do time $SHELL -c -i exit; done'
+    TIMESHELL=1 zsh -c 'for i in $(seq 1 10); do time $SHELL -c -i exit; done'
 }
 
 ## docker ##
 dockerclean() {
-  # remove first none images
-  docker rmi -f $(docker images -a | grep "^<none>" | awk '{print $3}') 2>/dev/null
-  # now remove none container
-  docker rmi -f $(docker ps -a -f status=exited -q) 2>/dev/null
+    # remove first none images
+    docker rmi -f $(docker images -a | grep "^<none>" | awk '{print $3}') 2>/dev/null
+    # now remove none container
+    docker rmi -f $(docker ps -a -f status=exited -q) 2>/dev/null
 }
 
 dockerrmi() {
-  # remove images by reference
-  docker rmi -f $(docker images --filter=reference="$1" -q) 2>/dev/null
+    # remove images by reference
+    docker rmi -f $(docker images --filter=reference="$1" -q) 2>/dev/null
 }
 
 # Select a docker container to remove
 drm() {
-  local cid
-  cid=$(docker ps -a | sed 1d | fzf -q "$1" | awk '{print $1}')
+    local cid
+    cid=$(docker ps -a | sed 1d | fzf -q "$1" | awk '{print $1}')
 
-  [ -n "$cid" ] && docker rm "$cid"
+    [ -n "$cid" ] && docker rm "$cid"
 }
 
 # Select a running docker container to stop
 ds() {
-  local cid
-  cid=$(docker ps | sed 1d | fzf -q "$1" | awk '{print $1}')
+    local cid
+    cid=$(docker ps | sed 1d | fzf -q "$1" | awk '{print $1}')
 
-  [ -n "$cid" ] && docker stop "$cid"
+    [ -n "$cid" ] && docker stop "$cid"
 }
 
 # Create a new directory and enter it
 mkd() {
-  mkdir -p "$@" && cd "$_"
+    mkdir -p "$@" && cd "$_"
 }
 
 listen() {
-  sudo lsof -iTCP:"$@" -sTCP:LISTEN
+    sudo lsof -iTCP:"$@" -sTCP:LISTEN
 }
 
 # Determine size of a file or total size of a directory
 fs() {
-  if du -b /dev/null >/dev/null 2>&1; then
-    local arg=-sbh
-  else
-    local arg=-sh
-  fi
-  if [[ -n "$@" ]]; then
-    du $arg -- "$@"
-  else
-    du $arg .[^.]* ./*
-  fi
+    if du -b /dev/null >/dev/null 2>&1; then
+        local arg=-sbh
+    else
+        local arg=-sh
+    fi
+    if [[ -n "$@" ]]; then
+        du $arg -- "$@"
+    else
+        du $arg .[^.]* ./*
+    fi
 }
 
 venv() {
-  name="${1:-.venv}"
-  if [[ ! -d "$name" ]]; then
-    uv venv "${PWD}/$name"
-    source "$name/bin/activate"
-  else
-    source "$name/bin/activate"
-  fi
+    name="${1:-.venv}"
+    if [[ ! -d "$name" ]]; then
+        uv venv "${PWD}/$name"
+        source "$name/bin/activate"
+    else
+        source "$name/bin/activate"
+    fi
 
-  uv pip install pylatexenc mypy jupytext plotly pnglatex pyperclip jupyter-client pynvim jupyterlab-vim
+    uv pip install pylatexenc mypy jupytext plotly pnglatex pyperclip jupyter-client pynvim jupyterlab-vim
 }
 
 # Check for virtualenvwrapper
 if type workon >/dev/null 2>&1; then
-  VENV_WRAPPER=true
+    VENV_WRAPPER=true
 else
-  VENV_WRAPPER=false
+    VENV_WRAPPER=false
 fi
 
 _venv_auto_activate() {
-  emulate -L zsh
+    emulate -L zsh
 
-  local venvPath
-  local venvWrapperActivate
-  local venvName
-  local currentVenv="${VIRTUAL_ENV-}"
-  local projectDir="${PROJECT_DIR-}"
-  local debugFlag="${DEBUG-}"
-  local venvWrapper="${VENV_WRAPPER-false}"
+    local venvPath
+    local venvWrapperActivate
+    local venvName
+    local currentVenv="${VIRTUAL_ENV-}"
+    local projectDir="${PROJECT_DIR-}"
+    local debugFlag="${DEBUG-}"
+    local venvWrapper="${VENV_WRAPPER-false}"
 
-  if [[ -n "$currentVenv" ]]; then
-    # Check if the current directory is inside the project directory
-    if [[ -n "$projectDir" && "$PWD" != "$projectDir"* ]]; then
-      [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mDeactivating venv...\e[0m"
-      deactivate
-      unset PROJECT_DIR
-    fi
-    return
-  fi
-
-  if [[ -e ".venv" ]]; then
-    # Check for symlink pointing to virtualenv
-    if [[ -L ".venv" ]]; then
-      venvPath="$(readlink .venv)"
-      venvWrapperActivate=false
-    # Check for directory containing virtualenv
-    elif [[ -d ".venv" ]]; then
-      venvPath="$(pwd -P)/.venv"
-      venvWrapperActivate=false
-    # Check for file containing name of virtualenv
-    elif [[ -f ".venv" && "$venvWrapper" == "true" && -n "${WORKON_HOME-}" ]]; then
-      venvPath="$WORKON_HOME/$(cat .venv)"
-      venvWrapperActivate=true
-    else
-      return
+    if [[ -n "$currentVenv" ]]; then
+        # Check if the current directory is inside the project directory
+        if [[ -n "$projectDir" && "$PWD" != "$projectDir"* ]]; then
+            [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mDeactivating venv...\e[0m"
+            deactivate
+            unset PROJECT_DIR
+        fi
+        return
     fi
 
-    # Check to see if already activated to avoid redundant activating
-    if [[ "$currentVenv" != "$venvPath" ]]; then
-      [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mActivating venv...\e[0m"
-      if $venvWrapperActivate; then
-        venvName="$(basename "$venvPath")"
-        workon "$venvName"
-      else
-        venvName="$(basename "$(pwd)")"
-        VIRTUAL_ENV_DISABLE_PROMPT=1
-        source .venv/bin/activate
-      fi
-      PROJECT_DIR="$PWD"
+    if [[ -e ".venv" ]]; then
+        # Check for symlink pointing to virtualenv
+        if [[ -L ".venv" ]]; then
+            venvPath="$(readlink .venv)"
+            venvWrapperActivate=false
+            # Check for directory containing virtualenv
+        elif [[ -d ".venv" ]]; then
+            venvPath="$(pwd -P)/.venv"
+            venvWrapperActivate=false
+            # Check for file containing name of virtualenv
+        elif [[ -f ".venv" && "$venvWrapper" == "true" && -n "${WORKON_HOME-}" ]]; then
+            venvPath="$WORKON_HOME/$(cat .venv)"
+            venvWrapperActivate=true
+        else
+            return
+        fi
+
+        # Check to see if already activated to avoid redundant activating
+        if [[ "$currentVenv" != "$venvPath" ]]; then
+            [[ -n "$debugFlag" ]] && echo -e "\n\e[1;33mActivating venv...\e[0m"
+            if $venvWrapperActivate; then
+                venvName="$(basename "$venvPath")"
+                workon "$venvName"
+            else
+                venvName="$(basename "$(pwd)")"
+                VIRTUAL_ENV_DISABLE_PROMPT=1
+                source .venv/bin/activate
+            fi
+            PROJECT_DIR="$PWD"
+        fi
     fi
-  fi
 }
 
 __dix_set_posh_vi_mode() {
-  emulate -L zsh
+    emulate -L zsh
 
-  case "${KEYMAP:-main}" in
-    vicmd) export DIX_VI_MODE=N ;;
-    visual) export DIX_VI_MODE=V ;;
-    *) export DIX_VI_MODE=I ;;
-  esac
+    case "${KEYMAP:-main}" in
+        vicmd) export DIX_VI_MODE=N ;;
+        visual) export DIX_VI_MODE=V ;;
+        *) export DIX_VI_MODE=I ;;
+    esac
 }
 
 set_poshcontext() {
-  __dix_set_posh_vi_mode
+    __dix_set_posh_vi_mode
 }
 
 __dix_zle_line_init() {
-  __dix_set_posh_vi_mode
+    __dix_set_posh_vi_mode
 }
 
 __dix_zle_keymap_select() {
-  __dix_set_posh_vi_mode
-  if typeset -f _omp_get_prompt >/dev/null; then
-    eval "$(_omp_get_prompt primary --eval)"
-  fi
-  zle .reset-prompt
+    __dix_set_posh_vi_mode
+    if typeset -f _omp_get_prompt >/dev/null; then
+        eval "$(_omp_get_prompt primary --eval)"
+    fi
+    zle .reset-prompt
 }
 
 if typeset -f _omp_create_widget >/dev/null; then
-  _omp_create_widget zle-line-init __dix_zle_line_init
-  _omp_create_widget zle-keymap-select __dix_zle_keymap_select
+    _omp_create_widget zle-line-init __dix_zle_line_init
+    _omp_create_widget zle-keymap-select __dix_zle_keymap_select
 fi
 
 chpwd_functions+=(_venv_auto_activate)
 precmd_functions=(_venv_auto_activate $precmd_functions)
 
 show_keymaps() {
-  local selected_command
-  selected_command=$(bindkey -L | rg -v '^#' | fzf --preview '_fzf_complete_realpath {}' --preview-window up:50% --bind 'enter:execute(echo {1})+accept')
+    local selected_command
+    selected_command=$(bindkey -L | rg -v '^#' | fzf --preview '_fzf_complete_realpath {}' --preview-window up:50% --bind 'enter:execute(echo {1})+accept')
 
-  if [[ -n $selected_command ]]; then
-    eval "$selected_command"
-  fi
+    if [[ -n $selected_command ]]; then
+        eval "$selected_command"
+    fi
 }
 zle -N show_keymaps
 bindkey '^P' show_keymaps

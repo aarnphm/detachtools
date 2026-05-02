@@ -1,0 +1,50 @@
+#compdef cl
+
+local -i index separatorIndex=0
+local -a claudeWords wrapperArguments wrapperWords
+local claudeCompletion completionSource
+
+for (( index = 2; index <= $#words; index++ )); do
+  if [[ "${words[index]}" == "--" ]]; then
+    separatorIndex=$index
+    break
+  fi
+done
+
+if (( separatorIndex > 0 && CURRENT > separatorIndex )); then
+  wrapperWords=("${words[@]}")
+  claudeWords=("${(@)wrapperWords[$((separatorIndex + 1)),-1]}")
+  if (( CURRENT > $#wrapperWords )); then
+    claudeWords+=("")
+  fi
+
+  words=(claude "${claudeWords[@]}")
+  CURRENT=$((CURRENT - separatorIndex + 1))
+
+  completionSource="${functions_source[_cl]:-${${(%):-%x}}}"
+  claudeCompletion="${completionSource:h}/_claude"
+  if [[ ! -r "$claudeCompletion" ]]; then
+    _message 'missing claude completion'
+    return 1
+  fi
+
+  source "$claudeCompletion"
+  return
+fi
+
+if (( CURRENT == 2 )); then
+  wrapperArguments=(
+    '--:complete claude arguments'
+    'opus[1m]:model override'
+  )
+  _describe -t wrapper-arguments 'cl argument' wrapperArguments
+  return
+fi
+
+if (( CURRENT == 3 && words[2] != "--" )); then
+  wrapperArguments=('--:complete claude arguments')
+  _describe -t separators 'separator' wrapperArguments
+  return
+fi
+
+_message 'use -- before claude arguments'

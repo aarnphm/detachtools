@@ -27,6 +27,7 @@ in {
           font-family = "Berkeley Mono";
           font-size = 12;
           window-inherit-font-size = true;
+          window-save-state = "always";
           window-width = 120;
           window-height = 120;
           keybind = [

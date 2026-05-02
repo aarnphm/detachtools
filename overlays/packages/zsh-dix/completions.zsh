@@ -18,7 +18,16 @@ zstyle ':completion:*:matches' group 'yes'
 zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
 zstyle ':completion:*:descriptions' format '[%d]'
 
+_dixCompletionDir="${${(%):-%x}:h}"
+_dixSiteFunctionsDir="$_dixCompletionDir/site-functions"
+
+if [[ -d "$_dixSiteFunctionsDir" && ${fpath[(Ie)$_dixSiteFunctionsDir]} -eq 0 ]]; then
+  fpath=("$_dixSiteFunctionsDir" "${fpath[@]}")
+fi
+
 zstyle ':fzf-tab:*' switch-group '[' ']'
+zstyle ':fzf-tab:*' fzf-bindings \
+  "ctrl-f:execute({_FTB_INIT_}source ${(q)_dixCompletionDir}/fzf-tab-edit.zsh)+abort"
 
 # complete `ls` / `cat` / etc
 zstyle ':fzf-tab:complete:(\\|*/|)(ls|gls|bat|eza|cat|cd|rm|cp|mv|ln|nano|nvim|vim|open|tree|source):*' \
@@ -59,4 +68,23 @@ zstyle '*' single-ignored show
 
 zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat {/etc/ssh_,~/.ssh/known_}hosts(|2)(N) /dev/null)"}%%[# ]*}//,/ })'
 
-compdef _claude cl
+_dix_register_completions() {
+  (( $+functions[compdef] )) || return 1
+
+  autoload -Uz _claude _cl
+  compdef _claude claude
+  compdef _cl cl
+}
+
+if ! _dix_register_completions; then
+  autoload -Uz add-zsh-hook
+
+  _dix_register_completions_once() {
+    _dix_register_completions || return 0
+    add-zsh-hook -d precmd _dix_register_completions_once 2> /dev/null || true
+  }
+
+  add-zsh-hook precmd _dix_register_completions_once 2> /dev/null || true
+fi
+
+unset _dixCompletionDir _dixSiteFunctionsDir
