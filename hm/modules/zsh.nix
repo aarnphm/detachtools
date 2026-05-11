@@ -45,7 +45,22 @@ in {
         ${lib.getExe pkgs.any-nix-shell} zsh --info-right | source /dev/stdin
         source ${pkgs.zsh-dix}/share/zsh/dix.plugin.zsh
         [[ -d ${config.home.homeDirectory}/.ghcup ]] && source ${config.home.homeDirectory}/.ghcup/env
-        [[ -d ${config.home.sessionVariables.WORKSPACE}/modular ]] && source ${config.home.sessionVariables.WORKSPACE}/modular/utils/start-modular.sh
+
+        sourceModular() {
+          local modularPath="${config.home.sessionVariables.WORKSPACE}/modular"
+          [[ -f "$modularPath/utils/start-modular.sh" ]] || return
+          if [[ -n "''${IN_NIX_SHELL:-}" ]]; then
+            case "$PWD/" in
+              "$modularPath"/*) ;;
+              *) return ;;
+            esac
+          fi
+
+          PATH="${lib.makeBinPath [pkgs.python3]}:$PATH"
+          source "$modularPath/utils/start-modular.sh"
+        }
+        sourceModular
+        unset -f sourceModular
 
         gardep() {
           emulate -L zsh
