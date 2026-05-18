@@ -28,7 +28,6 @@
       "plantuml"
       "ddclient"
       "mas"
-      "gemini-cli"
       "bitwarden-cli"
       "monolith"
       "mole"
