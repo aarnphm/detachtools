@@ -261,6 +261,71 @@ _venv_auto_activate() {
     fi
 }
 
+__dix_find_node_bin() {
+    emulate -L zsh
+
+    local dir="$PWD"
+    local nodeBin
+
+    while true; do
+        nodeBin="$dir/node_modules/.bin"
+        if [[ -d "$nodeBin" ]]; then
+            print -r -- "$nodeBin"
+            return 0
+        fi
+
+        [[ "$dir" == "/" ]] && return 1
+        dir="${dir:h}"
+        [[ -z "$dir" ]] && dir="/"
+    done
+}
+
+__dix_path_has() {
+    emulate -L zsh
+
+    local entry
+    local needle="$1"
+
+    for entry in "${path[@]}"; do
+        [[ "$entry" == "$needle" ]] && return 0
+    done
+
+    return 1
+}
+
+__dix_path_without() {
+    emulate -L zsh
+
+    local entry
+    local removePath="$1"
+    local -a nextPath=()
+
+    for entry in "${path[@]}"; do
+        [[ "$entry" == "$removePath" ]] && continue
+        nextPath+=("$entry")
+    done
+
+    path=("${nextPath[@]}")
+}
+
+__dix_auto_node_bin() {
+    emulate -L zsh
+
+    local previousNodeBin="${DIX_NODE_BIN_DIR-}"
+    local nodeBin
+
+    if [[ -n "$previousNodeBin" ]]; then
+        __dix_path_without "$previousNodeBin"
+        unset DIX_NODE_BIN_DIR
+    fi
+
+    nodeBin="$(__dix_find_node_bin)" || return 0
+    __dix_path_has "$nodeBin" && return 0
+
+    path=("$nodeBin" "${path[@]}")
+    export DIX_NODE_BIN_DIR="$nodeBin"
+}
+
 __dix_set_posh_vi_mode() {
     emulate -L zsh
 
@@ -292,8 +357,8 @@ if typeset -f _omp_create_widget >/dev/null; then
     _omp_create_widget zle-keymap-select __dix_zle_keymap_select
 fi
 
-chpwd_functions+=(_venv_auto_activate)
-precmd_functions=(_venv_auto_activate $precmd_functions)
+chpwd_functions+=(_venv_auto_activate __dix_auto_node_bin)
+precmd_functions=(_venv_auto_activate __dix_auto_node_bin $precmd_functions)
 
 show_keymaps() {
     local selected_command

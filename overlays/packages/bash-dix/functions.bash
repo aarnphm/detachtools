@@ -235,10 +235,82 @@ _venv_auto_activate() {
   fi
 }
 
+__dix_find_node_bin() {
+  local dir="$PWD"
+  local nodeBin
+
+  while true; do
+    nodeBin="$dir/node_modules/.bin"
+    if [[ -d "$nodeBin" ]]; then
+      printf "%s\n" "$nodeBin"
+      return 0
+    fi
+
+    [[ "$dir" == "/" ]] && return 1
+    dir="${dir%/*}"
+    [[ -z "$dir" ]] && dir="/"
+  done
+}
+
+__dix_path_has() {
+  local entry
+  local needle="$1"
+  local oldIFS="$IFS"
+
+  IFS=:
+  for entry in $PATH; do
+    if [[ "$entry" == "$needle" ]]; then
+      IFS="$oldIFS"
+      return 0
+    fi
+  done
+  IFS="$oldIFS"
+
+  return 1
+}
+
+__dix_path_without() {
+  local entry
+  local newPath=""
+  local oldIFS="$IFS"
+  local removePath="$1"
+  local pathEntries=()
+
+  IFS=:
+  read -r -a pathEntries <<< "$PATH"
+  IFS="$oldIFS"
+
+  for entry in "${pathEntries[@]}"; do
+    [[ "$entry" == "$removePath" ]] && continue
+    newPath="${newPath:+$newPath:}$entry"
+  done
+
+  PATH="$newPath"
+  export PATH
+}
+
+__dix_auto_node_bin() {
+  local previousNodeBin="${DIX_NODE_BIN_DIR-}"
+  local nodeBin
+
+  if [[ -n "$previousNodeBin" ]]; then
+    __dix_path_without "$previousNodeBin"
+    unset DIX_NODE_BIN_DIR
+  fi
+
+  nodeBin="$(__dix_find_node_bin)" || return 0
+  __dix_path_has "$nodeBin" && return 0
+
+  PATH="$nodeBin${PATH:+:$PATH}"
+  export DIX_NODE_BIN_DIR="$nodeBin"
+  export PATH
+}
+
 __dix_prompt_command() {
   local exit_code=$?
   history -a
   _venv_auto_activate
+  __dix_auto_node_bin
   return $exit_code
 }
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__dix_prompt_command"
