@@ -94,6 +94,16 @@ with lib; {
                     fetch_bare_info = true;
                   };
                 }
+                {
+                  foreground = "lightYellow";
+                  style = "plain";
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ .FormattedMs }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
+                  type = "executiontime";
+                  properties = {
+                    threshold = 500;
+                    style = "austin";
+                  };
+                }
               ];
             }
             {
