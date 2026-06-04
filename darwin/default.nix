@@ -136,7 +136,7 @@
 
   # System preferences
   system = {
-    stateVersion = 6;
+    stateVersion = 7;
     # Set Git commit hash for darwin-version.
     configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
     primaryUser = user;

@@ -294,7 +294,7 @@ in {
       then "/home/${user}"
       else "/Users/${user}"
     );
-    stateVersion = lib.trivial.release;
+    stateVersion = "26.05";
 
     file = let
       colorMapping = {
@@ -375,7 +375,7 @@ in {
 
         # ai
         cl1m = ''cl "opus[1m]"'';
-        ge = "gemini --approval-mode=yolo";
+        ge = "agy --dangerously-skip-permissions";
         ch = "codex --dangerously-bypass-approvals-and-sandbox";
         ki = "kimi --thinking --yolo";
 

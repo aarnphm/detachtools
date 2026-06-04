@@ -286,6 +286,10 @@ in {
           "sdist/"
           "wheels/"
           "node_modules/"
+          ".antigravitycli/"
+          ".agents"
+          ".claude"
+          ".codex"
         ];
       };
     };
