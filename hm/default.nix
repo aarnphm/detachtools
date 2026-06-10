@@ -130,6 +130,7 @@
     imagemagick
     texliveFull
     ghostscript
+    container
     # apps
     pinentry_mac
     pinentry-touchid

@@ -133,6 +133,10 @@
   };
 
   services.openssh.enable = true;
+  services.container = {
+    enable = true;
+    inherit user;
+  };
 
   # System preferences
   system = {

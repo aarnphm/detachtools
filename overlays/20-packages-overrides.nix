@@ -1,4 +1,14 @@
 {self}: final: prev: {
+  container = prev.container.overrideAttrs (_oldAttrs: let
+    version = "1.0.0";
+  in {
+    inherit version;
+    src = final.fetchurl {
+      url = "https://github.com/apple/container/releases/download/${version}/container-${version}-installer-signed.pkg";
+      hash = "sha256-E/RfJtqUw1Sty+/h6PdjHn8SbpPF1N1qWlOKpmtPR50=";
+    };
+  });
+
   direnv = prev.direnv.overrideAttrs (oldAttrs: {
     postPatch =
       (oldAttrs.postPatch or "")
