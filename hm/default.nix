@@ -431,6 +431,7 @@ in {
         cx = "chmod +x";
         cdx = "chmod -x";
         copy = lib.getExe pkgs.unicopy;
+        sso-mxserv = "${lib.getExe pkgs.awscli2} sso login --profile stage-1-mxserv-admin && export AWS_PROFILE=stage-1-mxserv-admin";
 
         # aliases
         pip = ''${lib.getExe pkgs.uv} pip'';

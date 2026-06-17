@@ -32,8 +32,10 @@
       "monolith"
       "mole"
       "rtk"
-      "stripe/stripe-cli/stripe"
     ];
+    extraConfig = ''
+      brew "stripe/stripe-cli/stripe", trusted: true
+    '';
     casks = [
       "arc"
       "google-chrome"
