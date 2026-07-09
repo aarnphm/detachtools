@@ -49,7 +49,6 @@
     eternal-terminal
     elan
     zig
-    _1password-cli
 
     # tools for language, lsp, linter, etc.
     grpcurl
