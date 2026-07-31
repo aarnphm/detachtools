@@ -32,6 +32,9 @@
       "monolith"
       "mole"
       "rtk"
+      "ripgrep"
+      "gmp"
+      "gnupg"
     ];
     extraConfig = ''
       brew "stripe/stripe-cli/stripe", trusted: true
@@ -42,7 +45,6 @@
       "zotero"
       "discord"
       "zoom"
-      "obs"
       "ollama-app"
       "codex"
       "codex-app"
@@ -57,7 +59,6 @@
       "zed@preview"
       "zed"
       "middleclick"
-      "sioyek"
     ];
     # nix run nixpkgs#mas -- search <apps>
     masApps = {
