@@ -377,6 +377,7 @@ in {
         cl1m = ''cl "opus[1m]"'';
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --dangerously-bypass-approvals-and-sandbox";
+        chat = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_context_window=1000000 -c model_auto_compact_token_limit=900000";
         ki = "kimi --thinking --yolo";
 
         # git
