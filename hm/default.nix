@@ -153,7 +153,7 @@
   in
     {
       # custom envvar to control theme from one spot
-      XDG_SYSTEM_THEME = "dark"; # dark
+      XDG_SYSTEM_THEME = "light"; # dark
 
       # XDG
       XDG_BIN_HOME = "${config.home.homeDirectory}/.local/bin";
@@ -378,6 +378,7 @@ in {
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --dangerously-bypass-approvals-and-sandbox";
         chat = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_context_window=1000000 -c model_auto_compact_token_limit=900000";
+        o = "opencode";
         ki = "kimi --thinking --yolo";
 
         # git
