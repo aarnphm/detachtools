@@ -21,7 +21,6 @@
     kubectl
     buildkit
     qemu
-    pplatex
     ratchet
     kind
     skopeo
@@ -37,7 +36,6 @@
     git-lfs
     delta
     tree
-    mise
 
     # languages
     go

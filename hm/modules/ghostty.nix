@@ -28,6 +28,8 @@ in {
           font-size = 12;
           window-inherit-font-size = true;
           window-save-state = "always";
+          # Avoid the CVDisplayLinkStop hang observed on macOS 27.
+          window-vsync = false;
           window-width = 120;
           window-height = 120;
           keybind = [
