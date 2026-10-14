@@ -1,29 +1,40 @@
 {self}: final: prev: {
-  nixosOptionsDoc = args:
+  nixosOptionsDoc = args: let
+    nixpkgsPrefix = "${toString prev.path}/";
+    normalizeDeclaration = declaration:
+      if builtins.isAttrs declaration
+      then declaration
+      else let
+        declarationPath = toString declaration;
+        relativePath = final.lib.removePrefix nixpkgsPrefix declarationPath;
+      in
+        if final.lib.hasPrefix nixpkgsPrefix declarationPath
+        then {
+          name = relativePath;
+          url = "https://github.com/NixOS/nixpkgs/blob/${self.inputs.nixpkgs.rev}/${relativePath}";
+        }
+        else declaration;
+  in
     prev.nixosOptionsDoc (args
       // {
         transformOptions = option: let
           transformedOption = (args.transformOptions or final.lib.id) option;
-          nixpkgsPrefix = "${prev.path}/";
-          normalizeDeclaration = declaration:
-            if builtins.isAttrs declaration
-            then declaration
-            else let
-              declarationPath = toString declaration;
-              relativePath = final.lib.removePrefix nixpkgsPrefix declarationPath;
-            in
-              if final.lib.hasPrefix nixpkgsPrefix declarationPath
-              then {
-                name = relativePath;
-                url = "https://github.com/NixOS/nixpkgs/blob/${self.inputs.nixpkgs.rev}/${relativePath}";
-              }
-              else declaration;
         in
           transformedOption
           // {
             declarations = map normalizeDeclaration transformedOption.declarations;
           };
       });
+
+  atuin = let
+    testBash = final.writeShellScriptBin "bash" ''
+      export NOSYSBASHRC=1
+      exec ${final.lib.getExe final.bashInteractive} "$@"
+    '';
+  in
+    prev.atuin.overrideAttrs (final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
+      ATUIN_E2E_BASH = final.lib.getExe testBash;
+    });
 
   container = final.stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "container";
