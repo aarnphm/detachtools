@@ -4,6 +4,8 @@ Setting up environment shouldn't be this hard
 
 ## installations.
 
+Supported platforms: Apple Silicon macOS (`aarch64-darwin`), x86-64 Linux (`x86_64-linux`), and ARM64 Linux (`aarch64-linux`).
+
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
@@ -37,6 +39,14 @@ Some packages include certain override:
 - to run update, uses `nix run github:Mic92/nix-update`
 
 On MacOS, to add support to Ghostty, we have to build in impure mode for now
+
+### appearance.
+
+Ghostty, kitty, and Zed follow system appearance. On Linux, the standardized preference is the XDG desktop portal's `org.freedesktop.appearance` / `color-scheme` setting. tmux uses the terminal palette. The fzf and delta wrappers detect macOS appearance or the Linux terminal's background; bat selects its light or dark theme automatically.
+
+`XDG_SYSTEM_THEME` is a custom Home Manager override, and is unset by default. Set `home.sessionVariables.XDG_SYSTEM_THEME` to `"light"` or `"dark"` to pin Ghostty, kitty, tmux, Helix, and Alacritty when rebuilding. Missing, empty, and unrecognized values use automatic behavior. An inherited shell variable does not affect pure Nix evaluation.
+
+The pinned Helix (25.07.1) and Alacritty do not provide native light/dark theme switching here, so they keep their application defaults without an override. Both are disabled by default.
 
 ### lambda.
 

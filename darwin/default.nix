@@ -155,30 +155,47 @@
     # default settings within System Preferences
     defaults = {
       NSGlobalDomain = {
+        KeyRepeat = 2;
+        InitialKeyRepeat = 15;
+        AppleShowAllExtensions = true;
         NSAutomaticCapitalizationEnabled = false;
         NSAutomaticSpellingCorrectionEnabled = false;
+        NSAutomaticPeriodSubstitutionEnabled = false;
+        NSAutomaticDashSubstitutionEnabled = false;
+        NSAutomaticQuoteSubstitutionEnabled = false;
         NSAutomaticInlinePredictionEnabled = true;
       };
       dock = {
         autohide = true;
+        autohide-delay = 0.0;
         magnification = true;
         mineffect = "scale";
         orientation = "bottom";
         showhidden = true;
         show-recents = false;
         mru-spaces = true;
+        persistent-apps = [
+          "/Applications/Avec.app"
+          "/Applications/Claude.app"
+          "/Applications/ChatGPT.app"
+          "/Applications/Ghostty.app"
+        ];
       };
       finder = {
         AppleShowAllFiles = true;
         AppleShowAllExtensions = true;
         QuitMenuItem = true;
         FXEnableExtensionChangeWarning = false;
+        ShowPathbar = true;
+        FXPreferredViewStyle = "Nlsv"; # list view
+        _FXShowPosixPathInTitle = true;
       };
       trackpad = {
         Clicking = true;
         TrackpadRightClick = true;
         TrackpadThreeFingerDrag = true;
       };
+      screencapture.location = "~/Downloads";
     };
   };
 }

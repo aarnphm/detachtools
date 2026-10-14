@@ -18,10 +18,9 @@ with lib; {
       bat = {
         enable = true;
         config = {
-          theme =
-            if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
-            then "gruvbox-dark"
-            else "gruvbox-light";
+          theme = "auto";
+          theme-dark = "gruvbox-dark";
+          theme-light = "gruvbox-light";
           map-syntax = [
             ".ignore:Git Ignore"
             "config:Git Config"

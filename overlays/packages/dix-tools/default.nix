@@ -194,7 +194,7 @@ in {
     pname = "nebius";
     version = "0.12.145";
     os =
-      if stdenv.isDarwin
+      if stdenv.hostPlatform.isDarwin
       then "darwin"
       else "linux";
     arch =
@@ -207,7 +207,7 @@ in {
     src = fetchurl {
       url = "https://storage.eu-north1.nebius.cloud/cli/release/${version}/${os}/${arch}/${pname}";
       sha256 =
-        if stdenv.isDarwin
+        if stdenv.hostPlatform.isDarwin
         then "sha256-fBA5qeXt5Rbe0zp/OqyiEsQm4SZkbKsOf5OEXCgUDXw="
         else "sha256-elViwAz9ootUhd3qwuNVaVQv3yq2X5gEuR41V7DgiYE="; # lib.fakeSha256;
     };

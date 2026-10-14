@@ -41,10 +41,7 @@ in {
           navigate = true;
           side-by-side = true;
           line-numbers = true;
-          syntax-theme =
-            if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
-            then "gruvbox-dark"
-            else "gruvbox-light";
+          detect-dark-light = "auto";
 
           interactive = {
             keep-plus-minus-markers = false;
@@ -56,7 +53,7 @@ in {
             file-style = "omit";
             hunk-header-decoration-style = "blue box";
             hunk-header-file-style = "red";
-            hunk-header-line-number-style = "#067a00";
+            hunk-header-line-number-style = "green";
             hunk-header-style = "file line-number syntax";
           };
         };
@@ -244,7 +241,7 @@ in {
         };
         signing = {
           key =
-            if pkgs.stdenv.isDarwin
+            if pkgs.stdenv.hostPlatform.isDarwin
             then "18974753009D2BFA"
             else "DEFC62745C797989";
           signByDefault = false;

@@ -4,8 +4,9 @@
   ...
 }:
 with lib; let
+  terminalTheme = import ../lib/terminal-theme.nix {inherit config;};
   theme =
-    if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
+    if terminalTheme.isDark
     then ./config/alacritty/flexoki-dark.toml
     else ./config/alacritty/flexoki-light.toml;
   family = "Berkeley Mono"; # "JetBrainsMono NFM"
@@ -24,7 +25,7 @@ in {
         enable = true;
         settings = {
           general = {
-            import = [theme];
+            import = lib.optionals (!terminalTheme.isAutomatic) [theme];
           };
           window = {
             dynamic_padding = false;

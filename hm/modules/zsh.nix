@@ -155,7 +155,7 @@ in {
             "${pkgs.zsh-completions}/share/zsh/site-functions"
             "${config.home.homeDirectory}/.stripe"
           ]
-          ++ optionals pkgs.stdenv.isDarwin ["/Applications/OrbStack.app/Contents/Resources/completions/zsh"];
+          ++ optionals pkgs.stdenv.hostPlatform.isDarwin ["/Applications/OrbStack.app/Contents/Resources/completions/zsh"];
       in
         pkgs.concatStringsSepNewLine [
           (concatStrings (map (sitePath: "fpath+=${sitePath}\n") sites))

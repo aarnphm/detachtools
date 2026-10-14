@@ -1,8 +1,36 @@
 {config}: let
-  systemTheme = config.home.sessionVariables.XDG_SYSTEM_THEME or "light";
+  configuredTheme = config.home.sessionVariables.XDG_SYSTEM_THEME or null;
+  systemTheme =
+    if builtins.elem configuredTheme ["light" "dark"]
+    then configuredTheme
+    else "auto";
   themes = {
+    auto = {
+      bar = {
+        background = "default";
+        mutedBackground = "default";
+        foreground = "default";
+        mutedForeground = "default";
+        divider = "colour8";
+        accentA = "yellow";
+        accentB = "magenta";
+        currentWindowBackground = "colour8";
+        currentWindowForeground = "default";
+        prefixBackground = "magenta";
+        prefixForeground = "black";
+        clockDateBackground = "yellow";
+        clockDateForeground = "black";
+        clockTimeBackground = "default";
+        clockTimeForeground = "default";
+        messageBackground = "yellow";
+        messageForeground = "black";
+        modeBackground = "magenta";
+        modeForeground = "black";
+        activeBorder = "magenta";
+        inactiveBorder = "colour8";
+      };
+    };
     light = {
-      ghosttyTheme = "Flexoki Light";
       bar = {
         background = "#fffcf0";
         mutedBackground = "#f2f0e5";
@@ -28,7 +56,6 @@
       };
     };
     dark = {
-      ghosttyTheme = "Flexoki Dark";
       bar = {
         background = "#100f0f";
         mutedBackground = "#1c1b1a";
@@ -55,8 +82,15 @@
     };
   };
 in
-  (themes.${systemTheme} or themes.light)
+  themes.${systemTheme}
   // {
     inherit systemTheme;
+    ghosttyTheme =
+      if systemTheme == "auto"
+      then "dark:Flexoki Dark,light:Flexoki Light"
+      else if systemTheme == "dark"
+      then "Flexoki Dark"
+      else "Flexoki Light";
+    isAutomatic = systemTheme == "auto";
     isDark = systemTheme == "dark";
   }

@@ -144,15 +144,8 @@
     inherit (pkgs) fd git neovim ripgrep zsh;
     inherit (lib) concatStringsSep getExe makeBinPath;
     defaultShell = zsh;
-    # defaultShell =
-    #   if pkgs.stdenv.isLinux
-    #   then bash
-    #   else zsh;
   in
     {
-      # custom envvar to control theme from one spot
-      XDG_SYSTEM_THEME = "light"; # dark
-
       # XDG
       XDG_BIN_HOME = "${config.home.homeDirectory}/.local/bin";
 
@@ -199,11 +192,11 @@
         "$PATH"
       ];
     }
-    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       # misc
       OPENBLAS = "${lib.makeLibraryPath [pkgs.openblas]}/libopenblas.dylib";
     }
-    // lib.optionalAttrs pkgs.stdenv.isLinux
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux
     {
       GPG_TTY = "$(tty)";
       UCX_TLS = "all";
@@ -224,7 +217,6 @@
 in {
   imports = [./modules];
 
-  alacritty.enable = false;
   bat.enable = true;
   broot.enable = true;
   btop.enable = true;
@@ -239,7 +231,7 @@ in {
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
-  opam.enable = pkgs.stdenv.isDarwin;
+  opam.enable = pkgs.stdenv.hostPlatform.isDarwin;
   oh-my-posh.enable = true;
 
   # include neovim and vimrc symlinks
@@ -282,53 +274,27 @@ in {
     packages =
       filterNone
       (packages
-        ++ (lib.optionals pkgs.stdenv.isDarwin ([pkgs.opam] ++ darwinPackages))
-        ++ (lib.optionals pkgs.stdenv.isLinux linuxPackages));
+        ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin ([pkgs.opam] ++ darwinPackages))
+        ++ (lib.optionals pkgs.stdenv.hostPlatform.isLinux linuxPackages));
     username = user;
     homeDirectory = pkgs.lib.mkForce (
       if user == "root"
       then "/root"
-      else if pkgs.stdenv.isLinux
+      else if pkgs.stdenv.hostPlatform.isLinux
       then "/home/${user}"
       else "/Users/${user}"
     );
     stateVersion = "26.05";
 
-    file = let
-      colorMapping = {
-        "rose-pine" = {
-          light = {
-            default = ''--color=fg:#797593,bg:#faf4ed,hl:#d7827e --color=fg+:#575279,bg+:#f2e9e1,hl+:#d7827e --color=border:#dfdad9,header:#286983,gutter:#faf4ed --color=spinner:#ea9d34,info:#56949f --color=pointer:#907aa9,marker:#b4637a,prompt:#797593'';
-          };
-          dark = {
-            default = ''--color=fg:#908caa,bg:#191724,hl:#ebbcba --color=fg+:#e0def4,bg+:#26233a,hl+:#ebbcba --color=border:#403d52,header:#31748f,gutter:#191724 --color=spinner:#f6c177,info:#9ccfd8 --color=pointer:#c4a7e7,marker:#eb6f92,prompt:#908caa'';
-            moon = ''--color=fg:#908caa,bg:#232136,hl:#ea9a97 --color=fg+:#e0def4,bg+:#393552,hl+:#ea9a97 --color=border:#44415a,header:#3e8fb0,gutter:#232136 --color=spinner:#f6c177,info:#9ccfd8 --color=pointer:#c4a7e7,marker:#eb6f92,prompt:#908caa'';
-          };
-        };
-        "flexoki" = {
-          light = {
-            default = ''--color=fg:#B7B5AC,bg:#FFFCF0,hl:#100F0F --color=fg+:#B7B5AC,bg+:#F2F0E5,hl+:#100F0F --color=border:#AF3029,header:#100F0F,gutter:#FFFCF0 --color=spinner:#3AA99F,info:#3AA99F,separator:#F2F0E5 --color=pointer:#D0A215,marker:#D14D41,prompt:#D0A215'';
-          };
-          dark = {
-            default = ''--color=fg:#878580,bg:#100F0F,hl:#CECDC3 --color=fg+:#878580,bg+:#1C1B1A,hl+:#CECDC3 --color=border:#AF3029,header:#CECDC3,gutter:#100F0F --color=spinner:#24837B,info:#24837B,separator:#1C1B1A --color=pointer:#AD8301,marker:#AF3029,prompt:#AD8301'';
-          };
-        };
-      };
-      variants = "default";
-
-      fzfConfig = pkgs.writeText "fzfrc" (pkgs.concatStringsSepNewLine [
-        colorMapping.flexoki.${config.home.sessionVariables.XDG_SYSTEM_THEME}.${variants}
-        ''
+    file =
+      {
+        ".fzfrc".text = ''
           --bind='ctrl-/:toggle-preview'
           --bind='ctrl-u:preview-page-up'
           --bind='ctrl-d:preview-page-down'
           --preview-window 'right:40%:wrap'
           --cycle --bind 'tab:toggle-up,btab:toggle-down' --prompt='» ' --marker='»' --pointer='◆' --info=right --layout='reverse' --border='sharp' --preview-window='border-sharp' --height='80%'
-        ''
-      ]);
-    in
-      {
-        ".fzfrc".source = fzfConfig;
+        '';
         ".bazelrc".text = ''
           # Share downloaded external dependencies across all workspaces
           common --repository_cache=${config.home.sessionVariables.XDG_CACHE_HOME}/bazel-repo-cache
@@ -347,7 +313,7 @@ in {
           common --experimental_disk_cache_gc_max_age=14d
         '';
       }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
       };
 
@@ -440,12 +406,12 @@ in {
         ipynb = ''${lib.getExe' pkgs.uv "uvx"} --from 'jupyter_core' jupyter notebook --autoreload --debug'';
         ipy = "ipython --autoindent";
         pinentry = lib.getExe (
-          if pkgs.stdenv.isDarwin
+          if pkgs.stdenv.hostPlatform.isDarwin
           then pkgs.pinentry_mac
           else pkgs.pinentry-all
         );
         ghostty =
-          if pkgs.stdenv.isDarwin
+          if pkgs.stdenv.hostPlatform.isDarwin
           then ''$GHOSTTY_BIN_DIR/ghostty''
           else "poggers";
 
@@ -465,7 +431,7 @@ in {
 
         python-format = ''ruff format --config "indent-width=2" --config "line-length=119" --config "preview=true"'';
       }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         obsidian = "/Applications/Obsidian.app/Contents/MacOS/Obsidian";
       };
   };

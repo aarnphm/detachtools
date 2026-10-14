@@ -11,7 +11,7 @@ with lib; let
     else
       exec ${
       lib.getExe (
-        if pkgs.stdenv.isLinux
+        if pkgs.stdenv.hostPlatform.isLinux
         then pkgs.pinentry-all
         else pkgs.pinentry-touchid
       )
@@ -50,10 +50,10 @@ in {
           disable-ccid = true;
         };
       };
-      home.file.".gnupg/gpg-agent.conf".source = gpgAgentConfig pkgs.stdenv.isDarwin;
+      home.file.".gnupg/gpg-agent.conf".source = gpgAgentConfig pkgs.stdenv.hostPlatform.isDarwin;
       services.gpg-agent.pinentry.package = pinentry-meta;
     }
-    // lib.optionalAttrs pkgs.stdenv.isLinux {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       services.gpg-agent = {
         enable = true;
         enableSSHSupport = true;

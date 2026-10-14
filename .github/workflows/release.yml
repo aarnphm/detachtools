@@ -45,8 +45,6 @@ jobs:
             os: ubuntu-latest
           - system: aarch64-linux
             os: ubuntu-24.04-arm
-          - system: x86_64-darwin
-            os: macos-13
           - system: aarch64-darwin
             os: macos-latest
     runs-on: ${{ matrix.os }}

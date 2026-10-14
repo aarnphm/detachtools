@@ -5,8 +5,9 @@
   ...
 }:
 with lib; let
+  terminalTheme = import ../lib/terminal-theme.nix {inherit config;};
   theme =
-    if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
+    if terminalTheme.isDark
     then "rose-pine"
     else "rose-pine-dawn";
   family = "BerkeleyMono Nerd Font Mono"; # "BerkeleyMono Nerd Font Mono" | "JetBrainsMono NFM"
@@ -23,7 +24,18 @@ in {
     programs = {
       kitty = {
         enable = true;
-        themeFile = theme;
+        themeFile =
+          if terminalTheme.isAutomatic
+          then null
+          else theme;
+        autoThemeFiles =
+          if terminalTheme.isAutomatic
+          then {
+            light = "rose-pine-dawn";
+            dark = "rose-pine";
+            noPreference = "rose-pine-dawn";
+          }
+          else null;
         font = {
           name = family;
           size = 14;

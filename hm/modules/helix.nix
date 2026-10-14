@@ -4,7 +4,9 @@
   pkgs,
   ...
 }:
-with lib; {
+with lib; let
+  terminalTheme = import ../lib/terminal-theme.nix {inherit config;};
+in {
   options.helix = {
     enable = mkOption {
       type = types.bool;
@@ -125,10 +127,11 @@ with lib; {
         ];
       };
       settings = {
-        theme =
-          if config.home.sessionVariables.XDG_SYSTEM_THEME == "dark"
+        theme = lib.mkIf (!terminalTheme.isAutomatic) (
+          if terminalTheme.isDark
           then "flexoki_dark"
-          else "flexoki_light";
+          else "flexoki_light"
+        );
         editor =
           lib.optionalAttrs config.helix.evil {
             evil = true;

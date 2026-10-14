@@ -1,5 +1,9 @@
 {
-  "theme": "Flexoki Light",
+  "theme": {
+    "mode": "system",
+    "light": "Flexoki Light",
+    "dark": "Flexoki Dark"
+  },
   "buffer_font_family": "BerkeleyMono Nerd Font Mono",
   "telemetry": {
     "diagnostics": false,

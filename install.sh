@@ -114,7 +114,6 @@ main() {
 		;;
 	Darwin)
 		case $ARCH in
-		x86_64) SYSTEM="x86_64-darwin" ;;
 		arm64) SYSTEM="aarch64-darwin" ;; # Darwin uses arm64 for Apple Silicon
 		*)
 			log_error "Unsupported architecture ($ARCH) for Darwin/macOS."

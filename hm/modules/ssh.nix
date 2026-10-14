@@ -36,7 +36,7 @@ with lib; {
               controlPersist = lib.mkDefault "no";
             };
           }
-          // lib.optionalAttrs pkgs.stdenv.isDarwin {
+          // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
             "sam-wafer" = {
               hostname = "75.10.7.20";
               user = "sam";
@@ -53,7 +53,7 @@ with lib; {
             };
           };
       }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         extraConfig = ''
           IgnoreUnknown UseKeychain
           UseKeychain yes
