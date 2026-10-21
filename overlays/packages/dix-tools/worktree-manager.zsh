@@ -56,20 +56,18 @@ warn() {
 list_worktrees() {
     local worktrees="$(worktrees_dir)"
     local found=0
+    local project="" wt=""
+    local -a entries=()
 
-    if [ -d "$worktrees" ]; then
-        for project in "$worktrees"/*; do
-            [ -d "$project" ] || continue
-            found=1
-            local project_name
-            project_name=$(basename "$project")
-            printf '\n[%s]\n' "$project_name"
-            for wt in "$project"/*; do
-                [ -d "$wt" ] || continue
-                printf '  - %s\n' "$(basename "$wt")"
-            done
+    for project in "$worktrees"/*(N-/); do
+        entries=("$project"/*(N-/))
+        [ "${#entries}" -gt 0 ] || continue
+        found=1
+        printf '\n[%s]\n' "${project:t}"
+        for wt in "${entries[@]}"; do
+            printf '  - %s\n' "${wt:t}"
         done
-    fi
+    done
 
     if [ "$found" -eq 0 ]; then
         echo "No worktrees found."

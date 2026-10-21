@@ -344,6 +344,7 @@ in {
         chat = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_context_window=1000000 -c model_auto_compact_token_limit=900000";
         o = "opencode";
         ki = "kimi --thinking --yolo";
+        auto-commit = ''argon --stream-format human --flash --conversation e7e9b4b6-b734-4927-a9a0-05927db22cb2 "now look at the current staged files, and with all of the changes from both Argon/Gemini Flash, Astra/Sol, and Opus/Haiku/Sonnet, Grok 4.7/Composer please write atomic commits following conventional commits for better history tracking here"'';
 
         # git
         g = lib.getExe pkgs.git;
