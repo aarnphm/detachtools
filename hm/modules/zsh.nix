@@ -148,14 +148,12 @@ in {
         export ZEROBREW_BIN=${config.home.homeDirectory}/.local/bin
       '';
       profileExtra = let
-        sites =
-          [
-            "${pkgs.worktree-manager}/share/zsh/site-functions"
-            "${pkgs.zsh-dix}/share/zsh/site-functions"
-            "${pkgs.zsh-completions}/share/zsh/site-functions"
-            "${config.home.homeDirectory}/.stripe"
-          ]
-          ++ optionals pkgs.stdenv.hostPlatform.isDarwin ["/Applications/OrbStack.app/Contents/Resources/completions/zsh"];
+        sites = [
+          "${pkgs.worktree-manager}/share/zsh/site-functions"
+          "${pkgs.zsh-dix}/share/zsh/site-functions"
+          "${pkgs.zsh-completions}/share/zsh/site-functions"
+          "${config.home.homeDirectory}/.stripe"
+        ];
       in
         pkgs.concatStringsSepNewLine [
           (concatStrings (map (sitePath: "fpath+=${sitePath}\n") sites))

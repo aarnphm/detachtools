@@ -52,7 +52,6 @@
       "obsidian"
       "rectangle"
       "steam"
-      "orbstack"
       "alt-tab"
       "nvidia-nsight-systems"
       "karabiner-elements"

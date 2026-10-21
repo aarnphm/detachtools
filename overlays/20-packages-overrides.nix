@@ -26,16 +26,6 @@
           };
       });
 
-  atuin = let
-    testBash = final.writeShellScriptBin "bash" ''
-      export NOSYSBASHRC=1
-      exec ${final.lib.getExe final.bashInteractive} "$@"
-    '';
-  in
-    prev.atuin.overrideAttrs (final.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
-      ATUIN_E2E_BASH = final.lib.getExe testBash;
-    });
-
   container = final.stdenvNoCC.mkDerivation (finalAttrs: {
     pname = "container";
     version = "1.0.0";

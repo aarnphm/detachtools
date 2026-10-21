@@ -58,9 +58,6 @@ with lib; {
           IgnoreUnknown UseKeychain
           UseKeychain yes
         '';
-        includes = [
-          "${config.home.homeDirectory}/.orbstack/ssh/config"
-        ];
       };
   };
 }
