@@ -40,7 +40,7 @@ with lib; {
                   foreground = "lightBlue";
                   foreground_templates = ["{{ if .Root }}lightRed{{ end }}"];
                   style = "plain";
-                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>┌─(</>{{ .UserName }}{{ if .Root }}💀{{ else }}@{{ end }}{{ .HostName }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>)</>'';
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>┌─(</>{{ .UserName }}{{ if .Root }}!!!{{ else }}@{{ end }}{{ .HostName }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>)</>'';
                   type = "session";
                   properties.display_host = true;
                 }
@@ -58,7 +58,7 @@ with lib; {
                 {
                   foreground = "yellow";
                   style = "plain";
-                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if .Error }}{{ .Error }}{{ else }}py {{ .Full }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
                   type = "python";
                   properties = {
                     fetch_version = true;
@@ -68,7 +68,7 @@ with lib; {
                 {
                   foreground = "magenta";
                   style = "plain";
-                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ if eq .Type "unknown" }}{{ else }}nix-{{ .Type }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if eq .Type "unknown" }}unk{{ else }}nix-{{ .Type }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
                   type = "nix-shell";
                 }
                 {
@@ -84,10 +84,10 @@ with lib; {
                 {
                   foreground = "white";
                   style = "plain";
-                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if .IsWorkTree }}wt {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>{{ if .IsWorkTree }}wt {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} st {{ .StashCount }}{{ end }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
                   type = "git";
                   properties = {
-                    branch_icon = " ";
+                    branch_icon = "";
                     fetch_status = true;
                     fetch_stash_count = true;
                     fetch_upstream_icon = true;
@@ -97,7 +97,7 @@ with lib; {
                 {
                   foreground = "lightYellow";
                   style = "plain";
-                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</> {{ .FormattedMs }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
+                  template = ''<{{ if .Root }}lightBlue{{ else }}green{{ end }}>-[</>elapsed {{ .FormattedMs }}<{{ if .Root }}lightBlue{{ else }}green{{ end }}>]</>'';
                   type = "executiontime";
                   properties = {
                     threshold = 500;
