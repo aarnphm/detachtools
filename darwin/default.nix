@@ -183,7 +183,8 @@
       finder = {
         AppleShowAllFiles = true;
         AppleShowAllExtensions = true;
-        QuitMenuItem = true;
+        # DiskImageMounter needs Finder running to show installer volumes.
+        QuitMenuItem = false;
         FXEnableExtensionChangeWarning = false;
         ShowPathbar = true;
         FXPreferredViewStyle = "Nlsv"; # list view

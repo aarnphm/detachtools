@@ -66,42 +66,45 @@
       # NOTE: This will change some of your default packages, so proceed with CAUTION.
       overlays.default = nixpkgs.lib.composeManyExtensions overlays;
 
-      darwinConfigurations = builtins.listToAttrs (builtins.map (computerName: let
-        user = "aarnphm";
-      in {
-        name = computerName;
-        value = nix-darwin.lib.darwinSystem rec {
-          system = "aarch64-darwin";
-          pkgs = forPackages system;
-          specialArgs = {inherit self inputs pkgs user computerName;};
-          modules = [
-            home-manager.darwinModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                users."${user}".imports = [./hm];
-                backupFileExtension = "backup-from-hm";
-                extraSpecialArgs = specialArgs;
-                verbose = true;
-              };
+      darwinConfigurations =
+        nixpkgs.lib.mapAttrs (
+          computerName: user:
+            nix-darwin.lib.darwinSystem rec {
+              system = "aarch64-darwin";
+              pkgs = forPackages system;
+              specialArgs = {inherit self inputs pkgs user computerName;};
+              modules = [
+                home-manager.darwinModules.home-manager
+                {
+                  home-manager = {
+                    useGlobalPkgs = true;
+                    useUserPackages = true;
+                    users."${user}".imports = [./hm];
+                    backupFileExtension = "backup-from-hm";
+                    extraSpecialArgs = specialArgs;
+                    verbose = true;
+                  };
+                }
+                inputs.nix-homebrew.darwinModules.nix-homebrew
+                {
+                  nix-homebrew = {
+                    inherit user;
+                    enable = true;
+                    enableRosetta = true;
+                    autoMigrate = true;
+                    extraEnv = {
+                      HOMEBREW_NO_ANALYTICS = "1";
+                    };
+                  };
+                }
+                ./darwin
+              ];
             }
-            inputs.nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                inherit user;
-                enable = true;
-                enableRosetta = true;
-                autoMigrate = true;
-                extraEnv = {
-                  HOMEBREW_NO_ANALYTICS = "1";
-                };
-              };
-            }
-            ./darwin
-          ];
+        ) {
+          appl-mbp16 = "aarnphm";
+          appl-nv = "aapham";
+          bentoml = "aarnphm";
         };
-      }) ["appl-mbp16" "bentoml"]);
 
       homeConfigurations = builtins.listToAttrs (builtins.map (
         user: {

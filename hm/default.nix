@@ -45,7 +45,6 @@
     xz
     age
     eternal-terminal
-    elan
     zig
 
     # tools for language, lsp, linter, etc.
