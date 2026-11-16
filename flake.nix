@@ -68,7 +68,10 @@
 
       darwinConfigurations =
         nixpkgs.lib.mapAttrs (
-          computerName: user:
+          configName: {
+            user,
+            computerName ? configName,
+          }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
               pkgs = forPackages system;
@@ -101,9 +104,12 @@
               ];
             }
         ) {
-          appl-mbp16 = "aarnphm";
-          appl-nv = "aapham";
-          bentoml = "aarnphm";
+          appl-mbp16.user = "aarnphm";
+          appl-nv = {
+            user = "aapham";
+            computerName = "G1WLYJLVP6";
+          };
+          bentoml.user = "aarnphm";
         };
 
       homeConfigurations = builtins.listToAttrs (builtins.map (

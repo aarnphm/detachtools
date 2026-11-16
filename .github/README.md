@@ -28,7 +28,7 @@ Ofc you can just run `nix run home-manager` or `nix run nix-darwin/master#darwin
 nix run github:aarnphm/detachtools#bootstrap -- <darwin|ubuntu> --flake ~/workspace/detachtools # or any flake uri
 ```
 
-The `appl-nv` Apple Silicon Mac uses the `aapham` account and `/Users/aapham` home directory. From this checkout on that machine, apply its configuration with:
+The `appl-nv` configuration targets the Apple Silicon Mac named `G1WLYJLVP6`, using the `aapham` account and `/Users/aapham` home directory. The flake selector is `appl-nv`; the configured macOS computer name and hostname are `G1WLYJLVP6`. From this checkout on that machine, apply its configuration with:
 
 ```bash
 sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#appl-nv -v --show-trace -L
