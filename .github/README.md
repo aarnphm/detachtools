@@ -9,7 +9,7 @@ Supported platforms: Apple Silicon macOS (`aarch64-darwin`), x86-64 Linux (`x86_
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
-nix run github:aarnphm/detachtools#bootstrap -- darwin # or ubuntu
+nix run github:aarnphm/detachtools#bootstrap -- darwin # or nvidia, linux
 nix run github:aarnphm/detachtools#lambda -- --help # Run CLI to interact with Lambda Cloud
 ```
 
@@ -25,16 +25,8 @@ bootstrap is a helper to run a few tools on setup or rebuild based on Linux/Darw
 Ofc you can just run `nix run home-manager` or `nix run nix-darwin/master#darwin-rebuild`, but I'm lazy...
 
 ```bash
-nix run github:aarnphm/detachtools#bootstrap -- <darwin|ubuntu> --flake ~/workspace/detachtools # or any flake uri
+nix run github:aarnphm/detachtools#bootstrap -- <darwin|nvidia|linux> --flake ~/workspace/detachtools # or any flake uri
 ```
-
-The `appl-nv` configuration targets the Apple Silicon Mac named `G1WLYJLVP6`, using the `aapham` account and `/Users/aapham` home directory. The flake selector is `appl-nv`; the configured macOS computer name and hostname are `G1WLYJLVP6`. From this checkout on that machine, apply its configuration with:
-
-```bash
-sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#appl-nv -v --show-trace -L
-```
-
-The bootstrap wrapper also accepts the host explicitly: `nix run .#bootstrap -- darwin appl-nv --flake .`.
 
 ## notes.
 

@@ -4,6 +4,7 @@
   user,
   inputs,
   computerName,
+  hostName,
   ...
 }: {
   imports = [./modules];
@@ -117,13 +118,12 @@
 
   # Networking
   networking = {
-    inherit computerName;
+    inherit computerName hostName;
     dns = ["1.1.1.1" "8.8.8.8"];
     knownNetworkServices = [
       "Wi-Fi"
       "Thunderbolt Ethernet Slot 2"
     ];
-    hostName = computerName;
   };
 
   # add PAM

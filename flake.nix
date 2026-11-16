@@ -71,11 +71,12 @@
           configName: {
             user,
             computerName ? configName,
+            hostName ? computerName,
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
               pkgs = forPackages system;
-              specialArgs = {inherit self inputs pkgs user computerName;};
+              specialArgs = {inherit self inputs pkgs user computerName hostName;};
               modules = [
                 home-manager.darwinModules.home-manager
                 {
@@ -107,7 +108,7 @@
           appl-mbp16.user = "aarnphm";
           appl-nv = {
             user = "aapham";
-            computerName = "G1WLYJLVP6";
+            hostName = "G1WLYJLVP6";
           };
           bentoml.user = "aarnphm";
         };

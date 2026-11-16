@@ -5,7 +5,7 @@ set -euo pipefail
 flakeUri="@FLAKE_URI_BASE@"
 
 usage() {
-	echo "usage: bootstrap <darwin|linux> [target_name] [--flake <flake_uri>] [--impure]"
+	echo "usage: bootstrap <darwin|nvidia|linux> [target_name] [--flake <flake_uri>] [--impure]"
 }
 
 ERROR_COLOR="\033[0;31m" # Red
@@ -74,7 +74,7 @@ POSITIONAL_ARGS=()
 while [[ $# -gt 0 ]]; do
 	case $1 in
 	--flake)
-		if [[ -n "$2" && "$2" != --* ]]; then
+		if [[ -n "${2:-}" && "$2" != --* ]]; then
 			flakeUri="$2"
 			shift
 			shift
@@ -106,6 +106,10 @@ SYSTEM_TYPE="$1"
 TARGET_NAME="${2:-}"
 
 case "$SYSTEM_TYPE" in
+nvidia)
+	SYSTEM_TYPE="darwin"
+	FLAKE_TARGET="${TARGET_NAME:-appl-nv}"
+	;;
 darwin)
 	if [ -z "$TARGET_NAME" ]; then
 		FLAKE_TARGET="appl-mbp16"
