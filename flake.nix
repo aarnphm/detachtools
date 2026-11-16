@@ -72,7 +72,7 @@
             user,
             computerName ? configName,
             hostName ? computerName,
-            dns ? ["1.1.1.1" "8.8.8.8"],
+            dns ? [],
             enableOpam ? true,
           }:
             nix-darwin.lib.darwinSystem rec {
@@ -111,7 +111,6 @@
           appl-nv = {
             user = "aapham";
             computerName = "G1WLYJLVP6";
-            dns = [];
             enableOpam = false;
           };
           bentoml.user = "aarnphm";
