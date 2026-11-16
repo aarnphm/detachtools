@@ -72,11 +72,12 @@
             user,
             computerName ? configName,
             hostName ? computerName,
+            dns ? ["1.1.1.1" "8.8.8.8"],
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
               pkgs = forPackages system;
-              specialArgs = {inherit self inputs pkgs user computerName hostName;};
+              specialArgs = {inherit self inputs pkgs user computerName hostName dns;};
               modules = [
                 home-manager.darwinModules.home-manager
                 {
@@ -109,6 +110,7 @@
           appl-nv = {
             user = "aapham";
             hostName = "G1WLYJLVP6";
+            dns = [];
           };
           bentoml.user = "aarnphm";
         };

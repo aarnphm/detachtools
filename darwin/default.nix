@@ -5,6 +5,7 @@
   inputs,
   computerName,
   hostName,
+  dns,
   ...
 }: {
   imports = [./modules];
@@ -118,8 +119,7 @@
 
   # Networking
   networking = {
-    inherit computerName hostName;
-    dns = ["1.1.1.1" "8.8.8.8"];
+    inherit computerName hostName dns;
     knownNetworkServices = [
       "Wi-Fi"
       "Thunderbolt Ethernet Slot 2"
@@ -195,7 +195,220 @@
         TrackpadRightClick = true;
         TrackpadThreeFingerDrag = true;
       };
+      WindowManager = {
+        EnableTiledWindowMargins = true;
+        EnableTilingByEdgeDrag = false;
+        EnableTilingOptionAccelerator = false;
+        EnableTopTilingByEdgeDrag = false;
+      };
       screencapture.location = "~/Downloads";
+      CustomUserPreferences = {
+        "com.knollsoft.Rectangle" = {
+          SUEnableAutomaticChecks = true;
+          SUHasLaunchedBefore = true;
+          allowAnyShortcut = true;
+          almostMaximize = {
+            keyCode = 8;
+            modifierFlags = 786432;
+          };
+          almostMaximizeHeight = 0.0;
+          almostMaximizeWidth = 0.0;
+          altThirdCycle = 0;
+          alternateDefaultShortcuts = false;
+          alwaysAccountForStage = 0;
+          applyGapsToMaximize = 0;
+          applyGapsToMaximizeHeight = 0;
+          attemptMatchOnNextPrevDisplay = 0;
+          autoMaximize = 0;
+          bottomHalf = {
+            keyCode = 38;
+            modifierFlags = 786432;
+          };
+          bottomLeft = {
+            keyCode = 45;
+            modifierFlags = 786432;
+          };
+          bottomRight = {
+            keyCode = 46;
+            modifierFlags = 786432;
+          };
+          cascadeAllDeltaSize = 30.0;
+          center = {};
+          centerHalf = {
+            keyCode = 0;
+            modifierFlags = 786432;
+          };
+          centerHalfCycles = 0;
+          centerThird = {
+            keyCode = 32;
+            modifierFlags = 786432;
+          };
+          centeredDirectionalMove = 0;
+          cornerSnapAreaSize = 20.0;
+          curtainChangeSize = 0;
+          doubleClickTitleBar = 3;
+          doubleClickTitleBarRestore = 0;
+          dragFromStage = 0;
+          firstFourth = {
+            keyCode = 23;
+            modifierFlags = 1835008;
+          };
+          firstThird = {
+            keyCode = 16;
+            modifierFlags = 786432;
+          };
+          firstThreeFourths = {
+            keyCode = 25;
+            modifierFlags = 786432;
+          };
+          firstTwoThirds = {
+            keyCode = 31;
+            modifierFlags = 786432;
+          };
+          footprintAlpha = 0.3;
+          footprintAnimationDurationMultiplier = 0.75;
+          footprintBorderWidth = 2.0;
+          footprintFade = 0;
+          gapSize = 6.0;
+          greenButtonOverride = true;
+          halvesPreserveOtherAxisSize = false;
+          hapticFeedbackOnSnap = 1;
+          hideMenubarIcon = false;
+          horizontalSplitRatio = 50.0;
+          ignoreDragSnapToo = 0;
+          ignoredSnapAreas = 0;
+          internalTilingNotified = true;
+          landscapeSnapAreas = ''[1,{"action":15},5,{"compound":-3},2,{"action":2},6,{"action":13},3,{"action":16},4,{"compound":-2},8,{"action":14},7,{"compound":-4}]'';
+          larger = {
+            keyCode = 24;
+            modifierFlags = 786432;
+          };
+          lastFourth = {
+            keyCode = 28;
+            modifierFlags = 1835008;
+          };
+          lastThird = {
+            keyCode = 34;
+            modifierFlags = 786432;
+          };
+          lastThreeFourths = {
+            keyCode = 29;
+            modifierFlags = 786432;
+          };
+          lastTwoThirds = {
+            keyCode = 35;
+            modifierFlags = 786432;
+          };
+          lastVersion = "111";
+          launchOnLogin = true;
+          leftHalf = {
+            keyCode = 4;
+            modifierFlags = 786432;
+          };
+          maximize = {
+            keyCode = 36;
+            modifierFlags = 786432;
+          };
+          minimumWindowHeight = 0.0;
+          minimumWindowWidth = 0.0;
+          missionControlDragging = 0;
+          missionControlDraggingAllowedOffscreenDistance = 25.0;
+          missionControlDraggingDisallowedDuration = 250;
+          moveCursor = 0;
+          moveCursorAcrossDisplays = 1;
+          moveDown = {
+            keyCode = 40;
+            modifierFlags = 1835008;
+          };
+          moveLeft = {
+            keyCode = 4;
+            modifierFlags = 1835008;
+          };
+          moveRight = {
+            keyCode = 37;
+            modifierFlags = 1835008;
+          };
+          moveUp = {
+            keyCode = 38;
+            modifierFlags = 1835008;
+          };
+          nextDisplay = {
+            keyCode = 124;
+            modifierFlags = 917504;
+          };
+          notifiedOfProblemApps = true;
+          obtainWindowOnClick = 0;
+          previousDisplay = {
+            keyCode = 123;
+            modifierFlags = 917504;
+          };
+          reflowTodo = {
+            keyCode = 45;
+            modifierFlags = 786432;
+          };
+          relaunchOpensMenu = false;
+          resizeOnDirectionalMove = false;
+          rightHalf = {
+            keyCode = 37;
+            modifierFlags = 786432;
+          };
+          screenEdgeGapBottom = 0.0;
+          screenEdgeGapLeft = 0.0;
+          screenEdgeGapRight = 0.0;
+          screenEdgeGapTop = 0.0;
+          screenEdgeGapsOnMainScreenOnly = false;
+          secondFourth = {
+            keyCode = 22;
+            modifierFlags = 1835008;
+          };
+          shortEdgeSnapAreaSize = 145.0;
+          showAdditionalSizesInMenu = 2;
+          showAllActionsInMenu = 0;
+          sixthsSnapArea = 0;
+          sizeOffset = 0.0;
+          smaller = {
+            keyCode = 27;
+            modifierFlags = 786432;
+          };
+          snapEdgeMarginBottom = 5.0;
+          snapEdgeMarginLeft = 5.0;
+          snapEdgeMarginRight = 5.0;
+          snapEdgeMarginTop = 5.0;
+          snapModifiers = 0;
+          specifiedHeight = 1050.0;
+          specifiedWidth = 1680.0;
+          stageSize = 135.3125;
+          subsequentExecutionMode = 1;
+          systemWideMouseDown = 0;
+          thirdFourth = {
+            keyCode = 26;
+            modifierFlags = 1835008;
+          };
+          todo = 2;
+          todoMode = false;
+          todoSidebarWidth = 400.0;
+          toggleTodo = {
+            keyCode = 11;
+            modifierFlags = 786432;
+          };
+          topHalf = {
+            keyCode = 40;
+            modifierFlags = 786432;
+          };
+          topLeft = {
+            keyCode = 11;
+            modifierFlags = 786432;
+          };
+          topRight = {
+            keyCode = 43;
+            modifierFlags = 786432;
+          };
+          traverseSingleScreen = 0;
+          unsnapRestore = 0;
+          verticalSplitRatio = 66.66667;
+          windowSnapping = 1;
+        };
+      };
     };
   };
 }
