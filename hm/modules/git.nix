@@ -17,6 +17,19 @@ in {
   };
 
   config = mkIf config.git.enable {
+    xdg.configFile."gh/config.yml".enable = false;
+    home.activation.ghConfig = lib.hm.dag.entryAfter ["linkGeneration"] (
+      lib.hm.generators.mkImpureConfigMerger {
+        inherit pkgs;
+        format = "yaml";
+        empty = "{}";
+        jqOperation = "$dynamic * $static";
+        path = "${config.xdg.configHome}/gh/config.yml";
+        staticSettings = config.xdg.configFile."gh/config.yml".source;
+        mode = "600";
+      }
+    );
+
     programs = {
       gh = {
         enable = true;
