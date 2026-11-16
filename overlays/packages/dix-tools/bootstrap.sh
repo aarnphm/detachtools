@@ -160,11 +160,15 @@ if command -v nvim &>/dev/null; then
 	if [ ! -d "$NVIM_DIR" ]; then
 		log_info "default nvim setup"
 		gh repo clone aarnphm/editor "$NVIM_DIR"
-		nvim --headless "+Lazy! sync" +qa
-		nvim --headless -c 'lua require("nvim-treesitter.install").update({ with_sync = true }); vim.cmd("quitall")'
 	fi
+	log_info "initialize nvim plugins"
+	nix shell --inputs-from "$flake" nixpkgs#cargo nixpkgs#rustc --command nvim --headless \
+		-c 'if v:errmsg != "" | cquit | endif' \
+		-c PackBuild \
+		-c 'if v:errmsg != "" | cquit | endif' \
+		-c qa
 
-	if [ ! -f "$HOME/.vimrc" ] && [ ! -L "$NVIM_DIR/.vimrc" ]; then
+	if [ ! -f "$HOME/.vimrc" ] && [ ! -L "$HOME/.vimrc" ]; then
 		log_info "link .vimrc config"
 		ln -s "$NVIM_DIR/.vimrc" "$HOME/.vimrc"
 	fi
