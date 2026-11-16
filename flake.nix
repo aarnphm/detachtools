@@ -109,7 +109,7 @@
           appl-mbp16.user = "aarnphm";
           appl-nv = {
             user = "aapham";
-            hostName = "G1WLYJLVP6";
+            computerName = "G1WLYJLVP6";
             dns = [];
           };
           bentoml.user = "aarnphm";
