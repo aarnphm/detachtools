@@ -8,7 +8,7 @@ with lib; {
     enable = mkOption {
       type = types.bool;
       default = false;
-      description = mdDoc ''ghostty configuration'';
+      description = mdDoc ''OPAM configuration'';
     };
   };
 

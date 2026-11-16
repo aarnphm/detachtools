@@ -73,11 +73,12 @@
             computerName ? configName,
             hostName ? computerName,
             dns ? ["1.1.1.1" "8.8.8.8"],
+            enableOpam ? true,
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
               pkgs = forPackages system;
-              specialArgs = {inherit self inputs pkgs user computerName hostName dns;};
+              specialArgs = {inherit self inputs pkgs user computerName hostName dns enableOpam;};
               modules = [
                 home-manager.darwinModules.home-manager
                 {
@@ -111,6 +112,7 @@
             user = "aapham";
             computerName = "G1WLYJLVP6";
             dns = [];
+            enableOpam = false;
           };
           bentoml.user = "aarnphm";
         };

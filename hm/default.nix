@@ -4,6 +4,7 @@
   lib,
   inputs,
   user,
+  enableOpam ? pkgs.stdenv.hostPlatform.isDarwin,
   ...
 }: let
   filterNone = value: builtins.filter (x: x != null) value;
@@ -230,7 +231,7 @@ in {
   atuin.enable = true;
   zoxide.enable = true;
   neovim.enable = true;
-  opam.enable = pkgs.stdenv.hostPlatform.isDarwin;
+  opam.enable = enableOpam;
   oh-my-posh.enable = true;
 
   # include neovim and vimrc symlinks
@@ -273,7 +274,7 @@ in {
     packages =
       filterNone
       (packages
-        ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin ([pkgs.opam] ++ darwinPackages))
+        ++ (lib.optionals pkgs.stdenv.hostPlatform.isDarwin darwinPackages)
         ++ (lib.optionals pkgs.stdenv.hostPlatform.isLinux linuxPackages));
     username = user;
     homeDirectory = pkgs.lib.mkForce (
