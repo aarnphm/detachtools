@@ -20,7 +20,7 @@
     onActivation = {
       cleanup = "zap";
       extraFlags = ["--verbose"];
-      autoUpdate = true;
+      autoUpdate = false;
     };
     brews = [
       "ast-grep"
@@ -42,19 +42,17 @@
       brew "stripe/stripe-cli/stripe", trusted: true
     '';
     casks = [
-      "arc"
       "google-chrome"
       "zotero"
       "discord"
       "zoom"
       "ollama-app"
       "codex"
-      "codex-app"
+      "chatgpt"
       "claude"
       "obsidian"
       "rectangle"
       "steam"
-      "alt-tab"
       "nvidia-nsight-systems"
       "karabiner-elements"
       "zed@preview"
@@ -174,10 +172,8 @@
         show-recents = false;
         mru-spaces = true;
         persistent-apps = [
-          "/Applications/Avec.app"
           "/Applications/Claude.app"
           "/Applications/ChatGPT.app"
-          "/Applications/Ghostty.app"
         ];
       };
       finder = {
