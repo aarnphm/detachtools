@@ -55,7 +55,7 @@
     protolint
     buf
     sqlite
-    postgresql_14
+    postgresql_18
     llvm_18
     openblas
     enchant
