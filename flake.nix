@@ -74,6 +74,7 @@
             hostName ? computerName,
             dns ? [],
             enableOpam ? true,
+            gitSigningKey ? null,
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
@@ -85,7 +86,10 @@
                   home-manager = {
                     useGlobalPkgs = true;
                     useUserPackages = true;
-                    users."${user}".imports = [./hm];
+                    users."${user}" = {
+                      imports = [./hm];
+                      git = nixpkgs.lib.optionalAttrs (gitSigningKey != null) {signingKey = gitSigningKey;};
+                    };
                     backupFileExtension = "backup-from-hm";
                     extraSpecialArgs = specialArgs;
                     verbose = true;
@@ -112,6 +116,7 @@
             user = "aapham";
             computerName = "G1WLYJLVP6";
             enableOpam = false;
+            gitSigningKey = "AAA80A6DDDB165C0";
           };
           bentoml.user = "aarnphm";
         };
