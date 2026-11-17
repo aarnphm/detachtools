@@ -1,0 +1,69 @@
+:root {
+  --vimPaper: #fffcf0;
+  --vimInk: #100f0f;
+  --vimRule: #cecdc3;
+  --vimHint: #fdb2a2;
+  --vimMono: "Berkeley Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+#outerContainer {
+  height: calc(100% - 24px) !important;
+}
+
+#vimStatus {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--vimPaper);
+  color: var(--vimInk);
+  border-top: 1px solid var(--vimRule);
+  font: 12px/1 var(--vimMono);
+  z-index: 10000;
+}
+
+#vimHelp {
+  position: fixed;
+  right: 12px;
+  bottom: 36px;
+  padding: 10px 14px;
+  background: var(--vimPaper);
+  color: var(--vimInk);
+  border: 1px solid var(--vimInk);
+  font: 12px/1.6 var(--vimMono);
+  z-index: 10001;
+}
+
+#vimHelp[hidden] {
+  display: none;
+}
+
+#vimHelp div {
+  display: flex;
+  gap: 16px;
+}
+
+#vimHelp kbd {
+  min-width: 18ch;
+  font: inherit;
+  font-weight: 700;
+}
+
+#vimHints span {
+  position: fixed;
+  padding: 1px 3px;
+  background: var(--vimHint);
+  color: var(--vimInk);
+  border: 1px solid var(--vimInk);
+  font: 700 11px/1 var(--vimMono);
+  text-transform: uppercase;
+  z-index: 10002;
+}
+
+#vimHints span[hidden] {
+  display: none;
+}

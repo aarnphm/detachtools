@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Vim PDF",
+  "version": "1.0.0",
+  "description": "Open PDFs in a bundled pdf.js viewer with vim motions.",
+  "permissions": ["clipboardWrite"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["redirect.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["web/viewer.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
