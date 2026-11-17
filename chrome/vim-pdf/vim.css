@@ -1,40 +1,37 @@
-:root {
-  --vimPaper: #fffcf0;
-  --vimInk: #100f0f;
-  --vimRule: #cecdc3;
-  --vimHint: #fdb2a2;
-  --vimMono: "Berkeley Mono", ui-monospace, "SF Mono", Menlo, monospace;
-}
-
 #outerContainer {
-  height: calc(100% - 24px) !important;
+  height: calc(100% - 22px) !important;
 }
 
 #vimStatus {
   position: fixed;
   inset: auto 0 0 0;
-  height: 24px;
+  height: 22px;
   box-sizing: border-box;
-  padding: 0 10px;
+  padding: 0 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--vimPaper);
-  color: var(--vimInk);
-  border-top: 1px solid var(--vimRule);
-  font: 12px/1 var(--vimMono);
+  background: var(--g-pdf-surface);
+  color: var(--g-darkgray);
+  border-top: 1px solid var(--g-line);
+  font: var(--g-meta) / 1 var(--g-code);
+  font-variant-numeric: tabular-nums;
   z-index: 10000;
+}
+
+#vimStatusLeft {
+  color: var(--g-dark);
 }
 
 #vimHelp {
   position: fixed;
   right: 12px;
-  bottom: 36px;
-  padding: 10px 14px;
-  background: var(--vimPaper);
-  color: var(--vimInk);
-  border: 1px solid var(--vimInk);
-  font: 12px/1.6 var(--vimMono);
+  bottom: 34px;
+  padding: 8px 12px;
+  background: var(--g-surface);
+  color: var(--g-dark);
+  border: 1px solid var(--g-darkgray);
+  font: var(--g-meta) / 1.6 var(--g-code);
   z-index: 10001;
 }
 
@@ -53,13 +50,17 @@
   font-weight: 700;
 }
 
+#vimHelp span {
+  color: var(--g-darkgray);
+}
+
 #vimHints span {
   position: fixed;
   padding: 1px 3px;
-  background: var(--vimHint);
-  color: var(--vimInk);
-  border: 1px solid var(--vimInk);
-  font: 700 11px/1 var(--vimMono);
+  background: var(--g-salmon);
+  color: #100f0f;
+  border: 1px solid #100f0f;
+  font: 700 var(--g-meta) / 1 var(--g-code);
   text-transform: uppercase;
   z-index: 10002;
 }

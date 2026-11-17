@@ -20,8 +20,8 @@ cp "$tmp/pdfjs/LICENSE" "$out/LICENSE.pdfjs"
 rm -f "$out"/web/*.map "$out"/web/debugger.* "$out"/web/compressed.tracemonkey-pldi-09.pdf
 
 cp "$here/manifest.json" "$here/redirect.js" "$out/"
-cp "$here/vim.js" "$here/vim.css" "$out/web/"
-perl -0pi -e 's|(<script src="viewer.mjs" type="module"></script>)|$1\n  <script src="vim.js" type="module"></script>\n  <link rel="stylesheet" href="vim.css" />|' "$out/web/viewer.html"
+cp "$here/vim.js" "$here/vim.css" "$here/garden.css" "$out/web/"
+perl -0pi -e 's|(<script src="viewer.mjs" type="module"></script>)|$1\n  <script src="vim.js" type="module"></script>\n  <link rel="stylesheet" href="garden.css" />\n  <link rel="stylesheet" href="vim.css" />|' "$out/web/viewer.html"
 grep -q 'vim.js' "$out/web/viewer.html"
 
 echo "$out"

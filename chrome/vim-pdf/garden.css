@@ -1,0 +1,407 @@
+:root {
+  --g-light: #fffcf0;
+  --g-lightgray: #e6e4d9;
+  --g-gray: #b7b5ac;
+  --g-darkgray: #6f6e69;
+  --g-dark: #100f0f;
+  --g-surface: #fcf9ed;
+  --g-selected: #f4f3de;
+  --g-line: #b7b5ac8c;
+  --g-pdf-surface: #fcfaee;
+  --g-pdf-selected: #f3f3de;
+  --g-hover: #dad8ce;
+  --g-hover-ink: #100f0f;
+  --g-salmon: #fdb2a2;
+  --g-sage: #cdd597;
+  --g-peach: #fcc192;
+  --g-title: "Space Grotesk", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --g-body: "PP Neue Montreal", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --g-code: "Berkeley Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --g-ui: 14px;
+  --g-meta: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-light: #100f0f;
+    --g-lightgray: #282726;
+    --g-gray: #575653;
+    --g-darkgray: #9f9d96;
+    --g-dark: #cecdc3;
+    --g-surface: #131212;
+    --g-selected: #34352a;
+    --g-line: #5756538c;
+    --g-pdf-surface: #121111;
+    --g-pdf-selected: #343429;
+    --g-hover: #879a39;
+    --g-hover-ink: #100f0f;
+  }
+}
+
+:root,
+#outerContainer,
+#viewsManager,
+.popupMenu,
+.treeView,
+.doorHanger,
+#findbar,
+.textLayer,
+.pdfViewer,
+dialog {
+  --main-color: var(--g-dark);
+  --text-color: var(--g-dark);
+  --body-bg-color: var(--g-lightgray);
+  --toolbar-bg-color: var(--g-pdf-surface);
+  --toolbar-border-color: var(--g-line);
+  --toolbar-border-bottom: 1px solid var(--g-line);
+  --toolbar-box-shadow: none;
+  --toolbar-icon-bg-color: var(--g-darkgray);
+  --toolbar-icon-hover-bg-color: var(--g-dark);
+  --toolbar-icon-opacity: 1;
+  --button-hover-color: var(--g-hover);
+  --button-hover-text-color: var(--g-hover-ink);
+  --toggled-btn-color: var(--g-dark);
+  --toggled-btn-bg-color: var(--g-pdf-selected);
+  --toggled-btn-text-color: var(--g-dark);
+  --toggled-hover-active-btn-color: var(--g-pdf-selected);
+  --field-bg-color: var(--g-light);
+  --field-border-color: var(--g-darkgray);
+  --field-color: var(--g-dark);
+  --dropdown-btn-bg-color: var(--g-pdf-surface);
+  --dropdown-btn-border: 1px solid var(--g-darkgray);
+  --doorhanger-bg-color: var(--g-surface);
+  --doorhanger-border-color: var(--g-darkgray);
+  --doorhanger-separator-color: var(--g-line);
+  --doorhanger-hover-color: var(--g-dark);
+  --separator-color: var(--g-line);
+  --focus-ring-color: var(--g-dark);
+  --focus-outline-color: var(--g-dark);
+  --progressBar-bg-color: var(--g-line);
+  --progressBar-color: var(--g-dark);
+  --progressBar-blend-color: var(--g-gray);
+  --scrollbar-color: var(--g-gray);
+  --scrollbar-bg-color: var(--g-lightgray);
+  --highlight-bg-color: #fcc19299;
+  --highlight-selected-bg-color: #fdb2a2cc;
+  --sidebar-bg-color: var(--g-pdf-surface);
+  --sidebar-toolbar-bg-color: var(--g-pdf-surface);
+  --sidebar-border-color: var(--g-line);
+  --sidebar-border-radius: 0;
+  --sidebar-box-shadow: none;
+  --sidebar-backdrop-filter: none;
+  --views-text-color: var(--g-dark);
+  --button-fg: var(--g-dark);
+  --button-no-bg: transparent;
+  --button-bg: transparent;
+  --button-hover-bg: var(--g-hover);
+  --button-hover-fg: var(--g-hover-ink);
+  --button-active-bg: var(--g-pdf-selected);
+  --button-active-fg: var(--g-dark);
+  --button-focus-no-bg: transparent;
+  --treeitem-color: var(--g-darkgray);
+  --treeitem-hover-color: var(--g-hover-ink);
+  --treeitem-bg-color: var(--g-hover);
+  --treeitem-selected-color: var(--g-dark);
+  --treeitem-selected-bg-color: var(--g-selected);
+  --menu-bg: var(--g-surface);
+  --menu-border-color: var(--g-darkgray);
+  --menu-box-shadow: none;
+  --menu-text-color: var(--g-dark);
+  --menuitem-border-radius: 0;
+  --menuitem-hover-bg: var(--g-hover);
+  --menuitem-text-hover-fg: var(--g-hover-ink);
+  --menuitem-active-bg: var(--g-pdf-selected);
+  --menuitem-text-active-fg: var(--g-dark);
+  --menuitem-focus-bg: transparent;
+  --menuitem-focus-outline-color: var(--g-dark);
+  --menuitem-focus-border-color: transparent;
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+menu,
+.popupMenu,
+#viewsManager {
+  font-family: var(--g-body);
+}
+
+#outerContainer {
+  background: var(--g-lightgray);
+}
+
+#toolbarContainer,
+#toolbarViewer {
+  background: var(--g-pdf-surface);
+}
+
+#toolbarContainer {
+  border-bottom: 1px solid var(--g-line);
+}
+
+#toolbarViewer {
+  align-items: center;
+}
+
+.toolbarButton {
+  height: 24px;
+  align-self: center;
+  color: var(--g-darkgray);
+  transition: background-color 120ms, color 120ms;
+}
+
+.toolbarButton.toggled,
+.toolbarButton[aria-pressed="true"],
+.toolbarButton[aria-expanded="true"] {
+  background: var(--g-pdf-selected);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toolbarButton:not(:disabled):hover {
+    background: var(--g-hover);
+  }
+
+  .toolbarButton:not(:disabled):hover::before {
+    background-color: var(--g-hover-ink);
+  }
+}
+
+.toolbarButton:focus-visible,
+.dropdownToolbarButton select:focus-visible,
+.treeItem > a:focus-visible,
+.popupMenu button:focus-visible,
+#viewsManager button:focus-visible {
+  outline: 2px solid var(--g-dark);
+  outline-offset: -2px;
+}
+
+.toolbarField,
+#pageNumber {
+  margin: 0;
+  height: 24px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  font: var(--g-meta) / 1 var(--g-code);
+  font-variant-numeric: tabular-nums;
+  text-transform: lowercase;
+  background: var(--g-light);
+  border: 1px solid var(--g-darkgray);
+  color: var(--g-dark);
+}
+
+.toolbarField:focus,
+#pageNumber:focus,
+#findInput:focus {
+  border-color: var(--g-dark);
+  outline: 2px solid var(--g-dark);
+  outline-offset: -2px;
+}
+
+.toolbarLabel,
+#numPages {
+  font: var(--g-meta) / 1 var(--g-code);
+  color: var(--g-darkgray);
+}
+
+.dropdownToolbarButton {
+  min-width: 0;
+  height: 24px;
+  align-self: center;
+  border: 1px solid var(--g-darkgray);
+  background: var(--g-pdf-surface);
+}
+
+.dropdownToolbarButton > select {
+  height: 22px;
+  padding-block: 0;
+  font: var(--g-meta) / 1 var(--g-code);
+  text-transform: lowercase;
+  background-color: var(--g-pdf-surface);
+  color: var(--g-dark);
+}
+
+.dropdownToolbarButton > select > option {
+  background: var(--g-surface);
+  color: var(--g-dark);
+}
+
+.dropdownToolbarButton:hover,
+.dropdownToolbarButton > select:is(:hover, :focus-visible) {
+  background-color: var(--g-hover);
+  color: var(--g-hover-ink);
+}
+
+.verticalToolbarSeparator,
+.horizontalToolbarSeparator {
+  background: var(--g-line);
+}
+
+.popupMenu,
+.doorHanger,
+.doorHangerRight,
+#findbar,
+#secondaryToolbar {
+  background: var(--g-surface);
+  border: 1px solid var(--g-darkgray);
+  color: var(--g-dark);
+}
+
+.doorHanger::before,
+.doorHanger::after,
+.doorHangerRight::before,
+.doorHangerRight::after {
+  display: none;
+}
+
+.popupMenu button,
+.popupMenu [role="menuitem"],
+#secondaryToolbar button {
+  font: var(--g-ui) / 1.45 var(--g-body);
+  color: var(--g-dark);
+}
+
+.popupMenu button:disabled,
+#secondaryToolbar button:disabled {
+  opacity: 0.5;
+}
+
+#findbar .toolbarLabel,
+#findbarMessageContainer,
+#findbar label {
+  font: var(--g-meta) / 1.4 var(--g-code);
+  color: var(--g-darkgray);
+}
+
+#viewsManager {
+  inset-block-start: 100%;
+  height: var(--viewer-container-height);
+  background: var(--g-pdf-surface);
+  border: 0;
+  border-inline-end: 1px solid var(--g-line);
+  color: var(--g-dark);
+}
+
+#outerContainer.viewsManagerOpen #viewsManager {
+  inset-inline-start: 0;
+}
+
+#viewsManagerHeader,
+#viewsManagerTitle,
+#viewsManagerSelector {
+  background: var(--g-pdf-surface) !important;
+}
+
+#viewsManagerHeader {
+  box-sizing: border-box;
+  width: 100%;
+  border-bottom: 1px solid var(--g-line);
+  padding: 4px 6px;
+  gap: 4px;
+}
+
+#viewsManagerHeaderLabel,
+.viewsManagerLabel,
+#viewsManagerTitle {
+  font: 500 var(--g-ui) / 1.45 var(--g-title);
+  color: var(--g-dark);
+}
+
+#viewsManagerContent {
+  padding: 4px 0;
+}
+
+.treeView .treeItem > a {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 8px;
+  font: var(--g-ui) / 1.45 var(--g-body);
+  color: var(--g-darkgray);
+  transition: background-color 120ms, color 120ms;
+}
+
+.treeView .treeItem.selected > a {
+  background: var(--g-selected);
+  color: var(--g-dark);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .treeView .treeItem > a:hover {
+    background: var(--g-surface);
+    color: var(--g-dark);
+  }
+}
+
+.treeView.withNesting > .treeItem,
+.treeView.withNesting .treeItem > .treeItems {
+  margin-inline-start: 18px;
+}
+
+.treeView.withNesting .treeItemToggler::before {
+  width: 14px;
+  height: 14px;
+  inset-inline-end: 2px;
+  inset-block-start: 5px;
+}
+
+.treeView.withNesting .treeItemToggler:hover + a,
+.treeView.withNesting .treeItemToggler:hover ~ .treeItems {
+  background: transparent;
+  color: inherit;
+}
+
+.thumbnail .thumbnailSelectionRing,
+.thumbnailImage {
+  border-radius: 0;
+}
+
+.thumbnail.selected > .thumbnailSelectionRing {
+  background: var(--g-selected);
+  border: 1px solid var(--g-dark);
+}
+
+#loadingBar {
+  background: var(--g-line);
+}
+
+#loadingBar .progress {
+  background: var(--g-dark);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+  background: var(--g-lightgray);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--g-gray);
+  border: 3px solid var(--g-lightgray);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--g-darkgray);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+  }
+}
