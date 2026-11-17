@@ -14,6 +14,14 @@ in {
       default = false;
       description = mdDoc ''Git configuration'';
     };
+    signingKey = mkOption {
+      type = types.str;
+      default =
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "18974753009D2BFA"
+        else "DEFC62745C797989";
+      description = mdDoc ''OpenPGP key ID used for commit and tag signing'';
+    };
   };
 
   config = mkIf config.git.enable {
@@ -253,10 +261,9 @@ in {
           };
         };
         signing = {
-          key =
-            if pkgs.stdenv.hostPlatform.isDarwin
-            then "18974753009D2BFA"
-            else "DEFC62745C797989";
+          key = config.git.signingKey;
+          format = "openpgp";
+          signer = getExe config.programs.gpg.package;
           signByDefault = false;
         };
         ignores = [
