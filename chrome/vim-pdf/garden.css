@@ -90,7 +90,7 @@ dialog {
   --sidebar-box-shadow: none;
   --sidebar-backdrop-filter: none;
   --views-text-color: var(--g-dark);
-  --button-fg: var(--g-dark);
+  --button-fg: var(--g-darkgray);
   --button-no-bg: transparent;
   --button-bg: transparent;
   --button-hover-bg: var(--g-hover);
@@ -188,13 +188,15 @@ menu,
   outline-offset: -2px;
 }
 
-.toolbarField,
-#pageNumber {
+#outerContainer .toolbarField,
+#outerContainer #pageNumber {
   margin: 0;
   height: 24px;
   padding: 0 6px;
   box-sizing: border-box;
-  font: var(--g-meta) / 1 var(--g-code);
+  font-family: var(--g-code) !important;
+  font-size: 12px !important;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   text-transform: lowercase;
   background: var(--g-light);
@@ -304,19 +306,51 @@ menu,
   background: var(--g-pdf-surface) !important;
 }
 
-#viewsManagerHeader {
+#viewsManager #viewsManagerHeader {
   box-sizing: border-box;
   width: 100%;
   border-bottom: 1px solid var(--g-line);
-  padding: 4px 6px;
-  gap: 4px;
 }
 
-#viewsManagerHeaderLabel,
-.viewsManagerLabel,
-#viewsManagerTitle {
-  font: 500 var(--g-ui) / 1.45 var(--g-title);
+#viewsManager #viewsManagerHeader #viewsManagerTitle {
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 4px 6px;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+#viewsManager #viewsManagerHeader #viewsManagerTitle::after {
+  display: none !important;
+}
+
+#viewsManager #viewsManagerHeader #viewsManagerHeaderLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: var(--g-meta) / 24px var(--g-code);
+  text-transform: lowercase;
   color: var(--g-dark);
+}
+
+#viewsManagerSelector {
+  width: 40px !important;
+  height: 24px !important;
+}
+
+#viewsManagerAddFileButton,
+#viewsManagerCurrentOutlineButton {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+#viewsManager .popupMenu button,
+#viewsManager .popupMenu button > span {
+  font: var(--g-meta) / 1.4 var(--g-body);
 }
 
 #viewsManagerContent {
@@ -327,8 +361,8 @@ menu,
   display: block;
   min-width: 0;
   margin: 0;
-  padding: 4px 8px;
-  font: var(--g-ui) / 1.45 var(--g-body);
+  padding: 3px 8px;
+  font: var(--g-meta) / 1.4 var(--g-body);
   color: var(--g-darkgray);
   transition: background-color 120ms, color 120ms;
 }
