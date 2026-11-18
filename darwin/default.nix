@@ -37,6 +37,7 @@
       "ripgrep"
       "gmp"
       "gnupg"
+      "cargo-binstall"
     ];
     extraConfig = ''
       brew "stripe/stripe-cli/stripe", trusted: true

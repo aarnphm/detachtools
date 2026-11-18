@@ -166,7 +166,6 @@
       DISABLE_CHDIR = "1";
       WORKTREE_BRANCH_PREFIX = "aarnphm";
       CLAUDE_CODE_NO_FLICKER = "1";
-      CLAUDE_CODE_AUTO_COMPACT_WINDOW = 256000;
 
       # Fzf
       FZF_CTRL_T_COMMAND = "${getExe fd} --hidden --follow --exclude .git";
@@ -339,9 +338,9 @@ in {
 
         # ai
         cl1m = ''cl "opus[1m]"'';
+        clf = ''cl "fable"'';
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --dangerously-bypass-approvals-and-sandbox";
-        chat = "codex --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_context_window=1000000 -c model_auto_compact_token_limit=900000";
         o = "opencode";
         ki = "kimi --thinking --yolo";
         auto-commit = ''argon --stream-format human --flash --conversation e7e9b4b6-b734-4927-a9a0-05927db22cb2 "now look at the current staged files, and with all of the changes from both Argon/Gemini Flash, Astra/Sol, and Opus/Haiku/Sonnet, Grok 4.7/Composer please write atomic commits following conventional commits for better history tracking here"'';

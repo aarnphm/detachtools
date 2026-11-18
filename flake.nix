@@ -75,6 +75,7 @@
             dns ? [],
             enableOpam ? true,
             gitSigningKey ? null,
+            claudeAutoCompactWindow ? null,
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
@@ -89,6 +90,9 @@
                     users."${user}" = {
                       imports = [./hm];
                       git = nixpkgs.lib.optionalAttrs (gitSigningKey != null) {signingKey = gitSigningKey;};
+                      home.sessionVariables = nixpkgs.lib.optionalAttrs (claudeAutoCompactWindow != null) {
+                        CLAUDE_CODE_AUTO_COMPACT_WINDOW = claudeAutoCompactWindow;
+                      };
                     };
                     backupFileExtension = "backup-from-hm";
                     extraSpecialArgs = specialArgs;
@@ -111,7 +115,10 @@
               ];
             }
         ) {
-          appl-mbp16.user = "aarnphm";
+          appl-mbp16 = {
+            user = "aarnphm";
+            claudeAutoCompactWindow = 256000;
+          };
           appl-nv = {
             user = "aapham";
             computerName = "G1WLYJLVP6";

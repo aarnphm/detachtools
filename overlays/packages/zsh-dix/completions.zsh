@@ -71,9 +71,10 @@ zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f
 _dix_register_completions() {
   (( $+functions[compdef] )) || return 1
 
-  autoload -Uz _claude _cl
+  autoload -Uz _claude _cl _chat
   compdef _claude claude
   compdef _cl cl
+  compdef _chat chat
 }
 
 if ! _dix_register_completions; then

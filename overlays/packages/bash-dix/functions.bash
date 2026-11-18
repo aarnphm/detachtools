@@ -33,6 +33,34 @@ cl() {
     "$@"
 }
 
+chat() {
+  local model="gpt-6.2-sol"
+
+  if (($# > 0)); then
+    if [[ "$1" == "--" ]]; then
+      shift
+    else
+      model="$1"
+      shift
+      if (($# > 0)); then
+        if [[ "$1" != "--" ]]; then
+          printf 'usage: chat [optional_model_id] -- [codex args]\n' >&2
+          return 2
+        fi
+        shift
+      fi
+    fi
+  fi
+
+  command codex \
+    --dangerously-bypass-approvals-and-sandbox \
+    --model "$model" \
+    -c model_reasoning_effort=max \
+    -c model_context_window=1000000 \
+    -c model_auto_compact_token_limit=900000 \
+    "$@"
+}
+
 where-is-program() {
   readlink -f $(which "$@")
 }

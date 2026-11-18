@@ -35,6 +35,36 @@ cl() {
         "$@"
 }
 
+chat() {
+    emulate -L zsh
+
+    local model="gpt-6.2-sol"
+
+    if (( $# > 0 )); then
+        if [[ "$1" == "--" ]]; then
+            shift
+        else
+            model="$1"
+            shift
+            if (( $# > 0 )); then
+                if [[ "$1" != "--" ]]; then
+                    print -u2 'usage: chat [optional_model_id] -- [codex args]'
+                    return 2
+                fi
+                shift
+            fi
+        fi
+    fi
+
+    command codex \
+        --dangerously-bypass-approvals-and-sandbox \
+        --model "$model" \
+        -c model_reasoning_effort=max \
+        -c model_context_window=1000000 \
+        -c model_auto_compact_token_limit=900000 \
+        "$@"
+}
+
 where-is-program() {
     readlink -f $(which "$@")
 }

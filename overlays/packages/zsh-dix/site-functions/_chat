@@ -1,0 +1,52 @@
+#compdef chat
+
+local -i index separatorIndex=0
+local -a codexWords wrapperArguments wrapperWords
+local codexCompletion completionSource
+
+for (( index = 2; index <= $#words; index++ )); do
+  if [[ "${words[index]}" == "--" ]]; then
+    separatorIndex=$index
+    break
+  fi
+done
+
+if (( separatorIndex > 0 && CURRENT > separatorIndex )); then
+  wrapperWords=("${words[@]}")
+  codexWords=("${(@)wrapperWords[$((separatorIndex + 1)),-1]}")
+  if (( CURRENT > $#wrapperWords )); then
+    codexWords+=("")
+  fi
+
+  words=(codex "${codexWords[@]}")
+  CURRENT=$((CURRENT - separatorIndex + 1))
+
+  completionSource="${functions_source[_chat]:-${${(%):-%x}}}"
+  codexCompletion="${completionSource:h}/_codex"
+  if [[ ! -r "$codexCompletion" ]]; then
+    _message 'missing codex completion'
+    return 1
+  fi
+
+  # clap's _codex only defines itself when sourced
+  source "$codexCompletion"
+  _codex
+  return
+fi
+
+if (( CURRENT == 2 )); then
+  wrapperArguments=(
+    '--:complete codex arguments'
+    'gpt-6.2-sol:model override'
+  )
+  _describe -t wrapper-arguments 'chat argument' wrapperArguments
+  return
+fi
+
+if (( CURRENT == 3 )); then
+  wrapperArguments=('--:complete codex arguments')
+  _describe -t separators 'separator' wrapperArguments
+  return
+fi
+
+_message 'use -- before codex arguments'
