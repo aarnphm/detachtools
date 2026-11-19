@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Transcripts",
+  "version": "1.0.0",
+  "description": "Read local Claude Code, Argon and Codex transcripts as a live tree.",
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "action": {
+    "default_title": "Open transcripts"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "omnibox": {
+    "keyword": "tr"
+  },
+  "permissions": ["nativeMessaging"],
+  "host_permissions": ["http://127.0.0.1/*"]
+}

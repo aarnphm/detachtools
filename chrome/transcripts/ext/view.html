@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>transcripts</title>
+    <link rel="icon" href="icon-32.png" />
+    <link rel="stylesheet" href="view.css" />
+    <script src="theme.js"></script>
+  </head>
+  <body data-rail="closed">
+    <a class="skip" href="#scroll">skip to transcript</a>
+    <aside class="rail" aria-label="sessions">
+      <header class="rail-head">
+        <h1 class="brand">transcripts</h1>
+        <span class="conn" id="conn" role="status">connecting</span>
+      </header>
+      <div class="find">
+        <label class="sr" for="find">filter sessions, or open a session id or a transcript path</label>
+        <input id="find" type="search" placeholder="filter, id or path" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      </div>
+      <div class="inst sources" id="sources" role="group" aria-label="source">
+        <button type="button" data-source="all" aria-pressed="true">all</button>
+        <button type="button" data-source="claude" aria-pressed="false">claude</button>
+        <button type="button" data-source="argon" aria-pressed="false">argon</button>
+        <button type="button" data-source="codex" aria-pressed="false">codex</button>
+      </div>
+      <nav class="sessions" id="sessions" aria-label="session list"></nav>
+      <footer class="keys">
+        <button type="button" id="keys-open" popovertarget="keys"><kbd>?</kbd> keyboard shortcuts</button>
+      </footer>
+    </aside>
+    <main class="pane">
+      <header class="bar" id="bar" hidden>
+        <div class="bar-title">
+          <button type="button" class="lone back" id="back">sessions</button>
+          <h2 id="title"></h2>
+        </div>
+        <div class="tools">
+          <div class="inst" role="group" aria-label="view">
+            <button type="button" id="follow" aria-pressed="true" title="stay on the newest item (f)">follow</button>
+            <button type="button" id="expand" aria-pressed="false" title="open every group of steps (e)">expand</button>
+            <button type="button" id="think" aria-pressed="true" title="show thinking steps (t)">thinking</button>
+          </div>
+          <div class="inst" role="group" aria-label="session">
+            <button type="button" id="copy" class="w-copy" title="copy the session id">copy id</button>
+            <button type="button" id="theme" class="w-theme" title="switch between the system, light and dark themes">theme auto</button>
+          </div>
+        </div>
+        <dl class="readout" id="readout"></dl>
+      </header>
+      <div class="scroll" id="scroll" tabindex="-1">
+        <div id="mount"></div>
+        <div class="state" id="state" role="status"></div>
+      </div>
+      <button type="button" class="lone latest" id="latest" hidden>latest</button>
+    </main>
+    <div class="keymap" id="keys" popover aria-labelledby="keys-title">
+      <h2 id="keys-title">keyboard</h2>
+      <dl>
+        <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>next turn, previous turn</dd></div>
+        <div><dt><kbd>g</kbd> <kbd>G</kbd></dt><dd>first turn, latest item</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>filter the sessions, or open an id or a path</dd></div>
+        <div><dt><kbd>e</kbd></dt><dd>open or fold every group of steps</dd></div>
+        <div><dt><kbd>f</kbd></dt><dd>follow the newest item</dd></div>
+        <div><dt><kbd>t</kbd></dt><dd>show or hide thinking</dd></div>
+        <div><dt><kbd>?</kbd></dt><dd>this page</dd></div>
+        <div><dt><kbd>esc</kbd></dt><dd>clear the filter, close this page</dd></div>
+      </dl>
+    </div>
+    <script type="module" src="view.js"></script>
+  </body>
+</html>

@@ -1,0 +1,93 @@
+---
+name: transcripts
+description: Chrome extension plus local bun server that renders Claude Code, Argon (agy) and Codex transcripts as a live tree of turns and collapsed tool steps; Garden look; port 4517
+metadata:
+  type: reference
+type: tooling
+kind: index
+status: current
+basis: observed
+author: claude
+session: bdecb69b-c4ca-4862-90bb-8dd5edb7635b
+created: 2026-11-19
+---
+
+# Transcripts
+
+A reader for agent sessions on this machine. A bun server reads the stores and tails them. The extension page draws each session: one block per prompt, prose as markdown, and each group of tool calls folded into one row that opens into a tree.
+
+## Run it
+
+1. Register the native host once. It builds `ext/view.js` and the icons, writes the launcher `~/.local/state/transcripts/native-host`, and writes `dev.aarnphm.transcripts.json` into the `NativeMessagingHosts` folder of each browser.
+
+   ```bash
+   bun server/install.ts --browsers chrome,helium
+   ```
+
+2. Load `ext/` in Chrome or Helium: `chrome://extensions`, developer mode, "Load unpacked".
+3. Click the toolbar button, or type `tr`, a space, then a session id or a transcript path in the address bar.
+
+The extension starts the server. The same page is served at `http://127.0.0.1:4517/` for a browser without the extension.
+
+## The daemon
+
+An extension cannot start a process. Chrome can: it runs a registered native host when the extension sends it a message. The host is `server/host.ts`.
+
+- The extension sends `{cmd: "start"}` when the browser starts, when the extension is installed or reloaded, when the toolbar button is clicked, and when the page finds no server.
+- `start` asks `GET /api/health`. With no answer it starts `server/main.ts` in its own session, with output in `~/.local/state/transcripts/server.log`, and waits up to 8 s for the port. A lock folder stops two hosts from starting two servers.
+- The server keeps running after the browser quits. `{cmd: "stop"}` ends it; so does `pkill -f transcripts/server/main.ts`.
+- The manifest allows one extension id. An unpacked extension gets its id from the path of its folder, and the installer computes it from `ext/`. Run the installer again after you move the repo.
+- With no flag the installer writes to every Chromium browser that has a profile folder here. `--uninstall` removes the files. `--dir <folder>` writes to one folder (the test uses it).
+
+`?` opens the one page that lists every shortcut.
+
+To run the server by hand: `bun server/main.ts`. `--watch` rebuilds the page when a file in `ui/` changes. `TRANSCRIPTS_PORT` moves the server, but the extension expects 4517.
+
+## What it reads
+
+| source | store | format |
+| --- | --- | --- |
+| claude | `~/.claude/projects/*/<id>.jsonl`, subagents in `<id>/subagents/` | JSONL, one record per content block |
+| argon | `~/.gemini/antigravity-cli/conversations/<id>.db` | SQLite `steps` table, protobuf payloads, decoded without a schema in `server/argon.ts` |
+| codex | `~/.codex/sessions/**/rollout-*-<id>.jsonl` | JSONL, `item_completed` events |
+
+A path to any `.jsonl` or `.db` transcript opens the same way as an id. Ids match from their first four characters.
+
+## Live updates
+
+- `GET /api/stream/<source>/<id>` is a server-sent event stream: one `snapshot`, then `upsert` for each new or changed item. The server watches the file and also checks it every 2 s.
+- `GET /api/sessions/stream` sends the session list, then one delta for each new or changed session.
+- `POST /api/notify` makes the server scan and tail now. Call it from a hook when 2 s is too slow.
+
+The server refuses a request whose `Host` is not `127.0.0.1:4517` or `localhost:4517`, and a request from a web origin other than itself or a `chrome-extension://` page.
+
+## Files
+
+| path | holds |
+| --- | --- |
+| `server/main.ts` | routes, event streams, session scan, origin check |
+| `server/claude.ts`, `codex.ts`, `argon.ts` | one adapter per store; each turns records into the items in `server/types.ts` |
+| `server/pb.ts` | protobuf wire decoder for the Argon steps |
+| `server/build.ts` | bundles `ui/` and draws the icons |
+| `server/host.ts`, `install.ts` | the native host (`start`, `stop`, `status`) and the script that registers it |
+| `ui/` | the page: `md.ts` (markdown to DOM nodes, no `innerHTML`), `ansi.ts` (terminal escapes to styled spans), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
+| `ext/` | the unpacked extension; `view.js` and `icon-*.png` are build output |
+| `e2e.py` | headless check of the extension against a fixture transcript that grows during the run |
+
+## Check it
+
+```bash
+uv run e2e.py
+```
+
+The run copies `ext/` to a temporary folder and uses port 4599 with its own state folder (`TRANSCRIPTS_PORT`, `TRANSCRIPTS_EXT`, `TRANSCRIPTS_STATE`), so a server on 4517 keeps running. It registers the host inside a temporary browser profile, loads the copy in headless Helium (`BROWSER_PATH` picks another Chromium), and waits for the extension to start the server. It then opens a fixture by path, appends records, waits for the page to show them, and stops the server through the host. It writes screenshots and `result.json` to `evidence/`, or to the folder given as the first argument. The run on 2026-11-19 passed 28 of 28 checks; its record is in `~/workspace/output/transcripts-viewer/`.
+
+## Known limits
+
+- Math is shown as its source text. There is no KaTeX.
+- Code blocks have no syntax colour.
+- Terminal output keeps bold, dim, italic, underline, strike, inverse and the 16 basic colours. 256-colour and true-colour text keeps the default ink, and background colours are dropped, so text stays readable on paper.
+- Claude thinking blocks are stored empty in most sessions, so they do not show. Argon and Codex reasoning shows when the store has its text.
+- An Argon step type other than 14, 15, 101 or 132 shows as a `system` row with its longest string.
+- The host files are written by `install.ts`, outside nix. A home-manager module in `hm/` would make them part of a rebuild.
+- Nothing stops the server when it is idle.
