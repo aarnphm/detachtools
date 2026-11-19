@@ -5,6 +5,8 @@ const HEADING = /^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/
 const RULE = /^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/
 const QUOTE = /^\s{0,3}>\s?/
 const BULLET = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/
+const NOTE_DEF = /^\[\^([^\]\s]+)\]:\s?(.*)$/
+const NOTE_MORE = /^(?: {2,}|\t)\S/
 const TABLE_SEP = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/
 
 const INLINE = new RegExp(
@@ -19,16 +21,99 @@ const INLINE = new RegExp(
     /(?<![*\w])\*(?=[^\s*])((?:[^*\n]|\*\*[^*\n]+\*\*)+?)(?<=[^\s*])\*(?!\*)/,
     /(?<![\w_])_(?=[^\s_])([^_\n]+?)(?<=[^\s_])_(?![\w_])/,
     /~~(?=\S)([\s\S]+?)(?<=\S)~~/,
+    /\[\^([^\]\s]+)\]/,
   ]
     .map((r) => r.source)
     .join("|"),
   "g",
 )
 
+interface Notes {
+  prefix: string
+  defs: Map<string, string[]>
+  order: string[]
+  calls: Map<string, number>
+}
+
+let notes: Notes | undefined
+let serial = 0
+
 export function markdown(src: string): DocumentFragment {
   const out = document.createDocumentFragment()
-  blocks(src.replace(/\r\n?/g, "\n").split("\n"), out)
+  const { lines, defs } = extractNotes(src.replace(/\r\n?/g, "\n").split("\n"))
+  const outer = notes
+  notes = defs.size ? { prefix: `fn${++serial}`, defs, order: [], calls: new Map() } : undefined
+  try {
+    blocks(lines, out)
+    if (notes) out.append(noteList(notes))
+  } finally {
+    notes = outer
+  }
   return out
+}
+
+function extractNotes(lines: string[]): { lines: string[]; defs: Map<string, string[]> } {
+  const rest: string[] = []
+  const defs = new Map<string, string[]>()
+  let fence: string | undefined
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const mark = FENCE.exec(line)
+    if (fence) {
+      rest.push(line)
+      if (mark && mark[2][0] === fence[0] && mark[2].length >= fence.length && !mark[3]) fence = undefined
+      continue
+    }
+    if (mark) {
+      fence = mark[2]
+      rest.push(line)
+      continue
+    }
+    const def = NOTE_DEF.exec(line)
+    if (!def) {
+      rest.push(line)
+      continue
+    }
+    const body = [def[2]]
+    while (i + 1 < lines.length) {
+      const next = lines[i + 1]
+      if (NOTE_MORE.test(next)) body.push(next.replace(/^(?: {1,4}|\t)/, ""))
+      else if (!next.trim() && i + 2 < lines.length && NOTE_MORE.test(lines[i + 2])) body.push("")
+      else break
+      i++
+    }
+    if (!defs.has(def[1])) defs.set(def[1], body)
+  }
+  return { lines: rest, defs }
+}
+
+function noteRef(id: string, raw: string): Child {
+  if (!notes?.defs.has(id)) return raw
+  let at = notes.order.indexOf(id)
+  if (at < 0) at = notes.order.push(id) - 1
+  const call = (notes.calls.get(id) ?? 0) + 1
+  notes.calls.set(id, call)
+  const target = `${notes.prefix}-${at + 1}`
+  return h("sup", { class: "fn-ref" }, h("a", { href: `#${target}`, id: `${target}-ref${call}`, "data-jump": target, "aria-label": `footnote ${at + 1}` }, String(at + 1)))
+}
+
+function noteList(state: Notes): HTMLElement {
+  const list = h("ol")
+  for (let i = 0; i < state.order.length || state.order.length < state.defs.size; i++) {
+    if (i >= state.order.length) for (const id of state.defs.keys()) if (!state.order.includes(id)) state.order.push(id)
+    const id = state.order[i]
+    const target = `${state.prefix}-${i + 1}`
+    const item = h("li", { id: target })
+    blocks(state.defs.get(id) ?? [], item)
+    if (state.calls.get(id)) {
+      const back = h("a", { class: "fn-back", href: `#${target}-ref1`, "data-jump": `${target}-ref1`, "aria-label": "back to the text" }, "↩")
+      const last = item.lastElementChild
+      if (last?.tagName === "P") last.append(" ", back)
+      else item.append(" ", back)
+    }
+    list.append(item)
+  }
+  return h("section", { class: "footnotes", "aria-label": "footnotes" }, list)
 }
 
 function link(url: string, children: Child[]): HTMLElement {
@@ -51,6 +136,7 @@ export function inline(text: string): Child[] {
     else if (m[9] !== undefined || m[10] !== undefined) out.push(h("strong", null, ...inline(m[9] ?? m[10])))
     else if (m[11] !== undefined || m[12] !== undefined) out.push(h("em", null, ...inline(m[11] ?? m[12])))
     else if (m[13] !== undefined) out.push(h("s", null, ...inline(m[13])))
+    else if (m[14] !== undefined) out.push(noteRef(m[14], m[0]))
   }
   if (last < text.length) out.push(text.slice(last))
   return out

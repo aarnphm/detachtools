@@ -72,7 +72,7 @@ def main() -> int:
     fixture.parent.mkdir(exist_ok=True)
     fixture.write_text(
         record("user", "u1", "count the markdown files, then report the total", origin={"kind": "human"})
-        + record("assistant", "a1", [{"type": "text", "text": "*two commands answer this.*\n\n- list the files\n- count them with `wc -l`"}])
+        + record("assistant", "a1", [{"type": "text", "text": "*two commands answer this.*[^why]\n\n- list the files\n- count them with `wc -l`\n\n[^why]: `ls` lists the files.\n    A second line of the same note."}])
         + record("assistant", "a2", [{"type": "tool_use", "id": "toolu_1", "name": "Bash", "input": {"command": "ls *.md", "description": "List markdown files"}}])
     )
 
@@ -120,7 +120,14 @@ def main() -> int:
         page.press("#find", "Enter")
         page.wait_for_selector(".turn .prompt", timeout=5000)
         check("a transcript opens from its path", "count the markdown files" in page.inner_text(".prompt"), page.inner_text(".prompt"))
-        check("markdown renders as elements", page.locator(".prose em").count() == 1 and page.locator(".prose li code").count() == 1)
+        check("markdown renders as elements", page.locator(".prose em").count() == 1 and page.locator(".prose > ul li code").count() == 1)
+        note = page.evaluate("(() => { const p = document.querySelector('.prose'); return [p.querySelector('.fn-ref a')?.textContent, p.querySelectorAll('.footnotes li').length, p.querySelector('.footnotes li')?.textContent.replace(/\\s+/g, ' ').trim(), p.textContent.includes('[^why]')] })()")
+        check("a footnote becomes a numbered reference and a note under the reply", note == ["1", 1, "ls lists the files. A second line of the same note. ↩", False], note)
+        before = page.evaluate("location.hash")
+        page.click(".fn-ref a")
+        jumped = page.evaluate("[document.activeElement?.closest('.footnotes') !== null, location.hash]")
+        page.click(".fn-back")
+        check("the reference jumps to its note and back without leaving the session", jumped == [True, before] and page.evaluate("document.activeElement?.closest('.fn-ref') !== null"), jumped)
         check("a pending step shows as running", page.locator(".node .flag[data-flag=run]").count() == 1)
         page.screenshot(path=str(OUT / "01-opened-light.png"))
 

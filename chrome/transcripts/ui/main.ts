@@ -560,6 +560,20 @@ document.addEventListener("keydown", (event) => {
   action()
 })
 
+document.addEventListener("click", (event) => {
+  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[data-jump]")
+  if (!link) return
+  event.preventDefault()
+  const target = document.getElementById(link.dataset.jump ?? "")
+  if (!target) return
+  target.scrollIntoView({ block: "center" })
+  if (!target.matches("a")) target.tabIndex = -1
+  target.focus({ preventScroll: true })
+  target.classList.remove("fresh")
+  void target.offsetWidth
+  target.classList.add("fresh")
+})
+
 window.addEventListener("hashchange", route)
 setInterval(() => {
   renderRail()

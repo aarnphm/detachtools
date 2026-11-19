@@ -1043,6 +1043,43 @@ kbd {
   text-underline-offset: 0.15em;
 }
 
+.prose .fn-ref {
+  font-size: 0.7em;
+  line-height: 0;
+}
+
+.prose .fn-ref a,
+.prose .fn-back {
+  padding: 0 0.15em;
+  color: var(--dark);
+  font-family: var(--code);
+  text-decoration: none;
+}
+
+.prose .fn-back {
+  color: var(--darkgray);
+}
+
+.footnotes {
+  margin-top: 1.25em;
+  padding-top: 0.75em;
+  border-top: 1px solid var(--line);
+  font-size: var(--ui);
+  line-height: 1.55;
+}
+
+.footnotes ol {
+  margin: 0;
+}
+
+.footnotes li:focus {
+  outline: none;
+}
+
+.footnotes li > p:last-child {
+  margin-bottom: 0;
+}
+
 .prose .ref {
   color: var(--dark);
 }
@@ -1133,6 +1170,12 @@ kbd {
   .prose a:hover,
   .state a:hover {
     color: var(--dark);
+  }
+
+  .prose .fn-ref a:hover,
+  .prose .fn-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
   }
 }
 
