@@ -1,5 +1,8 @@
+import type { SessionHit } from "../server/search"
 import type { Item, SessionMeta, SessionsDelta, Snapshot, Source } from "../server/types"
 import { h } from "./dom"
+import { setupFind } from "./find"
+import { setupToc } from "./toc"
 import { age, dayGroup, rel, stamp } from "./tools"
 import { Transcript } from "./transcript"
 
@@ -64,22 +67,40 @@ let waking = false
 let wokeAt = 0
 let hostMissing = false
 let listStream: EventSource | undefined
+let pendingFind: string | undefined
+let contentQuery = ""
+let contentHits = new Map<string, SessionHit>()
+let contentBusy = false
+let contentTimer: ReturnType<typeof setTimeout> | undefined
+let contentAbort: AbortController | undefined
 let theme: Theme = (THEMES as readonly string[]).includes(store.get("theme") ?? "") ? (store.get("theme") as Theme) : "auto"
 
 const keyOf = (m: { source: string; id: string }) => `${m.source}/${m.id}`
 const hrefOf = (m: { source: string; id: string }) => `#/${m.source}/${encodeURIComponent(m.id)}`
 const isLive = () => !!meta && streamUp && Date.now() - meta.updatedAt < LIVE_MS
 
-async function get(path: string): Promise<any> {
-  const res = await fetch(`${BASE}/api/${path}`)
+async function get(path: string, signal?: AbortSignal): Promise<any> {
+  const res = await fetch(`${BASE}/api/${path}`, { signal })
   if (!res.ok) throw new Error(String(res.status))
   return res.json()
 }
 
 const tx = new Transcript({ get, ref: () => current, cwd: () => meta?.cwd, live: isLive })
+const toc = setupToc({ stage: $("stage"), scroll, content: () => tx.el })
+const finder = setupFind({
+  get,
+  ref: () => current,
+  tx,
+  scroll,
+  showThinking: () => {
+    if (!think) toggleThink()
+  },
+})
 
 function show(heading: string, ...body: (Node | string)[]) {
   mount.replaceChildren()
+  tx.reset([])
+  toc.refresh()
   bar.hidden = true
   state.replaceChildren(h("h2", null, heading), ...body)
 }
@@ -90,8 +111,27 @@ function command(text: string): Node[] {
   return [h("pre", { class: "pre" }, text), copy]
 }
 
+const canWake = () => typeof chrome !== "undefined" && !!chrome.runtime?.sendNativeMessage
+
+function wake(onFail?: (reason: string) => void) {
+  if (!canWake() || hostMissing || waking || Date.now() - wokeAt < 10_000) return
+  waking = true
+  wokeAt = Date.now()
+  chrome!.runtime!.sendNativeMessage!(HOST_NAME, { cmd: "start" })
+    .then((res) => {
+      waking = false
+      if (res.ok) connect()
+      else onFail?.(res.error ?? "the native host gave no reason.")
+    })
+    .catch((error: Error) => {
+      waking = false
+      hostMissing = /not found|forbidden/i.test(error.message)
+      onFail?.(error.message)
+    })
+}
+
 function showOffline() {
-  if (typeof chrome === "undefined" || !chrome.runtime?.sendNativeMessage) {
+  if (!canWake()) {
     return show("the local server is not running", h("p", null, "transcripts are read from this machine by a small server. start it and this page connects by itself."), ...command(SERVER_COMMAND))
   }
   if (hostMissing) {
@@ -102,21 +142,11 @@ function showOffline() {
     )
   }
   if (waking || Date.now() - wokeAt < 10_000) return
-  waking = true
-  wokeAt = Date.now()
   show("starting the local server", h("p", null, "the page connects as soon as the server answers."))
-  chrome!.runtime!.sendNativeMessage!(HOST_NAME, { cmd: "start" })
-    .then((res) => {
-      waking = false
-      if (res.ok) return connect()
-      show("the server did not start", h("p", null, res.error ?? "the native host gave no reason."), ...command(SERVER_COMMAND))
-    })
-    .catch((error: Error) => {
-      waking = false
-      hostMissing = /not found|forbidden/i.test(error.message)
-      if (hostMissing) showOffline()
-      else show("the server did not start", h("p", null, error.message), ...command(SERVER_COMMAND))
-    })
+  wake((reason) => {
+    if (hostMissing) showOffline()
+    else show("the server did not start", h("p", null, reason), ...command(SERVER_COMMAND))
+  })
 }
 
 function showIdle() {
@@ -142,11 +172,40 @@ function setRail(open: boolean) {
   if (open) find.focus({ preventScroll: true })
 }
 
+const contentHit = (m: SessionMeta) => (contentQuery === find.value.trim() ? contentHits.get(keyOf(m)) : undefined)
+
 function visible(): SessionMeta[] {
   const q = find.value.trim().toLowerCase()
   return [...sessions.values()]
-    .filter((m) => (source === "all" || m.source === source) && (!q || `${m.title} ${m.id} ${m.cwd ?? ""} ${m.source}`.toLowerCase().includes(q)))
+    .filter((m) => (source === "all" || m.source === source) && (!q || `${m.title} ${m.id} ${m.cwd ?? ""} ${m.source}`.toLowerCase().includes(q) || contentHit(m)))
     .sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+function searchContent() {
+  clearTimeout(contentTimer)
+  contentAbort?.abort()
+  const q = find.value.trim()
+  if (q.length < 3 || /^[~/]/.test(q)) {
+    contentBusy = false
+    contentQuery = ""
+    contentHits = new Map()
+    return
+  }
+  contentBusy = true
+  contentTimer = setTimeout(async () => {
+    const abort = new AbortController()
+    contentAbort = abort
+    try {
+      const res: { sessions: SessionHit[] } = await get(`search?q=${encodeURIComponent(q)}`, abort.signal)
+      if (abort.signal.aborted) return
+      contentHits = new Map(res.sessions.map((hit) => [keyOf(hit), hit]))
+      contentQuery = q
+    } catch {
+      if (abort.signal.aborted) return
+    }
+    contentBusy = false
+    renderRail()
+  }, 200)
 }
 
 function renderRail() {
@@ -169,27 +228,39 @@ function renderRail() {
     }
     const live = now - m.updatedAt < LIVE_MS
     const project = m.cwd ? m.cwd.slice(m.cwd.lastIndexOf("/") + 1) : ""
-    row.firstElementChild!.textContent = m.title
+    const hit = contentHit(m)
+    row.href = hit ? `${hrefOf(m)}?find=${encodeURIComponent(contentQuery)}` : hrefOf(m)
+    row.children[0].textContent = m.title
     row.title = m.title
-    row.lastElementChild!.replaceChildren(
+    row.children[1].replaceChildren(
       h("span", null, m.source),
       h("span", { class: "proj" }, project),
-      live ? h("span", { class: "live" }, "live") : h("time", { datetime: new Date(m.updatedAt).toISOString(), title: stamp(m.updatedAt) }, age(m.updatedAt, now)),
+      hit
+        ? h("span", null, `${hit.hits} ${hit.hits === 1 ? "match" : "matches"}`)
+        : live
+          ? h("span", { class: "live" }, "live")
+          : h("time", { datetime: new Date(m.updatedAt).toISOString(), title: stamp(m.updatedAt) }, age(m.updatedAt, now)),
     )
+    if (hit) {
+      const line = row.children[2] ?? row.appendChild(h("span", { class: "sess-hit" }))
+      line.textContent = hit.snippet
+    } else row.children[2]?.remove()
     if (current && key === keyOf(current)) row.setAttribute("aria-current", "page")
     else row.removeAttribute("aria-current")
     nodes.push(row)
   }
   if (!shown.length && online) {
     const q = find.value.trim()
-    nodes.push(h("p", { class: "empty" }, q ? `nothing in the list matches “${q}”. press enter to open it as a session id or a transcript path.` : "no sessions on this machine yet."))
+    const text = !q ? "no sessions on this machine yet." : contentBusy ? "searching the transcripts" : `no title and no transcript matches “${q}”. press enter to open it as a session id or a transcript path.`
+    nodes.push(h("p", { class: "empty" }, text))
   }
   const same = nodes.length === list.childNodes.length && nodes.every((n, i) => n === list.childNodes[i])
   if (!same) {
     list.replaceChildren(...nodes)
     if (focused) rows.get(focused)?.focus({ preventScroll: true })
   }
-  conn.textContent = online ? `${sessions.size} sessions` : "offline"
+  const searched = contentQuery !== "" && contentQuery === find.value.trim()
+  conn.textContent = !online ? "offline" : contentBusy ? "searching" : searched ? `${contentHits.size} with matches` : `${sessions.size} sessions`
   conn.dataset.state = online ? "online" : "offline"
 }
 
@@ -232,6 +303,7 @@ function toBottom() {
 function arrived(items: Item[]) {
   const stick = follow && atBottom()
   tx.upsert(items)
+  toc.refresh()
   if (stick) return toBottom()
   if (atBottom()) return
   unseen += items.length
@@ -240,6 +312,7 @@ function arrived(items: Item[]) {
 }
 
 function close() {
+  finder.close()
   stream?.close()
   stream = undefined
   streamUp = false
@@ -248,10 +321,14 @@ function close() {
   latest.hidden = true
 }
 
-function open(next: { source: Source; id: string }) {
-  if (current && keyOf(current) === keyOf(next) && stream) return
+function open(next: { source: Source; id: string }, query?: string) {
+  if (current && keyOf(current) === keyOf(next) && stream) {
+    if (query && meta) finder.open(query)
+    return
+  }
   close()
   current = next
+  pendingFind = query
   tx.openRuns.clear()
   tx.openSteps.clear()
   expanded = false
@@ -277,13 +354,18 @@ function open(next: { source: Source; id: string }) {
     streamUp = true
     tx.reset(snap.items)
     if (!mount.contains(tx.el)) mount.replaceChildren(tx.el)
+    toc.refresh()
     renderBar()
     if (first) toBottom()
     else scroll.scrollTop = top
+    if (first && pendingFind) finder.open(pendingFind)
+    else finder.refresh()
+    pendingFind = undefined
   })
   es.addEventListener("upsert", (event) => {
     arrived(JSON.parse((event as MessageEvent).data).items)
     renderBar()
+    finder.refresh()
   })
   es.addEventListener("meta", (event) => {
     meta = JSON.parse((event as MessageEvent).data)
@@ -306,6 +388,7 @@ async function lookup(q: string) {
     const { hit }: { hit: { source: Source; id: string } | null } = await get(`resolve?q=${encodeURIComponent(q)}`)
     if (!hit) throw new Error("no match")
     find.value = ""
+    searchContent()
     location.hash = hrefOf(hit)
   } catch {
     close()
@@ -318,8 +401,8 @@ async function lookup(q: string) {
 
 function route() {
   const hash = location.hash
-  const session = /^#\/(claude|argon|codex)\/(.+)$/.exec(hash)
-  if (session) return open({ source: session[1] as Source, id: decodeURIComponent(session[2]) })
+  const session = /^#\/(claude|argon|codex)\/([^?]+)(?:\?find=(.*))?$/.exec(hash)
+  if (session) return open({ source: session[1] as Source, id: decodeURIComponent(session[2]) }, session[3] ? decodeURIComponent(session[3]) : undefined)
   if (hash.startsWith("#q=")) return void lookup(decodeURIComponent(hash.slice(3)))
   close()
   current = undefined
@@ -351,6 +434,7 @@ function connect() {
     online = false
     renderRail()
     if (!meta) showOffline()
+    else wake()
   })
 }
 
@@ -410,10 +494,14 @@ scroll.addEventListener("scroll", () => {
   }
 }, { passive: true })
 
-find.addEventListener("input", renderRail)
+find.addEventListener("input", () => {
+  searchContent()
+  renderRail()
+})
 find.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     find.value = ""
+    searchContent()
     renderRail()
     return
   }
@@ -421,10 +509,8 @@ find.addEventListener("keydown", (event) => {
   const q = find.value.trim()
   if (!q) return
   const hits = visible()
-  if (hits.length && !/^[~/]/.test(q)) {
-    find.value = ""
-    location.hash = hrefOf(hits[0])
-  } else void lookup(q)
+  if (hits.length && !/^[~/]/.test(q)) location.hash = rows.get(keyOf(hits[0]))?.getAttribute("href") ?? hrefOf(hits[0])
+  else void lookup(q)
 })
 
 $("sources").addEventListener("click", (event) => {
@@ -437,6 +523,17 @@ $("sources").addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   const target = event.target as HTMLElement
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && current && meta) {
+    const key = event.key.toLowerCase()
+    if (key === "f" && !event.shiftKey) {
+      event.preventDefault()
+      return finder.open()
+    }
+    if (key === "g" && finder.isOpen()) {
+      event.preventDefault()
+      return finder.step(event.shiftKey ? -1 : 1)
+    }
+  }
   if (event.metaKey || event.ctrlKey || event.altKey || target.closest("input, textarea, select, [contenteditable]")) return
   if (event.key === "?") {
     event.preventDefault()

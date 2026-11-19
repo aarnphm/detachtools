@@ -61,9 +61,15 @@ await build()
 const id = extensionId(EXT)
 const bun = Bun.which("bun") ?? process.execPath
 mkdirSync(STATE, { recursive: true })
-const overrides = ["TRANSCRIPTS_PORT", "TRANSCRIPTS_EXT", "TRANSCRIPTS_STATE"]
-  .filter((name) => process.env[name])
-  .map((name) => `export ${name}=${quote(process.env[name]!)}\n`)
+const exported: Record<string, string | undefined> = {
+  TRANSCRIPTS_PORT: process.env.TRANSCRIPTS_PORT,
+  TRANSCRIPTS_EXT: process.env.TRANSCRIPTS_EXT,
+  TRANSCRIPTS_STATE: process.env.TRANSCRIPTS_STATE,
+  TRANSCRIPTS_RG: process.env.TRANSCRIPTS_RG ?? Bun.which("rg") ?? undefined,
+}
+const overrides = Object.entries(exported)
+  .filter(([, value]) => value)
+  .map(([name, value]) => `export ${name}=${quote(value!)}\n`)
   .join("")
 writeFileSync(WRAPPER, `#!/bin/sh\n${overrides}exec ${quote(bun)} ${quote(join(import.meta.dir, "host.ts"))} "$@"\n`)
 chmodSync(WRAPPER, 0o755)

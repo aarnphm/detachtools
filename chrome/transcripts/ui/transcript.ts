@@ -59,6 +59,16 @@ export class Transcript {
     for (const run of this.runs) run.refresh()
   }
 
+  anchor(id: string): HTMLElement | undefined {
+    const at = this.where.get(id)
+    return at instanceof Run ? at.el : at
+  }
+
+  reveal(id: string): HTMLElement | undefined {
+    const at = this.where.get(id)
+    return at instanceof Run ? at.reveal(id) : at
+  }
+
   private turn(item: UserItem | undefined) {
     this.turns++
     const mark = h("div", { class: "turn-mark" }, h("b", null, String(this.turns).padStart(2, "0")))
@@ -251,6 +261,15 @@ class Run {
     if (!waiting.length) return
     for (const item of waiting) if (this.built) this.nodes.get(item.id)?.replaceWith(this.node(item, false))
     this.paint()
+  }
+
+  reveal(id: string): HTMLElement | undefined {
+    if (this.items.length > 1) this.toggle(true)
+    else if (!this.built) this.build()
+    const node = this.nodes.get(id)
+    const head = node?.querySelector<HTMLButtonElement>(':scope > button.step-head[aria-expanded="false"]')
+    head?.click()
+    return node
   }
 
   toggle(open = !this.open) {

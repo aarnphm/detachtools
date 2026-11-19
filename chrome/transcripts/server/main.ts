@@ -6,13 +6,15 @@ import { build } from "./build"
 import { EXT, PORT, ROOT } from "./paths"
 import * as claude from "./claude"
 import * as codex from "./codex"
-import type { Reader, SessionMeta, SessionsDelta, Snapshot, Source } from "./types"
+import { type SessionHit, filesWith, parseQuery, recall, remember, searchItems } from "./search"
+import type { Item, Reader, SessionMeta, SessionsDelta, Snapshot, Source } from "./types"
 import { slim } from "./util"
 
 const HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`])
 const LIST_LIMIT = 400
 const IDLE_CLOSE_MS = 60_000
 const TICK_MS = 2000
+const SEARCH_LIMIT = 80
 
 const adapters = { claude, argon, codex } satisfies Record<Source, { list(): Promise<SessionMeta[]>; ROOT: string }>
 const isSource = (s: string): s is Source => s in adapters
@@ -188,6 +190,38 @@ async function live(source: Source, id: string, agent: string | null): Promise<L
   return created
 }
 
+async function itemsOf(meta: SessionMeta): Promise<Item[]> {
+  const open = lives.get(key(meta))
+  if (open) {
+    await open.tick()
+    return [...open.reader.items.values()]
+  }
+  const stamp = String(meta.updatedAt)
+  const kept = recall(meta.path, stamp)
+  if (kept) return kept
+  const reader = adapters[meta.source].open(meta.path, meta.id)
+  await reader.poll().catch(() => undefined)
+  const items = [...reader.items.values()]
+  remember(meta.path, stamp, items)
+  return items
+}
+
+async function searchAll(q: string, signal: AbortSignal) {
+  const terms = parseQuery(q)
+  if (!terms.some((t) => t.text.length >= 2)) return { sessions: [], scanned: 0, total: sessions.size }
+  await scan()
+  const all = [...sessions.values()].sort((a, b) => b.updatedAt - a.updatedAt)
+  const files = await filesWith(terms, [{ dir: claude.ROOT, depth: 2 }, { dir: join(codex.ROOT, "sessions") }])
+  const candidates = (files ? all.filter((m) => m.source === "argon" || files.has(m.path)) : all).slice(0, SEARCH_LIMIT)
+  const found: SessionHit[] = []
+  for (const meta of candidates) {
+    if (signal.aborted) break
+    const hits = searchItems(await itemsOf(meta), terms)
+    if (hits.length) found.push({ source: meta.source, id: meta.id, hits: hits.length, snippet: hits[0].snippet })
+  }
+  return { sessions: found, scanned: candidates.length, total: all.length }
+}
+
 const encoder = new TextEncoder()
 
 function sse(req: Request, headers: HeadersInit, start: (send: Send) => (() => void) | void): Response {
@@ -257,6 +291,7 @@ async function handle(req: Request): Promise<Response> {
       await scan()
       return json({ sessions: [...sessions.values()] })
     }
+    if (parts[1] === "search" && parts.length === 2) return json(await searchAll(url.searchParams.get("q") ?? "", req.signal))
     if (parts[1] === "resolve") {
       const hit = await resolve(url.searchParams.get("q") ?? "")
       return json({ hit: hit ?? null })
@@ -274,6 +309,7 @@ async function handle(req: Request): Promise<Response> {
       })
     }
     if (verb === "items") return json(session.snapshot())
+    if (verb === "search") return json({ hits: searchItems(session.reader.items.values(), parseQuery(url.searchParams.get("q") ?? "")) })
     if (verb === "item") {
       const item = session.reader.items.get(itemId ?? "")
       return item ? json(item) : json({ error: "not found" }, 404)

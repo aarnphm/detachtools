@@ -61,6 +61,18 @@ A path to any `.jsonl` or `.db` transcript opens the same way as an id. Ids matc
 
 The server refuses a request whose `Host` is not `127.0.0.1:4517` or `localhost:4517`, and a request from a web origin other than itself or a `chrome-extension://` page.
 
+## The rail of bars
+
+The left edge of the transcript has the table of contents from aarnphm.xyz (`quartz/components/TableOfContents.tsx`, minimal layout), ported in `ui/toc.ts`. It has one bar for each turn and a half-width bar for each heading in a reply. Bars for what is on screen are darker. Under the pointer the bars widen, one label names the nearest turn, and the page behind is veiled. A click scrolls to that turn. The rail is hidden when the pane is narrower than 56rem and on a device with no hover; `j` and `k` do the same job from the keyboard.
+
+## Search
+
+- `⌘F` (or `ctrl F`) opens find for the open session. The server searches the parsed items in memory, so a match inside a folded group or a clamped output is found; the page then opens that step, scrolls to it and marks the text. `enter` and `shift enter` step through; `⌘G` does the same.
+- A query is a list of terms. Every term must occur in the same item, in any order. A term with a capital letter is matched with its case; `"two words"` in quotes is one term.
+- The rail filter searches titles at once and, from three characters, what was said. `rg` lists the session files that contain every term, then the server parses only those and counts the items that match. A row with matches shows the count and one line of context, and opens with find filled in.
+- `GET /api/search/<source>/<id>?q=` returns the items that match in one session. `GET /api/search?q=` returns the sessions that match, newest first, from at most 80 candidates.
+- The daemon gets the path of `rg` from `TRANSCRIPTS_RG`, which the installer writes into the launcher, because Chrome starts it with a bare `PATH`. With no `rg` the server parses every session instead.
+
 ## Files
 
 | path | holds |
@@ -68,9 +80,10 @@ The server refuses a request whose `Host` is not `127.0.0.1:4517` or `localhost:
 | `server/main.ts` | routes, event streams, session scan, origin check |
 | `server/claude.ts`, `codex.ts`, `argon.ts` | one adapter per store; each turns records into the items in `server/types.ts` |
 | `server/pb.ts` | protobuf wire decoder for the Argon steps |
+| `server/search.ts` | query terms, item text, the `rg` file filter and a parsed-session cache |
 | `server/build.ts` | bundles `ui/` and draws the icons |
 | `server/host.ts`, `install.ts` | the native host (`start`, `stop`, `status`) and the script that registers it |
-| `ui/` | the page: `md.ts` (markdown to DOM nodes, no `innerHTML`), `ansi.ts` (terminal escapes to styled spans), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
+| `ui/` | the page: `md.ts` (markdown to DOM nodes, no `innerHTML`), `ansi.ts` (terminal escapes to styled spans), `find.ts` (find bar, reveal and marks), `toc.ts` (the rail of bars), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
 | `ext/` | the unpacked extension; `view.js` and `icon-*.png` are build output |
 | `e2e.py` | headless check of the extension against a fixture transcript that grows during the run |
 
@@ -80,7 +93,7 @@ The server refuses a request whose `Host` is not `127.0.0.1:4517` or `localhost:
 uv run e2e.py
 ```
 
-The run copies `ext/` to a temporary folder and uses port 4599 with its own state folder (`TRANSCRIPTS_PORT`, `TRANSCRIPTS_EXT`, `TRANSCRIPTS_STATE`), so a server on 4517 keeps running. It registers the host inside a temporary browser profile, loads the copy in headless Helium (`BROWSER_PATH` picks another Chromium), and waits for the extension to start the server. It then opens a fixture by path, appends records, waits for the page to show them, and stops the server through the host. It writes screenshots and `result.json` to `evidence/`, or to the folder given as the first argument. The run on 2026-11-19 passed 28 of 28 checks; its record is in `~/workspace/output/transcripts-viewer/`.
+The run copies `ext/` to a temporary folder and uses port 4599 with its own state folder (`TRANSCRIPTS_PORT`, `TRANSCRIPTS_EXT`, `TRANSCRIPTS_STATE`), so a server on 4517 keeps running. It registers the host inside a temporary browser profile, loads the copy in headless Helium (`BROWSER_PATH` picks another Chromium), and waits for the extension to start the server. It then opens a fixture by path, appends records, waits for the page to show them, and stops the server through the host. It writes screenshots and `result.json` to `evidence/`, or to the folder given as the first argument. The run on 2026-11-19 passed 35 of 35 checks; its record is in `~/workspace/output/transcripts-viewer/`.
 
 ## Known limits
 
@@ -88,6 +101,7 @@ The run copies `ext/` to a temporary folder and uses port 4599 with its own stat
 - Code blocks have no syntax colour.
 - Terminal output keeps bold, dim, italic, underline, strike, inverse and the 16 basic colours. 256-colour and true-colour text keeps the default ink, and background colours are dropped, so text stays readable on paper.
 - Claude thinking blocks are stored empty in most sessions, so they do not show. Argon and Codex reasoning shows when the store has its text.
+- Search does not read subagent transcripts. A mark does not span markup, so a phrase that crosses bold or a link is found but not marked.
 - An Argon step type other than 14, 15, 101 or 132 shows as a `system` row with its longest string.
 - The host files are written by `install.ts`, outside nix. A home-manager module in `hm/` would make them part of a rebuild.
 - Nothing stops the server when it is idle.

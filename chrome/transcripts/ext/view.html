@@ -17,8 +17,8 @@
         <span class="conn" id="conn" role="status">connecting</span>
       </header>
       <div class="find">
-        <label class="sr" for="find">filter sessions, or open a session id or a transcript path</label>
-        <input id="find" type="search" placeholder="filter, id or path" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <label class="sr" for="find">filter sessions by title or content, or open a session id or a transcript path</label>
+        <input id="find" type="search" placeholder="filter, search, id or path" autocomplete="off" autocapitalize="off" spellcheck="false" />
       </div>
       <div class="inst sources" id="sources" role="group" aria-label="source">
         <button type="button" data-source="all" aria-pressed="true">all</button>
@@ -50,9 +50,21 @@
         </div>
         <dl class="readout" id="readout"></dl>
       </header>
-      <div class="scroll" id="scroll" tabindex="-1">
-        <div id="mount"></div>
-        <div class="state" id="state" role="status"></div>
+      <div class="finder" id="finder" role="search" hidden>
+        <label class="sr" for="find-in">find in this transcript</label>
+        <input id="find-in" type="search" placeholder="find in transcript" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <span class="find-count" id="find-count" role="status"></span>
+        <div class="inst" role="group" aria-label="matches">
+          <button type="button" id="find-prev" title="previous match (shift enter)">prev</button>
+          <button type="button" id="find-next" title="next match (enter)">next</button>
+          <button type="button" id="find-close" title="close find (esc)">close</button>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="scroll" id="scroll" tabindex="-1">
+          <div id="mount"></div>
+          <div class="state" id="state" role="status"></div>
+        </div>
       </div>
       <button type="button" class="lone latest" id="latest" hidden>latest</button>
     </main>
@@ -61,7 +73,8 @@
       <dl>
         <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>next turn, previous turn</dd></div>
         <div><dt><kbd>g</kbd> <kbd>G</kbd></dt><dd>first turn, latest item</dd></div>
-        <div><dt><kbd>/</kbd></dt><dd>filter the sessions, or open an id or a path</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>filter the sessions by title or by what was said, or open an id or a path</dd></div>
+        <div><dt><kbd>⌘</kbd> <kbd>f</kbd></dt><dd>find in this transcript; enter and shift enter step through</dd></div>
         <div><dt><kbd>e</kbd></dt><dd>open or fold every group of steps</dd></div>
         <div><dt><kbd>f</kbd></dt><dd>follow the newest item</dd></div>
         <div><dt><kbd>t</kbd></dt><dd>show or hide thinking</dd></div>
