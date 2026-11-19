@@ -439,3 +439,79 @@ menu,
     animation-duration: 0.01ms !important;
   }
 }
+
+:root {
+  --g-frame: color-mix(in srgb, var(--g-sage) 30%, var(--g-light));
+  --g-panel-gap: 8px;
+  --g-panel-radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-frame: color-mix(in srgb, var(--g-sage) 7%, #100f0f);
+  }
+}
+
+html,
+body,
+#outerContainer,
+#mainContainer {
+  background: var(--g-frame);
+}
+
+#outerContainer #toolbarContainer,
+#outerContainer #toolbarViewer,
+#outerContainer .toolbar {
+  background: transparent;
+  border: 0;
+}
+
+#outerContainer .dropdownToolbarButton,
+#outerContainer .dropdownToolbarButton > select {
+  background-color: transparent;
+}
+
+#outerContainer #viewerContainer {
+  inset: var(--toolbar-height) var(--g-panel-gap) var(--g-panel-gap);
+  background: var(--g-lightgray);
+  border: 1px solid var(--g-line);
+  border-radius: var(--g-panel-radius) !important;
+}
+
+#outerContainer.viewsManagerOpen #viewerContainer:not(.pdfPresentationMode) {
+  inset-inline-start: calc(
+    var(--viewsManager-width, 230px) + 2 * var(--g-panel-gap)
+  );
+}
+
+#outerContainer #viewsManager {
+  inset-block-start: 100%;
+  height: var(--viewer-container-height);
+  border: 1px solid var(--g-line);
+  border-radius: var(--g-panel-radius) !important;
+  overflow: hidden;
+}
+
+#outerContainer.viewsManagerOpen #viewsManager {
+  inset-inline-start: var(--g-panel-gap);
+}
+
+#outerContainer #viewsManager #viewsManagerHeader,
+#outerContainer #viewsManager #viewsManagerTitle,
+#outerContainer #viewsManager #viewsManagerSelector {
+  background: transparent !important;
+}
+
+#outerContainer #loadingBar {
+  inset-inline: calc(var(--g-panel-gap) + var(--g-panel-radius))
+    calc(var(--g-panel-gap) + var(--g-panel-radius) + var(--progressBar-end-offset, 0px));
+}
+
+#viewerContainer::-webkit-scrollbar,
+#viewerContainer::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+#viewerContainer::-webkit-scrollbar-thumb {
+  border-color: var(--g-lightgray);
+}

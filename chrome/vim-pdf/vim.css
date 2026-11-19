@@ -1,5 +1,6 @@
 #outerContainer {
   height: calc(100% - 22px) !important;
+  background: var(--g-frame);
 }
 
 #vimStatus {
@@ -11,9 +12,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--g-pdf-surface);
+  background: var(--g-frame);
   color: var(--g-darkgray);
-  border-top: 1px solid var(--g-line);
   font: var(--g-meta) / 1 var(--g-code);
   font-variant-numeric: tabular-nums;
   z-index: 10000;
