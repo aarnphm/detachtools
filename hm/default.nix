@@ -313,6 +313,7 @@ in {
         '';
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+        ".local/bin/rex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Rex Beta.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex";
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
       };
 
