@@ -548,3 +548,7 @@ body,
 #viewerContainer::-webkit-scrollbar-thumb {
   border-color: var(--g-lightgray);
 }
+
+#viewsManager #viewsManagerCurrentOutlineButton {
+  display: none !important;
+}
