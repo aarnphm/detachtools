@@ -442,14 +442,20 @@ menu,
 
 :root {
   --g-frame: color-mix(in srgb, var(--g-sage) 30%, var(--g-light));
+  --g-side: var(--viewsManager-width, 230px);
   --g-panel-gap: 8px;
   --g-panel-radius: 10px;
+  --g-panel-left: var(--g-panel-gap);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --g-frame: color-mix(in srgb, var(--g-sage) 7%, #100f0f);
   }
+}
+
+html:has(#outerContainer.viewsManagerOpen) {
+  --g-panel-left: var(--g-side);
 }
 
 html,
@@ -466,45 +472,72 @@ body,
   border: 0;
 }
 
+#outerContainer #toolbarViewerRight {
+  display: none !important;
+}
+
+#outerContainer #toolbarViewerLeft > .toolbarButtonSpacer {
+  width: max(8px, calc(var(--g-panel-left) - 24px));
+  transition: width var(--sidebar-transition-duration)
+    var(--sidebar-transition-timing-function);
+}
+
 #outerContainer .dropdownToolbarButton,
 #outerContainer .dropdownToolbarButton > select {
   background-color: transparent;
 }
 
-#outerContainer #viewerContainer {
-  inset: var(--toolbar-height) var(--g-panel-gap) var(--g-panel-gap);
-  background: var(--g-lightgray);
-  border: 1px solid var(--g-line);
-  border-radius: var(--g-panel-radius) !important;
+#outerContainer #toolbarViewerMiddle {
+  margin-inline-end: var(--g-panel-gap);
 }
 
+#outerContainer .dropdownToolbarButton > select,
+#outerContainer .dropdownToolbarButton > select > option,
+#viewsManager .popupMenu button,
+#viewsManager .popupMenu button > span,
+#viewsManagerHeaderLabel {
+  text-transform: lowercase;
+}
+
+#outerContainer #viewerContainer,
 #outerContainer.viewsManagerOpen #viewerContainer:not(.pdfPresentationMode) {
-  inset-inline-start: calc(
-    var(--viewsManager-width, 230px) + 2 * var(--g-panel-gap)
-  );
+  inset: var(--toolbar-height) 0 22px var(--g-panel-left);
+  background: var(--g-lightgray);
+  border: 0;
+  border-inline-start: 1px solid var(--g-line);
+  border-block-start: 1px solid var(--g-line);
+  border-start-start-radius: var(--g-panel-radius) !important;
 }
 
 #outerContainer #viewsManager {
+  box-sizing: border-box;
+  width: var(--g-side) !important;
   inset-block-start: 100%;
-  height: var(--viewer-container-height);
-  border: 1px solid var(--g-line);
-  border-radius: var(--g-panel-radius) !important;
-  overflow: hidden;
+  height: calc(100vh - var(--toolbar-height));
+  padding-block: 0;
+  background: var(--g-frame) !important;
+  border: 0;
+  border-radius: 0 !important;
 }
 
 #outerContainer.viewsManagerOpen #viewsManager {
-  inset-inline-start: var(--g-panel-gap);
+  inset-inline-start: 0;
 }
 
 #outerContainer #viewsManager #viewsManagerHeader,
 #outerContainer #viewsManager #viewsManagerTitle,
 #outerContainer #viewsManager #viewsManagerSelector {
   background: transparent !important;
+  border: 0;
+}
+
+#outerContainer #viewsManager .sidebarResizer {
+  inset-inline-start: calc(100% - 4px);
 }
 
 #outerContainer #loadingBar {
-  inset-inline: calc(var(--g-panel-gap) + var(--g-panel-radius))
-    calc(var(--g-panel-gap) + var(--g-panel-radius) + var(--progressBar-end-offset, 0px));
+  inset-inline: calc(var(--g-panel-left) + var(--g-panel-radius))
+    var(--progressBar-end-offset, 0px);
 }
 
 #viewerContainer::-webkit-scrollbar,
