@@ -361,8 +361,8 @@ menu,
   display: block;
   min-width: 0;
   margin: 0;
-  padding: 3px 8px;
-  font: var(--g-meta) / 1.4 var(--g-body);
+  padding: 3px 8px 3px 24px;
+  font: var(--g-meta) / 16px var(--g-body);
   color: var(--g-darkgray);
   transition: background-color 120ms, color 120ms;
 }
@@ -380,15 +380,18 @@ menu,
   }
 }
 
-.treeView.withNesting > .treeItem,
+.treeView.withNesting > .treeItem {
+  margin-inline-start: 0;
+}
+
 .treeView.withNesting .treeItem > .treeItems {
-  margin-inline-start: 18px;
+  margin-inline-start: 12px;
 }
 
 .treeView.withNesting .treeItemToggler::before {
-  width: 14px;
-  height: 14px;
-  inset-inline-end: 2px;
+  width: 12px;
+  height: 12px;
+  inset-inline: 7px auto;
   inset-block-start: 5px;
 }
 
@@ -512,6 +515,7 @@ body,
 #outerContainer #viewsManager {
   box-sizing: border-box;
   width: var(--g-side) !important;
+  min-width: 235px !important;
   inset-block-start: 100%;
   height: calc(100vh - var(--toolbar-height));
   padding-block: 0;
@@ -551,4 +555,13 @@ body,
 
 #viewsManager #viewsManagerCurrentOutlineButton {
   display: none !important;
+}
+
+#viewsManager #viewsManagerHeader #viewsManagerHeaderLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
