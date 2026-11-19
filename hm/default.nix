@@ -331,6 +331,7 @@ in {
         # ls-replacement
         ls = lib.getExe pkgs.eza;
         ll = "${lib.getExe pkgs.eza} -Ml --almost-all --group-directories-first -sName --icons=always";
+        la = "${lib.getExe pkgs.eza} -Ml --group-directories-first -sName";
         mtree = "${lib.getExe pkgs.eza} --almost-all -Ml --group-directories-first --tree";
         tree = ''${lib.getExe pkgs.broot} $@'';
 

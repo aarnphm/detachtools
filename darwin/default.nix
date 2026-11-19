@@ -29,6 +29,7 @@
       "asciidoctor"
       "plantuml"
       "ddclient"
+      "openconnect"
       "mas"
       "bitwarden-cli"
       "monolith"
