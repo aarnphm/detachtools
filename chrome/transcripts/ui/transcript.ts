@@ -1,6 +1,6 @@
-import type { Item, NoteItem, Patch, Snapshot, ToolItem, UserItem } from "../server/types"
+import type { Item, NoteItem, Patch, ToolItem, UserItem } from "../server/types"
 import { type Child, clamp, h } from "./dom"
-import { markdown } from "./md"
+import { markdown } from "./render"
 import { ansi, plain } from "./ansi"
 import { clock, commandOf, diffstat, duration, fields, kind, label, pathOf, rel, stamp, stepName, summary } from "./tools"
 
@@ -134,20 +134,6 @@ export class Transcript {
     return clamp(tool.out ?? "", OUTPUT_LINES, { total: tool.outLen, more, render: ansi })
   }
 
-  private subagent(tool: ToolItem): HTMLElement {
-    const box = h("div", { class: "sub" }, h("p", { class: "quiet pad" }, "reading the subagent transcript"))
-    const ref = this.host.ref()!
-    this.host
-      .get(`items/${ref.source}/${encodeURIComponent(ref.id)}?agent=${tool.agent}`)
-      .then((snap: Snapshot) => {
-        const child = new Transcript(this.host, tool.agent)
-        child.reset(snap.items)
-        box.replaceChildren(child.el)
-      })
-      .catch(() => box.replaceChildren(h("p", { class: "quiet pad" }, "the subagent transcript is not on disk")))
-    return box
-  }
-
   detail(item: Item): Child[] {
     if (item.k === "think") return [clamp(item.text, 40, { tag: "div", cls: "think" })]
     if (item.k === "note") return [clamp(item.detail ?? item.text, OUTPUT_LINES, { render: ansi })]
@@ -159,7 +145,10 @@ export class Transcript {
     else if (what === "edit" && item.patch?.length) out.push(...item.patch.map((p) => diff(p, this.host.cwd())))
     else if (what === "write" && typeof input.content === "string") out.push(block(rel(pathOf(item) ?? "content", this.host.cwd()), clamp(input.content, OUTPUT_LINES)))
     else if (what === "todo") out.push(todo(input))
-    else if (what === "agent" && item.agent) out.push(block(`subagent ${input.subagent_type ?? ""}`.trim(), this.subagent(item)))
+    else if (what === "agent") {
+      if (Object.keys(input).length) out.push(block("input", table(input)))
+      if (item.agent) out.push(h("button", { type: "button", class: "lone agent-open", "data-agent": item.agent, "data-title": summary(item, this.host.cwd()) }, "open the subagent transcript"))
+    }
     else if (typeof item.input === "string") out.push(block("input", clamp(item.input, 12)))
     else if (Object.keys(input).length) out.push(block("input", table(input)))
     const failed = item.status === "err"

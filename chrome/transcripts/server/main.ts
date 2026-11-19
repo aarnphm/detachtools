@@ -3,6 +3,7 @@ import { stat } from "node:fs/promises"
 import { join } from "node:path"
 import * as argon from "./argon"
 import { build } from "./build"
+import { findNote } from "./notes"
 import { EXT, PORT, ROOT } from "./paths"
 import * as claude from "./claude"
 import * as codex from "./codex"
@@ -254,6 +255,7 @@ const TYPES: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".png": "image/png",
+  ".woff2": "font/woff2",
   ".json": "application/json",
 }
 
@@ -292,6 +294,10 @@ async function handle(req: Request): Promise<Response> {
       return json({ sessions: [...sessions.values()] })
     }
     if (parts[1] === "search" && parts.length === 2) return json(await searchAll(url.searchParams.get("q") ?? "", req.signal))
+    if (parts[1] === "note") {
+      const found = await findNote(url.searchParams.get("target") ?? "", url.searchParams.get("cwd") || undefined, url.searchParams.get("from") || undefined)
+      return json({ note: found.note ?? null, tried: found.tried })
+    }
     if (parts[1] === "resolve") {
       const hit = await resolve(url.searchParams.get("q") ?? "")
       return json({ hit: hit ?? null })
@@ -325,7 +331,10 @@ async function handle(req: Request): Promise<Response> {
   return new Response(file, { headers: { "content-type": TYPES[ext], "cache-control": "no-store" } })
 }
 
-await build()
+await build().catch(async (error) => {
+  console.error("page build failed; serving the last build", error)
+  if (!(await Bun.file(join(EXT, "view.js")).exists())) throw error
+})
 if (process.argv.includes("--build")) process.exit(0)
 if (process.argv.includes("--watch")) {
   watch(join(ROOT, "ui"), { recursive: true }, () => void build().catch((e) => console.error(e)))

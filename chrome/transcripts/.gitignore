@@ -1,3 +1,5 @@
 ext/view.js
 ext/icon-*.png
+ext/katex/
 evidence/
+node_modules/

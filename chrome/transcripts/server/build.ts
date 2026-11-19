@@ -59,6 +59,7 @@ export async function build() {
     entrypoints: [join(ROOT, "ui", "main.ts")],
     target: "browser",
     format: "esm",
+    minify: true,
     define: {
       SERVER_COMMAND: JSON.stringify(`bun ${tilde(join(ROOT, "server", "main.ts"))}`),
       INSTALL_COMMAND: JSON.stringify(`bun ${tilde(join(ROOT, "server", "install.ts"))}`),
@@ -69,4 +70,9 @@ export async function build() {
   if (!result.success) throw new AggregateError(result.logs, "ui build failed")
   await Bun.write(join(EXT, "view.js"), await result.outputs[0].text())
   await Promise.all([16, 32, 48, 128].map((size) => Bun.write(join(EXT, `icon-${size}.png`), icon(size))))
+  const katex = join(ROOT, "node_modules", "katex", "dist")
+  await Bun.write(join(EXT, "katex", "katex.min.css"), Bun.file(join(katex, "katex.min.css")))
+  for await (const font of new Bun.Glob("*.woff2").scan({ cwd: join(katex, "fonts") })) {
+    await Bun.write(join(EXT, "katex", "fonts", font), Bun.file(join(katex, "fonts", font)))
+  }
 }

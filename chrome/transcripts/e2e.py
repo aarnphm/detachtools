@@ -31,6 +31,7 @@ EXT = HERE / "ext"
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else HERE / "evidence").resolve()
 PORT = 4599
 BASE = f"http://127.0.0.1:{PORT}"
+VAULT = OUT / "fixture" / "vault"
 BROWSER = os.environ.get("BROWSER_PATH", "/Applications/Helium.app/Contents/MacOS/Helium")
 results: list[dict] = []
 
@@ -54,7 +55,7 @@ def stamp() -> str:
 
 def record(kind: str, uuid: str, content: object, **extra: object) -> str:
     role = "assistant" if kind == "assistant" else "user"
-    rec = {"type": kind, "uuid": uuid, "timestamp": stamp(), "cwd": "/tmp/demo", "message": {"role": role, "content": content}, **extra}
+    rec = {"type": kind, "uuid": uuid, "timestamp": stamp(), "cwd": str(VAULT), "message": {"role": role, "content": content}, **extra}
     return json.dumps(rec) + "\n"
 
 
@@ -65,14 +66,22 @@ def main() -> int:
         return 2
     work = pathlib.Path(os.path.realpath(tempfile.mkdtemp(prefix="transcripts-e2e-")))
     ext = work / "ext"
-    shutil.copytree(EXT, ext, ignore=shutil.ignore_patterns("view.js", "icon-*.png"))
+    shutil.copytree(EXT, ext, ignore=shutil.ignore_patterns("view.js", "icon-*.png", "katex"))
     env = {**os.environ, "TRANSCRIPTS_PORT": str(PORT), "TRANSCRIPTS_EXT": str(ext), "TRANSCRIPTS_STATE": str(work / "state")}
 
     fixture = OUT / "fixture" / "live.jsonl"
-    fixture.parent.mkdir(exist_ok=True)
+    (VAULT / "sub").mkdir(parents=True, exist_ok=True)
+    (VAULT / "docs").mkdir(exist_ok=True)
+    (VAULT / "note-one.md").write_text(
+        "---\nname: note-one\ndescription: a fixture note\nmetadata:\n  type: reference\n---\n\n# Note one\n\n"
+        "The area is $\\pi r^2$. See [[second note#Details|the second note]].\n\n"
+        "> [!note] remember\n> callouts keep their title.\n\n```python\nprint('hi')\n```\n"
+    )
+    (VAULT / "sub" / "second note.md").write_text("# Second note\n\nintro\n\n## Details\n\nthe details live here.\n")
+    (VAULT / "docs" / "log.md").write_text("# The log\n\nan entry.\n")
     fixture.write_text(
         record("user", "u1", "count the markdown files, then report the total", origin={"kind": "human"})
-        + record("assistant", "a1", [{"type": "text", "text": "*two commands answer this.*[^why]\n\n- list the files\n- count them with `wc -l`\n\n[^why]: `ls` lists the files.\n    A second line of the same note."}])
+        + record("assistant", "a1", [{"type": "text", "text": "*two commands answer this.*[^why] it costs $5 and $10, and $E = mc^2$ holds.\n\nsee [[note-one]], [[missing-note]] and [the log](docs/log.md).\n\n- list the files\n- count them with `wc -l`\n\n[^why]: `ls` lists the files.\n    A second line of the same note."}])
         + record("assistant", "a2", [{"type": "tool_use", "id": "toolu_1", "name": "Bash", "input": {"command": "ls *.md", "description": "List markdown files"}}])
     )
 
@@ -121,13 +130,33 @@ def main() -> int:
         page.wait_for_selector(".turn .prompt", timeout=5000)
         check("a transcript opens from its path", "count the markdown files" in page.inner_text(".prompt"), page.inner_text(".prompt"))
         check("markdown renders as elements", page.locator(".prose em").count() == 1 and page.locator(".prose > ul li code").count() == 1)
-        note = page.evaluate("(() => { const p = document.querySelector('.prose'); return [p.querySelector('.fn-ref a')?.textContent, p.querySelectorAll('.footnotes li').length, p.querySelector('.footnotes li')?.textContent.replace(/\\s+/g, ' ').trim(), p.textContent.includes('[^why]')] })()")
+        note = page.evaluate("(() => { const p = document.querySelector('.prose'); return [p.querySelector('a[data-footnote-ref]')?.textContent, p.querySelectorAll('.footnotes li').length, p.querySelector('.footnotes li')?.textContent.replace(/\\s+/g, ' ').trim(), p.textContent.includes('[^why]')] })()")
         check("a footnote becomes a numbered reference and a note under the reply", note == ["1", 1, "ls lists the files. A second line of the same note. ↩", False], note)
         before = page.evaluate("location.hash")
-        page.click(".fn-ref a")
+        page.click("a[data-footnote-ref]")
         jumped = page.evaluate("[document.activeElement?.closest('.footnotes') !== null, location.hash]")
-        page.click(".fn-back")
-        check("the reference jumps to its note and back without leaving the session", jumped == [True, before] and page.evaluate("document.activeElement?.closest('.fn-ref') !== null"), jumped)
+        page.click("a[data-footnote-backref]")
+        check("the reference jumps to its note and back without leaving the session", jumped == [True, before] and page.evaluate("document.activeElement?.matches('a[data-footnote-ref]')"), jumped)
+        maths = page.evaluate("[document.querySelectorAll('.turn .prose .katex').length, document.querySelector('.turn .prose').textContent.includes('$5 and $10')]")
+        check("latex renders with katex and plain dollar amounts stay text", maths == [1, True], maths)
+
+        page.click(".notelink[data-note='note-one']")
+        page.wait_for_function("() => document.getElementById('side-title').textContent === 'Note one'", timeout=5000)
+        shown = page.evaluate("(() => { const b = document.getElementById('side-body'); return [b.querySelectorAll('.props dt').length, b.querySelectorAll('.katex').length, b.querySelector('.callout-title')?.textContent, b.querySelectorAll('[class*=hljs-]').length > 0, b.querySelector('h3')?.textContent] })()")
+        check("a wikilink opens the note in the side panel with properties, math, a callout and code colour", shown == [3, 1, "remember", True, None], shown)
+        page.screenshot(path=str(OUT / "11-note-panel.png"))
+        page.click("#side-body .notelink")
+        page.wait_for_function("() => document.getElementById('side-title').textContent === 'Second note'", timeout=5000)
+        page.click("#side-back")
+        page.wait_for_function("() => document.getElementById('side-title').textContent === 'Note one'", timeout=5000)
+        check("a wikilink inside a note is found by name in a subfolder, and back returns", True)
+        page.click(".turn .notelink[data-note='docs/log.md']")
+        page.wait_for_function("() => document.getElementById('side-title').textContent === 'The log'", timeout=5000)
+        page.click(".turn .notelink[data-note='missing-note']")
+        page.wait_for_function("() => /no note named/.test(document.getElementById('side-body').textContent)", timeout=5000)
+        check("a link to a markdown file opens too, and a missing note says where it looked", "missing-note.md" in page.inner_text("#side-body"), page.inner_text("#side-body"))
+        page.keyboard.press("Escape")
+        check("escape closes the side panel", page.locator("#side").is_hidden())
         check("a pending step shows as running", page.locator(".node .flag[data-flag=run]").count() == 1)
         page.screenshot(path=str(OUT / "01-opened-light.png"))
 
@@ -221,6 +250,30 @@ def main() -> int:
         check("escape closes the shortcuts page", page.locator("#keys:popover-open").count() == 0)
         bar = page.evaluate("getComputedStyle(document.getElementById('sessions'), '::-webkit-scrollbar').width")
         check("scrollbars are 8px and styled by the page", bar == "8px", bar)
+
+        places = "['copy', 'theme'].map(id => { const r = document.getElementById(id).getBoundingClientRect(); return [r.left, r.width] })"
+        still = page.evaluate(places)
+        page.click("#copy")
+        page.wait_for_function("() => document.getElementById('copy').textContent !== 'copy id'", timeout=3000)
+        check("copy id keeps every control in place", page.evaluate(places) == still, [still, page.evaluate(places)])
+
+        agents = fixture.with_suffix("") / "subagents"
+        agents.mkdir(parents=True, exist_ok=True)
+        (agents / "agent-abc123.meta.json").write_text(json.dumps({"agentType": "general-purpose", "toolUseId": "toolu_agent"}))
+        (agents / "agent-abc123.jsonl").write_text(record("user", "s1", "count files under docs/") + record("assistant", "s2", [{"type": "text", "text": "looking in docs/."}]))
+        with fixture.open("a") as f:
+            f.write(record("assistant", "a5", [{"type": "tool_use", "id": "toolu_agent", "name": "Agent", "input": {"description": "Count files in docs", "prompt": "count files under docs/", "subagent_type": "general-purpose"}}]))
+            f.write(record("user", "r3", [{"type": "tool_result", "tool_use_id": "toolu_agent", "content": "3 files"}], toolUseResult={"agentId": "abc123"}))
+        page.wait_for_selector(".turn:nth-child(2) .node[data-k=tool]", timeout=6000)
+        page.click(".turn:nth-child(2) .node button.step-head")
+        page.click(".agent-open")
+        page.wait_for_function("() => document.querySelector('#side-body .prompt')?.textContent.includes('count files under docs/')", timeout=5000)
+        with (agents / "agent-abc123.jsonl").open("a") as f:
+            f.write(record("assistant", "s3", [{"type": "text", "text": "found 3 files."}]))
+        page.wait_for_function("() => document.getElementById('side-body').textContent.includes('found 3 files.')", timeout=6000)
+        check("a subagent transcript opens in the side panel and follows new records", page.inner_text("#side-title") == "Count files in docs", page.inner_text("#side-title"))
+        page.screenshot(path=str(OUT / "12-subagent-panel.png"))
+        page.keyboard.press("Escape")
 
         pages = len(context.pages)
         worker.evaluate("id => show('#q=' + encodeURIComponent(id))", "live.jsonl-missing")

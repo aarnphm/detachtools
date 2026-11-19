@@ -2,6 +2,7 @@ import type { SessionHit } from "../server/search"
 import type { Item, SessionMeta, SessionsDelta, Snapshot, Source } from "../server/types"
 import { h } from "./dom"
 import { setupFind } from "./find"
+import { setupPanel } from "./panel"
 import { setupToc } from "./toc"
 import { age, dayGroup, rel, stamp } from "./tools"
 import { Transcript } from "./transcript"
@@ -85,7 +86,9 @@ async function get(path: string, signal?: AbortSignal): Promise<any> {
   return res.json()
 }
 
-const tx = new Transcript({ get, ref: () => current, cwd: () => meta?.cwd, live: isLive })
+const reader = { get, ref: () => current, cwd: () => meta?.cwd, live: isLive }
+const tx = new Transcript(reader)
+const panel = setupPanel({ ...reader, base: BASE, copy: (button, text, rest) => void flash(button, text, rest) })
 const toc = setupToc({ stage: $("stage"), scroll, content: () => tx.el })
 const finder = setupFind({
   get,
@@ -313,6 +316,7 @@ function arrived(items: Item[]) {
 
 function close() {
   finder.close()
+  panel.close()
   stream?.close()
   stream = undefined
   streamUp = false
@@ -352,7 +356,9 @@ function open(next: { source: Source; id: string }, query?: string) {
     const top = scroll.scrollTop
     meta = snap.meta
     streamUp = true
+    performance.mark("transcripts:reset")
     tx.reset(snap.items)
+    performance.measure("transcripts:render", "transcripts:reset")
     if (!mount.contains(tx.el)) mount.replaceChildren(tx.el)
     toc.refresh()
     renderBar()
@@ -535,6 +541,10 @@ document.addEventListener("keydown", (event) => {
     }
   }
   if (event.metaKey || event.ctrlKey || event.altKey || target.closest("input, textarea, select, [contenteditable]")) return
+  if (event.key === "Escape" && panel.isOpen() && !keymap.matches(":popover-open")) {
+    event.preventDefault()
+    return panel.close()
+  }
   if (event.key === "?") {
     event.preventDefault()
     return keymap.togglePopover()
@@ -561,7 +571,14 @@ document.addEventListener("keydown", (event) => {
 })
 
 document.addEventListener("click", (event) => {
-  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>("a[data-jump]")
+  const origin = event.target as HTMLElement
+  const noteLink = origin.closest<HTMLElement>(".notelink")
+  if (noteLink) {
+    return panel.open({ kind: "note", target: noteLink.dataset.note ?? "", anchor: noteLink.dataset.anchor, from: noteLink.closest<HTMLElement>("[data-path]")?.dataset.path })
+  }
+  const agent = origin.closest<HTMLElement>(".agent-open")
+  if (agent) return panel.open({ kind: "agent", agent: agent.dataset.agent ?? "", title: agent.dataset.title ?? "" })
+  const link = origin.closest<HTMLAnchorElement>("a[data-jump]")
   if (!link) return
   event.preventDefault()
   const target = document.getElementById(link.dataset.jump ?? "")

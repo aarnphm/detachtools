@@ -1,0 +1,19 @@
+{
+  "name": "transcripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "hast-util-to-dom": "4.0.1",
+    "katex": "0.16.47",
+    "mdast-util-find-and-replace": "3.0.4",
+    "rehype-highlight": "7.0.2",
+    "rehype-katex": "7.0.1",
+    "rehype-slug": "6.0.0",
+    "remark-gfm": "4.0.1",
+    "remark-math": "6.0.0",
+    "remark-parse": "11.0.0",
+    "remark-rehype": "11.1.2",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.2.0"
+  }
+}

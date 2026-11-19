@@ -18,7 +18,7 @@ A reader for agent sessions on this machine. A bun server reads the stores and t
 
 ## Run it
 
-1. Register the native host once. It builds `ext/view.js` and the icons, writes the launcher `~/.local/state/transcripts/native-host`, and writes `dev.aarnphm.transcripts.json` into the `NativeMessagingHosts` folder of each browser.
+1. Register the native host once. It installs the page's packages with `pnpm install --frozen-lockfile` when `node_modules` is missing, builds `ext/view.js`, the icons and the KaTeX files, writes the launcher `~/.local/state/transcripts/native-host`, and writes `dev.aarnphm.transcripts.json` into the `NativeMessagingHosts` folder of each browser.
 
    ```bash
    bun server/install.ts --browsers chrome,helium
@@ -61,6 +61,20 @@ A path to any `.jsonl` or `.db` transcript opens the same way as an id. Ids matc
 
 The server refuses a request whose `Host` is not `127.0.0.1:4517` or `localhost:4517`, and a request from a web origin other than itself or a `chrome-extension://` page.
 
+## Markdown
+
+Replies and notes go through one remark and rehype pipeline in `ui/render.ts`: GFM (tables, task lists, strikethrough, footnotes), math with KaTeX, code colour with highlight.js, and the Obsidian forms `[[wikilink]]`, `[[note#heading|alias]]`, `==highlight==`, `%%comment%%` and `> [!note]` callouts. The tree becomes DOM nodes with `hast-util-to-dom`; nothing is set through `innerHTML`.
+
+- Math: `$x$`, `$$x$$`, `\(x\)` and `\[x\]`. A `$` that does not open or close math by pandoc's rules (`$5 and $10`) is kept as text.
+- Raw HTML in a reply is shown as its source text. A remote image is shown as its alt text and is not fetched.
+- Rendering the largest session here (250 replies, 120,000 characters) takes 106 ms.
+
+## The side panel
+
+A wikilink, or a link to a `.md` file, opens that note in a panel on the right. The server finds the file (`GET /api/note`): a path is tried against the note that holds the link, the session's directory and the vault; a bare name is matched by file name anywhere in the vault, then in the Claude memory folder of that directory. The vault is the nearest parent folder with `.obsidian`. Only `.md` files under the home folder are read, up to 2 MB.
+
+The panel shows the frontmatter as a table, then the note. Links inside it open in the same panel and `back` returns. An `agent` step has `open the subagent transcript`, which shows that transcript in the panel and follows it while the subagent runs. `esc` closes the panel.
+
 ## The rail of bars
 
 The left edge of the transcript has the table of contents from aarnphm.xyz (`quartz/components/TableOfContents.tsx`, minimal layout), ported in `ui/toc.ts`. It has one bar for each turn and a half-width bar for each heading in a reply. Bars for what is on screen are darker. Under the pointer the bars widen, one label names the nearest turn, and the page behind is veiled. A click scrolls to that turn. The rail is hidden when the pane is narrower than 56rem and on a device with no hover; `j` and `k` do the same job from the keyboard.
@@ -80,11 +94,13 @@ The left edge of the transcript has the table of contents from aarnphm.xyz (`qua
 | `server/main.ts` | routes, event streams, session scan, origin check |
 | `server/claude.ts`, `codex.ts`, `argon.ts` | one adapter per store; each turns records into the items in `server/types.ts` |
 | `server/pb.ts` | protobuf wire decoder for the Argon steps |
+| `server/notes.ts` | finds a note by path or by name in the vault |
 | `server/search.ts` | query terms, item text, the `rg` file filter and a parsed-session cache |
 | `server/build.ts` | bundles `ui/` and draws the icons |
 | `server/host.ts`, `install.ts` | the native host (`start`, `stop`, `status`) and the script that registers it |
-| `ui/` | the page: `md.ts` (markdown to DOM nodes, no `innerHTML`; footnotes become numbered references with the notes under the reply), `ansi.ts` (terminal escapes to styled spans), `find.ts` (find bar, reveal and marks), `toc.ts` (the rail of bars), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
-| `ext/` | the unpacked extension; `view.js` and `icon-*.png` are build output |
+| `ui/` | the page: `render.ts` (the remark and rehype pipeline), `panel.ts` (the side panel for notes and subagent transcripts), `ansi.ts` (terminal escapes to styled spans), `find.ts` (find bar, reveal and marks), `toc.ts` (the rail of bars), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
+| `ext/` | the unpacked extension; `view.js`, `icon-*.png` and `katex/` are build output |
+| `package.json`, `pnpm-lock.yaml` | the page's pinned packages (unified, remark, rehype, katex) |
 | `e2e.py` | headless check of the extension against a fixture transcript that grows during the run |
 
 ## Check it
@@ -93,15 +109,17 @@ The left edge of the transcript has the table of contents from aarnphm.xyz (`qua
 uv run e2e.py
 ```
 
-The run copies `ext/` to a temporary folder and uses port 4599 with its own state folder (`TRANSCRIPTS_PORT`, `TRANSCRIPTS_EXT`, `TRANSCRIPTS_STATE`), so a server on 4517 keeps running. It registers the host inside a temporary browser profile, loads the copy in headless Helium (`BROWSER_PATH` picks another Chromium), and waits for the extension to start the server. It then opens a fixture by path, appends records, waits for the page to show them, and stops the server through the host. It writes screenshots and `result.json` to `evidence/`, or to the folder given as the first argument. The run on 2026-11-19 passed 37 of 37 checks; its record is in `~/workspace/output/transcripts-viewer/`.
+The run copies `ext/` to a temporary folder and uses port 4599 with its own state folder (`TRANSCRIPTS_PORT`, `TRANSCRIPTS_EXT`, `TRANSCRIPTS_STATE`), so a server on 4517 keeps running. It registers the host inside a temporary browser profile, loads the copy in headless Helium (`BROWSER_PATH` picks another Chromium), and waits for the extension to start the server. It then opens a fixture by path, appends records, waits for the page to show them, and stops the server through the host. It writes screenshots and `result.json` to `evidence/`, or to the folder given as the first argument. The run on 2026-11-19 passed 44 of 44 checks; its record is in `~/workspace/output/transcripts-viewer/`.
 
 ## Known limits
 
-- Math is shown as its source text. There is no KaTeX.
-- Code blocks have no syntax colour.
+- A code block is coloured only when its fence names a language.
+- The side panel reads markdown only. A link to a code file stays inert.
+- An embed (`![[note]]`) is a link to the note; the note is not drawn in place.
 - Terminal output keeps bold, dim, italic, underline, strike, inverse and the 16 basic colours. 256-colour and true-colour text keeps the default ink, and background colours are dropped, so text stays readable on paper.
 - Claude thinking blocks are stored empty in most sessions, so they do not show. Argon and Codex reasoning shows when the store has its text.
 - A footnote is matched to its definition inside one reply block. A reference whose definition is in another block stays as written.
+- With `node_modules` missing the page cannot be built. The server then serves the last build, or fails to start when there is none; run the installer.
 - Search does not read subagent transcripts. A mark does not span markup, so a phrase that crosses bold or a link is found but not marked.
 - An Argon step type other than 14, 15, 101 or 132 shows as a `system` row with its longest string.
 - The host files are written by `install.ts`, outside nix. A home-manager module in `hm/` would make them part of a rebuild.

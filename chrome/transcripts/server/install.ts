@@ -57,6 +57,15 @@ if (process.argv.includes("--uninstall")) {
   process.exit(0)
 }
 
+if (!existsSync(join(import.meta.dir, "..", "node_modules", "katex"))) {
+  const pnpm = Bun.which("pnpm")
+  if (!pnpm) {
+    console.error("the page needs its packages. run `pnpm install --frozen-lockfile` in chrome/transcripts, then run this again.")
+    process.exit(1)
+  }
+  const done = Bun.spawnSync([pnpm, "install", "--frozen-lockfile"], { cwd: join(import.meta.dir, ".."), stdout: "inherit", stderr: "inherit" })
+  if (done.exitCode !== 0) process.exit(done.exitCode ?? 1)
+}
 await build()
 const id = extensionId(EXT)
 const bun = Bun.which("bun") ?? process.execPath

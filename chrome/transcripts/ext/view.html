@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="light dark" />
     <title>transcripts</title>
     <link rel="icon" href="icon-32.png" />
+    <link rel="stylesheet" href="katex/katex.min.css" />
     <link rel="stylesheet" href="view.css" />
     <script src="theme.js"></script>
   </head>
@@ -60,13 +61,27 @@
           <button type="button" id="find-close" title="close find (esc)">close</button>
         </div>
       </div>
-      <div class="stage" id="stage">
-        <div class="scroll" id="scroll" tabindex="-1">
-          <div id="mount"></div>
-          <div class="state" id="state" role="status"></div>
+      <div class="work">
+        <div class="stage" id="stage">
+          <div class="scroll" id="scroll" tabindex="-1">
+            <div id="mount"></div>
+            <div class="state" id="state" role="status"></div>
+          </div>
+          <button type="button" class="lone latest" id="latest" hidden>latest</button>
         </div>
+        <aside class="side" id="side" aria-labelledby="side-title" hidden>
+          <header class="side-head">
+            <h2 id="side-title"></h2>
+            <div class="inst" role="group" aria-label="panel">
+              <button type="button" id="side-back" title="go back to the previous note or transcript">back</button>
+              <button type="button" id="side-copy" class="w-copy" title="copy the path or the id">copy</button>
+              <button type="button" id="side-close" title="close the panel (esc)">close</button>
+            </div>
+            <p class="side-sub" id="side-sub"></p>
+          </header>
+          <div class="side-body" id="side-body" tabindex="-1"></div>
+        </aside>
       </div>
-      <button type="button" class="lone latest" id="latest" hidden>latest</button>
     </main>
     <div class="keymap" id="keys" popover aria-labelledby="keys-title">
       <h2 id="keys-title">keyboard</h2>
@@ -79,7 +94,7 @@
         <div><dt><kbd>f</kbd></dt><dd>follow the newest item</dd></div>
         <div><dt><kbd>t</kbd></dt><dd>show or hide thinking</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>this page</dd></div>
-        <div><dt><kbd>esc</kbd></dt><dd>clear the filter, close this page</dd></div>
+        <div><dt><kbd>esc</kbd></dt><dd>clear the filter, close find, this page or the side panel</dd></div>
       </dl>
     </div>
     <script type="module" src="view.js"></script>
