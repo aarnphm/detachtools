@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Copy URL",
-  "version": "1.0.0",
-  "description": "Copy the active tab's URL with Cmd+Shift+C.",
-  "permissions": ["activeTab", "offscreen", "clipboardWrite"],
+  "version": "1.1.0",
+  "description": "Copy the active tab's URL with Cmd+Shift+C, or every selected tab as a Markdown list. Ctrl+Shift+C copies the URLs separated by spaces.",
+  "permissions": ["tabs", "offscreen", "clipboardWrite"],
   "background": {
     "service_worker": "background.js"
   },
@@ -12,10 +12,17 @@
   },
   "commands": {
     "copy-url": {
-      "description": "Copy the active tab's URL",
+      "description": "Copy the URL, or the selected tabs as a Markdown list",
       "suggested_key": {
         "default": "Ctrl+Shift+U",
         "mac": "Command+Shift+C"
+      }
+    },
+    "copy-url-plain": {
+      "description": "Copy the URLs of the selected tabs, separated by spaces",
+      "suggested_key": {
+        "default": "Alt+Shift+U",
+        "mac": "MacCtrl+Shift+C"
       }
     }
   }
