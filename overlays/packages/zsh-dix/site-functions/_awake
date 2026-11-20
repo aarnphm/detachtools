@@ -1,0 +1,26 @@
+#compdef awake
+
+local -a arguments
+arguments=(
+  'off:restore lid-close sleep now'
+  'status:show SleepDisabled, watchdog, battery, thermal'
+  'log:watchdog log and recent pmset sleep/wake events'
+  'help:print usage'
+  '-h:print usage'
+  '--help:print usage'
+  '4h:stay awake four hours (default)'
+  '3h:stay awake three hours'
+  '90m:stay awake ninety minutes'
+  '1h30m:stay awake one hour thirty'
+  '45:stay awake forty-five minutes'
+)
+
+if (( CURRENT == 2 )); then
+  _describe -t arguments 'awake' arguments
+  return
+fi
+
+if (( CURRENT == 3 )) && [[ ${words[2]} == log ]]; then
+  _message 'pmset sleep/wake line count (default 10)'
+  return
+fi
