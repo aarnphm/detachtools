@@ -66,7 +66,7 @@ def main() -> int:
     base = f"http://127.0.0.1:{server.server_port}"
     work = pathlib.Path(tempfile.mkdtemp(prefix="copy-url-e2e-"))
     ext = work / "ext"
-    shutil.copytree(HERE, ext, ignore=shutil.ignore_patterns("e2e.py", "evidence", "index.md"))
+    shutil.copytree(HERE, ext, ignore=shutil.ignore_patterns("e2e.py", "install.sh", "evidence", "index.md"))
 
     with sync_playwright() as pw:
         context = pw.chromium.launch_persistent_context(
@@ -134,6 +134,22 @@ def main() -> int:
 
         badge = worker.evaluate("tab => chrome.action.getBadgeText({ tabId: tab.id })", first)
         check("the badge shows how many tabs were copied", badge == "3", badge)
+
+        def menu() -> dict:
+            worker.evaluate("new Promise(r => setTimeout(r, 300))")
+            return worker.evaluate("menu")
+
+        select(list(PAGES))
+        shown = menu()
+        check("with three tabs selected the right-click menu offers Copy 3 tabs", shown == {"title": "Copy 3 tabs", "visible": True}, shown)
+        two = select(list(PAGES)[:2])
+        shown = menu()
+        check("the entry follows the selection: two tabs says Copy 2 tabs", shown == {"title": "Copy 2 tabs", "visible": True}, shown)
+        text = worker.evaluate("tab => onMenuClick({ menuItemId: 'copy-tabs' }, tab)", two)
+        check("choosing the entry copies the selected tabs as a markdown list", text is not None and text.count("\n") == 1 and read() == text, text)
+        select(["/alpha"])
+        shown = menu()
+        check("with one tab selected the entry is hidden", shown["visible"] is False, shown)
 
         (OUT / "copied-markdown.txt").write_text(worker.evaluate("tab => copyUrls(tab, 'markdown')", select(list(PAGES))) + "\n")
         (OUT / "copied-plain.txt").write_text(worker.evaluate("tab => copyUrls(tab, 'plain')", select(list(PAGES))) + "\n")

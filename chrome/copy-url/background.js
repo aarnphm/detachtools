@@ -1,3 +1,5 @@
+const MENU = "copy-tabs";
+
 const ensureOffscreen = async () => {
   if (await chrome.offscreen.hasDocument()) return;
   await chrome.offscreen.createDocument({
@@ -44,6 +46,40 @@ const copyUrls = async (tab, format) => {
   await flash(active.id, ok ? mark : "!", ok ? "#66800b" : "#af3029");
   return ok ? text : undefined;
 };
+
+let menu = { title: "", visible: false };
+
+const syncMenu = async (windowId) => {
+  const target = windowId ?? (await chrome.windows.getLastFocused().catch(() => undefined))?.id;
+  if (target === undefined || target === chrome.windows.WINDOW_ID_NONE) return menu;
+  const count = (await chrome.tabs.query({ highlighted: true, windowId: target })).filter((t) => t.url).length;
+  const next = { title: `Copy ${count} tabs`, visible: count > 1 };
+  if (next.title !== menu.title || next.visible !== menu.visible) {
+    menu = next;
+    await chrome.contextMenus.update(MENU, next).catch(() => undefined);
+  }
+  return menu;
+};
+
+const createMenu = async () => {
+  await chrome.contextMenus.removeAll();
+  chrome.contextMenus.create({ id: MENU, title: "Copy tabs", contexts: ["all"], visible: false });
+  menu = { title: "Copy tabs", visible: false };
+  await syncMenu();
+};
+
+const onMenuClick = (info, tab) => {
+  if (info.menuItemId === MENU) return copyUrls(tab, "markdown");
+};
+
+chrome.runtime.onInstalled.addListener(createMenu);
+chrome.runtime.onStartup.addListener(createMenu);
+chrome.tabs.onHighlighted.addListener(({ windowId }) => syncMenu(windowId));
+chrome.tabs.onUpdated.addListener((_id, change, tab) => {
+  if (change.url && tab.highlighted) syncMenu(tab.windowId);
+});
+chrome.windows.onFocusChanged.addListener((windowId) => syncMenu(windowId));
+chrome.contextMenus.onClicked.addListener(onMenuClick);
 
 chrome.commands.onCommand.addListener((command, tab) => {
   if (command === "copy-url") copyUrls(tab, "markdown");
