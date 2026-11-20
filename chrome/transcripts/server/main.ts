@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises"
 import { join } from "node:path"
 import * as argon from "./argon"
 import { build } from "./build"
-import { findNote } from "./notes"
+import { findNote, warmNotes } from "./notes"
 import { EXT, PORT, ROOT } from "./paths"
 import * as claude from "./claude"
 import * as codex from "./codex"
@@ -187,6 +187,7 @@ async function live(source: Source, id: string, agent: string | null): Promise<L
   const created = new Live(name, reader)
   lives.set(name, created)
   await created.tick()
+  warmNotes(reader.meta.cwd)
   created.release(() => {})
   return created
 }
@@ -207,24 +208,65 @@ async function itemsOf(meta: SessionMeta): Promise<Item[]> {
   return items
 }
 
-async function searchAll(params: URLSearchParams, signal: AbortSignal) {
+type SearchEvent =
+  | { t: "start"; candidates: number; total: number }
+  | { t: "hit"; hit: SessionHit; scanned: number }
+  | { t: "progress"; scanned: number }
+  | { t: "done"; scanned: number; ms: number; error?: string }
+
+async function* searchSessions(params: URLSearchParams, signal: AbortSignal): AsyncGenerator<SearchEvent> {
+  const started = performance.now()
+  const done = (scanned: number, error?: string): SearchEvent => ({ t: "done", scanned, ms: Math.round(performance.now() - started), error })
   const query = compile(params)
-  if ("error" in query) return { error: query.error, sessions: [], scanned: 0, total: sessions.size }
-  if (isEmpty(query)) return { sessions: [], scanned: 0, total: sessions.size }
+  if ("error" in query) return yield done(0, query.error)
+  if (isEmpty(query)) return yield done(0)
   const detail = Math.min(8, Number(params.get("detail") ?? 0) || 0)
   await scan()
   const all = [...sessions.values()].sort((a, b) => b.updatedAt - a.updatedAt)
   const files = query.literal ? await filesWith(query.terms, [{ dir: claude.ROOT, depth: 2 }, { dir: join(codex.ROOT, "sessions") }]) : undefined
   const candidates = (files ? all.filter((m) => m.source === "argon" || files.has(m.path)) : all).slice(0, SEARCH_LIMIT)
-  const found: SessionHit[] = []
+  yield { t: "start", candidates: candidates.length, total: all.length }
+  let scanned = 0
   for (const meta of candidates) {
     if (signal.aborted) break
     const result = searchLines(await itemsOf(meta), query, 2, Math.max(1, detail))
-    if (!result.total) continue
-    const lines = result.groups.flatMap((g) => g.lines.map((line) => ({ ...line, id: g.id, k: g.k }))).slice(0, Math.max(1, detail))
-    found.push({ source: meta.source, id: meta.id, hits: result.items, total: result.total, snippet: lines[0]?.text ?? "", lines: detail ? lines : undefined })
+    scanned++
+    if (result.total) {
+      const lines = result.groups.flatMap((g) => g.lines.map((line) => ({ ...line, id: g.id, k: g.k }))).slice(0, Math.max(1, detail))
+      yield { t: "hit", scanned, hit: { source: meta.source, id: meta.id, hits: result.items, total: result.total, snippet: lines[0]?.text ?? "", lines: detail ? lines : undefined } }
+    } else yield { t: "progress", scanned }
+    await new Promise((resume) => setImmediate(resume))
   }
-  return { sessions: found, scanned: candidates.length, total: all.length }
+  yield done(scanned)
+}
+
+async function searchAll(params: URLSearchParams, signal: AbortSignal) {
+  const found: SessionHit[] = []
+  let scanned = 0
+  let error: string | undefined
+  for await (const event of searchSessions(params, signal)) {
+    if (event.t === "hit") found.push(event.hit)
+    else if (event.t === "done") {
+      scanned = event.scanned
+      error = event.error
+    }
+  }
+  return { sessions: found, scanned, total: sessions.size, error }
+}
+
+function searchStream(params: URLSearchParams, signal: AbortSignal, headers: Record<string, string>): Response {
+  const events = searchSessions(params, signal)
+  const body = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const next = await events.next().catch(() => ({ done: true as const, value: undefined }))
+      if (next.done) return controller.close()
+      controller.enqueue(encoder.encode(`${JSON.stringify(next.value)}\n`))
+    },
+    cancel() {
+      void events.return(undefined)
+    },
+  })
+  return new Response(body, { headers: { ...headers, "content-type": "application/x-ndjson", "cache-control": "no-store" } })
 }
 
 function scoped(items: Item[], from: string | null, to: string | null): Item[] {
@@ -304,7 +346,9 @@ async function handle(req: Request): Promise<Response> {
       await scan()
       return json({ sessions: [...sessions.values()] })
     }
-    if (parts[1] === "search" && parts.length === 2) return json(await searchAll(url.searchParams, req.signal))
+    if (parts[1] === "search" && parts.length === 2) {
+      return url.searchParams.get("stream") === "1" ? searchStream(url.searchParams, req.signal, cors) : json(await searchAll(url.searchParams, req.signal))
+    }
     if (parts[1] === "note") {
       const found = await findNote(url.searchParams.get("target") ?? "", url.searchParams.get("cwd") || undefined, url.searchParams.get("from") || undefined)
       return json({ note: found.note ?? null, tried: found.tried })

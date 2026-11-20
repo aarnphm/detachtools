@@ -377,15 +377,17 @@ input {
   color: var(--dark);
 }
 
-.live::before {
+.live::before,
+.flag[data-flag="run"]::before {
   content: "";
   display: inline-block;
-  width: 0.375rem;
-  height: 0.375rem;
+  box-sizing: border-box;
+  width: 7px;
+  height: 7px;
   margin-right: 0.75ch;
+  border: 1px solid var(--dark);
   background: var(--secondary);
-  outline: 1px solid var(--dark);
-  vertical-align: 0.05em;
+  vertical-align: baseline;
 }
 
 .empty {
@@ -1607,17 +1609,6 @@ button.step-head {
 
 .flag[data-flag="err"] {
   color: var(--alert);
-}
-
-.flag[data-flag="run"]::before {
-  content: "";
-  display: inline-block;
-  width: 0.375rem;
-  height: 0.375rem;
-  margin-right: 0.75ch;
-  background: var(--secondary);
-  outline: 1px solid var(--dark);
-  vertical-align: 0.05em;
 }
 
 .stat {

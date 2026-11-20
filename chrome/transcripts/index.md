@@ -75,7 +75,7 @@ Open a tool step to see its recorded patches. Each file has a unified diff with 
 
 ## The side panel
 
-A wikilink, or a link to a `.md` file, opens that note in a panel on the right. The server finds the file (`GET /api/note`): a path is tried against the note that holds the link, the session's directory and the vault; a bare name is matched by file name anywhere in the vault, then in the Claude memory folder of that directory. The vault is the nearest parent folder with `.obsidian`. Only `.md` files under the home folder are read, up to 2 MB.
+A wikilink, or a link to a `.md` file, opens that note in a panel on the right. The server finds the file (`GET /api/note`): a path is tried against the note that holds the link, the session's directory and the vault; a bare name is matched by file name anywhere in the vault, then in the Claude memory folder of that directory. When several files have the name, the one nearest the note that holds the link wins, then the one nearest the session's directory. On macOS a name is first asked of Spotlight (`mdfind`), which answers in about 0.2 s; the full list of the vault's markdown files is built in the background when a session opens and is kept for two minutes, because listing a vault with many worktrees takes seconds. The vault is the nearest parent folder with `.obsidian`. Only `.md` files under the home folder are read, up to 2 MB.
 
 The panel shows the frontmatter as a table, then the note. Links inside it open in the same panel and `back` returns. An `agent` step has `open the subagent transcript`, which shows that transcript in the panel and follows it while the subagent runs. `esc` closes the panel.
 
@@ -96,10 +96,12 @@ The page scrolls like vim. `j` and `k` scroll the pane that has focus (the trans
 - `flags`: `case` matches capitals exactly, `word` matches whole words, `regex` reads the search as a regular expression, `fuzzy` matches letters in order with gaps (`glbmtch` finds `glob matched`) and lists the best lines first.
 - `scope`: `block` is the selected block, `session` is the open session, `all sessions` is every session on this machine.
 
+The line above the results says what was found and how long it took (`133 matches in 25 items · 8 ms`). A search that takes longer than 150 ms shows a running time while it waits, and `all sessions` shows how many sessions it has searched so far and adds each session to the list as it is found.
+
 Results are lines, grouped under the item that holds them, with the line number and the match marked. `enter` in the field, or a click on a line, opens the step that holds it, scrolls there and marks the text. `n` and `N` step through the lines from the transcript; `j` and `k` move through them when the list has focus. A line from another session opens that session and goes to the line.
 
 - The server searches the parsed items in memory, so a match inside a folded group or a clamped output is found. `GET /api/search/<source>/<id>` takes `q`, `mode` (`terms`, `regex`, `fuzzy`), `case`, `word`, `filter`, and `from` and `to` item ids for a block. It returns up to 500 lines, 6 for each item.
-- `GET /api/search` takes the same query and returns the sessions that match, newest first, from at most 80 candidates. For plain terms `rg` first lists the session files that contain every term, and only those are parsed.
+- `GET /api/search` takes the same query and returns the sessions that match, newest first, from at most 80 candidates. With `stream=1` the answer is one JSON object on each line: `start`, a `hit` or `progress` for each session, then `done` with the time in ms. For plain terms `rg` first lists the session files that contain every term, and only those are parsed.
 - The rail filter still searches titles at once and, from three characters, what was said.
 - The daemon gets the path of `rg` from `TRANSCRIPTS_RG`, which the installer writes into the launcher, because Chrome starts it with a bare `PATH`. With no `rg` the server parses every session instead.
 

@@ -15,6 +15,7 @@ export interface Selection {
 
 export interface SearchHost {
   get(path: string, signal?: AbortSignal): Promise<any>
+  fetch(path: string, signal?: AbortSignal): Promise<Response>
   ref(): { source: string; id: string } | undefined
   cwd(): string | undefined
   tx: Transcript
@@ -36,9 +37,14 @@ interface Hit {
 
 declare const Highlight: { new (...ranges: Range[]): unknown }
 
-const TYPE_MS = 120
+const TYPE_MS = 40
+const TYPE_ALL_MS = 160
 const LIVE_MS = 600
-const RETRY_MS = [0, 80, 320, 900]
+const WAIT_MS = 150
+const SETTLE_MS = 1500
+
+const took = (ms: number) => (ms < 1000 ? `${Math.max(1, Math.round(ms))} ms` : `${(ms / 1000).toFixed(1)} s`)
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 const marksOf = (line: Line) => [...new Set(line.ranges.map(([from, to]) => line.text.slice(from, to)).filter(Boolean))]
 
@@ -122,6 +128,9 @@ export function setupSearch(host: SearchHost) {
   let timer: ReturnType<typeof setTimeout> | undefined
   let abort: AbortController | undefined
   let pending: { id: string; k: Item["k"]; marks: string[] } | undefined
+  let shown = ""
+  let ticker: ReturnType<typeof setInterval> | undefined
+  let watcher: MutationObserver | undefined
 
   const mode = (): Mode => (on.regex ? "regex" : on.fuzzy ? "fuzzy" : "terms")
   const clear = () => marks?.delete("find")
@@ -174,41 +183,89 @@ export function setupSearch(host: SearchHost) {
         results.append(section)
       }
     }
-    const unit = found.total === 1 ? "match" : "matches"
-    const places = `${found.items} ${found.items === 1 ? "item" : "items"}`
     sum.dataset.state = found.total ? "some" : "none"
-    sum.textContent = !found.total ? (filter.value.trim() ? "no matches with this filter" : "no matches") : `${found.total} ${unit} in ${places}${found.truncated ? `, first ${hits.length} shown` : ""}`
+    return !found.total ? (filter.value.trim() ? "no matches with this filter" : "no matches") : `${plural(found.total, "match", "matches")} in ${plural(found.items, "item")}${found.truncated ? `, first ${hits.length} shown` : ""}`
   }
 
-  function renderSessions(list: SessionHit[]) {
-    results.replaceChildren()
-    hits = []
-    index = -1
-    const known = host.sessions()
-    let total = 0
-    for (const session of list) {
-      total += session.total
-      const meta = known.get(`${session.source}/${session.id}`)
-      const project = meta?.cwd ? meta.cwd.slice(meta.cwd.lastIndexOf("/") + 1) : ""
-      const section = h(
-        "section",
-        { class: "seek-group" },
-        h("h3", { class: "seek-file" }, h("span", { class: "where" }, meta?.title ?? session.id.slice(0, 8)), h("span", { class: "what" }, [session.source, project, meta ? age(meta.updatedAt) : ""].filter(Boolean).join(" · ")), h("span", { class: "n" }, String(session.total))),
-      )
-      for (const line of session.lines ?? []) {
-        section.append(row(line, { id: line.id, k: line.k, marks: marksOf(line), session: { source: session.source, id: session.id } }, h("span", { class: "ln" }, String(line.n))))
-      }
-      const rest = session.total - (session.lines?.length ?? 0)
-      if (rest > 0) section.append(h("p", { class: "seek-more" }, `${rest} more in this session`))
-      results.append(section)
+  function sessionGroup(session: SessionHit): HTMLElement {
+    const meta = host.sessions().get(`${session.source}/${session.id}`)
+    const project = meta?.cwd ? meta.cwd.slice(meta.cwd.lastIndexOf("/") + 1) : ""
+    const section = h(
+      "section",
+      { class: "seek-group" },
+      h("h3", { class: "seek-file" }, h("span", { class: "where" }, meta?.title ?? session.id.slice(0, 8)), h("span", { class: "what" }, [session.source, project, meta ? age(meta.updatedAt) : ""].filter(Boolean).join(" · ")), h("span", { class: "n" }, String(session.total))),
+    )
+    for (const line of session.lines ?? []) {
+      section.append(row(line, { id: line.id, k: line.k, marks: marksOf(line), session: { source: session.source, id: session.id } }, h("span", { class: "ln" }, String(line.n))))
     }
-    sum.dataset.state = total ? "some" : "none"
-    sum.textContent = !total ? "no matches" : `${total} ${total === 1 ? "match" : "matches"} in ${list.length} ${list.length === 1 ? "session" : "sessions"}`
+    const rest = session.total - (session.lines?.length ?? 0)
+    if (rest > 0) section.append(h("p", { class: "seek-more" }, `${rest} more in this session`))
+    return section
   }
 
-  async function run() {
+  function waiting(started: number, text: () => string) {
+    clearInterval(ticker)
+    ticker = setInterval(() => {
+      const ms = performance.now() - started
+      if (ms < WAIT_MS) return
+      sum.dataset.state = "some"
+      sum.textContent = `${text()} · ${took(ms)}`
+    }, 100)
+  }
+
+  async function runAll(params: URLSearchParams, signal: AbortSignal, mine: number, started: number): Promise<string | undefined> {
+    params.set("stream", "1")
+    const res = await host.fetch(`search?${params}`, signal)
+    if (!res.ok || !res.body) throw new Error(String(res.status))
+    let total = 0
+    let found = 0
+    let scanned = 0
+    let candidates = 0
+    let first = true
+    waiting(started, () => `${found ? `${plural(total, "match", "matches")} in ${plural(found, "session")}, ` : ""}searching ${scanned} of ${candidates} sessions`)
+    const decoder = new TextDecoder()
+    let rest = ""
+    for (const reader = res.body.getReader(); ; ) {
+      const chunk = await reader.read()
+      if (mine !== seq) return undefined
+      rest += decoder.decode(chunk.value ?? new Uint8Array(), { stream: !chunk.done })
+      const lines = rest.split("\n")
+      rest = lines.pop() ?? ""
+      for (const text of lines) {
+        if (!text) continue
+        const event = JSON.parse(text)
+        if (event.t === "start") candidates = event.candidates
+        else if (event.t === "progress") scanned = event.scanned
+        else if (event.t === "hit") {
+          if (first) {
+            results.replaceChildren()
+            hits = []
+            index = -1
+            first = false
+          }
+          scanned = event.scanned
+          found++
+          total += event.hit.total
+          results.append(sessionGroup(event.hit))
+        } else if (event.t === "done") {
+          if (event.error) return `not a valid regular expression: ${event.error}`
+          if (first) {
+            results.replaceChildren()
+            hits = []
+            index = -1
+          }
+          sum.dataset.state = total ? "some" : "none"
+          return total ? `${plural(total, "match", "matches")} in ${plural(found, "session")}, ${event.scanned} searched` : `no matches in ${plural(event.scanned, "session")}`
+        }
+      }
+      if (chunk.done) return undefined
+    }
+  }
+
+  async function run(quiet = false) {
     const mine = ++seq
     abort?.abort()
+    clearInterval(ticker)
     const q = input.value.trim()
     const ref = host.ref()
     paintControls()
@@ -216,6 +273,7 @@ export function setupSearch(host: SearchHost) {
       results.replaceChildren()
       hits = []
       index = -1
+      shown = ""
       sum.textContent = ""
       clear()
       return
@@ -230,29 +288,42 @@ export function setupSearch(host: SearchHost) {
     }
     if (scope === "all") params.set("detail", "3")
     abort = new AbortController()
-    let found: (Found & { error?: string }) | { sessions: SessionHit[]; error?: string }
+    const started = performance.now()
+    const keep = index >= 0 ? hits[index]?.id : undefined
+    const scroller = el.parentElement
+    const top = scroller?.scrollTop ?? 0
+    let text: string | undefined
     try {
-      found = await host.get(scope === "all" ? `search?${params}` : `search/${ref!.source}/${encodeURIComponent(ref!.id)}?${params}`, abort.signal)
+      if (scope === "all") text = await runAll(params, abort.signal, mine, started)
+      else {
+        if (!quiet) waiting(started, () => "searching")
+        const body = await host.fetch(`search/${ref!.source}/${encodeURIComponent(ref!.id)}?${params}`, abort.signal).then((res) => res.text())
+        if (mine !== seq) return
+        if (quiet && body === shown) return clearInterval(ticker)
+        shown = body
+        const found: Found & { error?: string } = JSON.parse(body)
+        if (found.error) {
+          results.replaceChildren()
+          hits = []
+          sum.dataset.state = "none"
+          text = `not a valid regular expression: ${found.error}`
+        } else text = render(found)
+      }
     } catch {
-      if (mine === seq) {
+      clearInterval(ticker)
+      if (mine === seq && !abort.signal.aborted) {
         sum.dataset.state = "none"
         sum.textContent = "the server did not answer"
       }
       return
     }
-    if (mine !== seq) return
-    if (found.error) {
-      results.replaceChildren()
-      hits = []
-      sum.dataset.state = "none"
-      sum.textContent = `not a valid regular expression: ${found.error}`
-      return
-    }
-    const keep = index >= 0 ? hits[index]?.id : undefined
-    if ("sessions" in found) renderSessions(found.sessions)
-    else render(found)
+    clearInterval(ticker)
+    if (mine !== seq || text === undefined) return
+    if (/^not a valid/.test(text)) sum.dataset.state = "none"
+    sum.textContent = `${text} · ${took(performance.now() - started)}`
     index = keep ? hits.findIndex((hit) => hit.id === keep) : -1
     if (index >= 0) hits[index].row.setAttribute("aria-current", "true")
+    if (quiet && scroller) scroller.scrollTop = top
     if (pending) {
       const want = pending
       pending = undefined
@@ -266,28 +337,31 @@ export function setupSearch(host: SearchHost) {
     if (k === "think") host.showThinking()
     const target = host.tx.reveal(id)
     if (!target) return
-    const mine = seq
-    let tries = 0
-    const attempt = () => {
-      if (mine !== seq) return
-      const found = ranges(target, needles).filter((r) => r.getClientRects().length)
-      if (!found.length && tries < RETRY_MS.length - 1) {
-        for (const more of target.querySelectorAll<HTMLButtonElement>('button.more[aria-expanded="false"]')) more.click()
-        setTimeout(attempt, RETRY_MS[++tries])
-        return
-      }
-      clear()
-      if (found.length && marks) marks.set("find", new Highlight(...found))
-      const box = (found[0] ?? target).getBoundingClientRect()
+    watcher?.disconnect()
+    clear()
+    const place = (box: DOMRect) => {
       const view = host.scroll.getBoundingClientRect()
       if (box.top < view.top + 24 || box.bottom > view.bottom - 24) host.scroll.scrollTop += box.top - view.top - view.height / 3
-      if (!found.length) {
-        target.classList.remove("fresh")
-        void target.offsetWidth
-        target.classList.add("fresh")
-      }
     }
-    attempt()
+    const mark = () => {
+      const found = ranges(target, needles).filter((r) => r.getClientRects().length)
+      if (!found.length) return false
+      if (marks) marks.set("find", new Highlight(...found))
+      place(found[0].getBoundingClientRect())
+      return true
+    }
+    place(target.getBoundingClientRect())
+    target.classList.remove("fresh")
+    void target.offsetWidth
+    target.classList.add("fresh")
+    if (mark()) return
+    for (const more of target.querySelectorAll<HTMLButtonElement>('button.more[aria-expanded="false"]')) more.click()
+    const observer = new MutationObserver(() => {
+      if (mark()) observer.disconnect()
+    })
+    watcher = observer
+    observer.observe(target, { childList: true, subtree: true, characterData: true })
+    setTimeout(() => observer.disconnect(), SETTLE_MS)
   }
 
   function activate(at: number) {
@@ -306,15 +380,15 @@ export function setupSearch(host: SearchHost) {
     show(hit.id, hit.k, hit.marks)
   }
 
-  const later = (ms: number) => {
+  const later = (ms: number, quiet = false) => {
     clearTimeout(timer)
-    timer = setTimeout(() => void run(), ms)
+    timer = setTimeout(() => void run(quiet), ms)
   }
 
   for (const field of [input, filter]) {
     field.addEventListener("input", () => {
       clear()
-      later(TYPE_MS)
+      later(scope === "all" ? TYPE_ALL_MS : TYPE_MS)
     })
   }
   for (const field of [input, filter]) {
@@ -384,10 +458,13 @@ export function setupSearch(host: SearchHost) {
       if (el.isConnected && input.value.trim()) void run()
     },
     refresh() {
-      if (el.isConnected && scope !== "all" && input.value.trim()) later(LIVE_MS)
+      if (el.isConnected && scope !== "all" && input.value.trim()) later(LIVE_MS, true)
     },
     hidden() {
       seq++
+      abort?.abort()
+      clearInterval(ticker)
+      watcher?.disconnect()
       clear()
     },
   }

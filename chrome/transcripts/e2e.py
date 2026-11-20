@@ -192,7 +192,7 @@ def main() -> int:
         page.wait_for_selector("#seek-q:focus", timeout=3000)
 
         def sums(text: str) -> None:
-            page.wait_for_function("want => document.querySelector('.seek-sum').textContent === want", arg=text, timeout=5000)
+            page.wait_for_function("want => document.querySelector('.seek-sum').textContent.split(' · ')[0] === want", arg=text, timeout=5000)
 
         page.fill("#seek-q", '"matches found"')
         sums("1 match in 1 item")
@@ -202,6 +202,8 @@ def main() -> int:
         check("search in the side panel opens the folded step that holds the match and marks it", marked == [1, "matches found", True], marked)
         page.screenshot(path=str(OUT / "07-search.png"))
 
+        timed = page.inner_text(".seek-sum")
+        check("the summary ends with how long the search took", bool(__import__("re").fullmatch(r"1 match in 1 item · \d+(\.\d)? (ms|s)", timed)), timed)
         page.fill("#seek-q", "DOCS try")
         sums("no matches")
         page.fill("#seek-q", "docs try")
@@ -239,8 +241,8 @@ def main() -> int:
         page.screenshot(path=str(OUT / "16-search-block.png"))
         page.click(".seek [data-scope=all]")
         page.fill("#seek-q", "glob matched nothing")
-        page.wait_for_function("() => /^\\d+ match(es)? in \\d+ sessions?$/.test(document.querySelector('.seek-sum').textContent)", timeout=10000)
-        check("the all sessions scope lists sessions with their lines", page.locator(".seek-group").count() >= 1, page.inner_text(".seek-sum"))
+        page.wait_for_function("() => /^\\d+ match(es)? in \\d+ sessions?, \\d+ searched · \\d+(\\.\\d)? (ms|s)$/.test(document.querySelector('.seek-sum').textContent)", timeout=10000)
+        check("the all sessions scope streams sessions with their lines, a count searched and the time", page.locator(".seek-group").count() >= 1, page.inner_text(".seek-sum"))
         page.press("#seek-q", "Escape")
         page.keyboard.press("Escape")
         cleared = page.locator(".picked").count() == 0 and page.locator("#side").is_visible()
@@ -257,6 +259,36 @@ def main() -> int:
             tops.append(page.evaluate("Math.round(document.getElementById('scroll').scrollTop)"))
         half = page.evaluate("Math.round(document.getElementById('scroll').clientHeight / 2)")
         check("vim keys scroll: j, a count, G, gg and d", tops[0] == 48 and tops[1] == 192 and tops[2] > 192 and tops[3] == 0 and tops[4] == half, [tops, half])
+        page.evaluate("document.getElementById('scroll').scrollTop = 0")
+
+        def turn_position() -> dict:
+            return page.evaluate("""() => {
+                const scroll = document.getElementById('scroll')
+                const next = scroll.querySelectorAll('.turn')[1]
+                return {
+                    page: document.scrollingElement.scrollTop,
+                    header: document.getElementById('bar').getBoundingClientRect().top,
+                    rail: document.querySelector('.rail-head').getBoundingClientRect().top,
+                    top: scroll.scrollTop,
+                    next: next.getBoundingClientRect().top - scroll.getBoundingClientRect().top - parseFloat(getComputedStyle(scroll).scrollPaddingTop),
+                    max: scroll.scrollHeight - scroll.clientHeight,
+                }
+            }""")
+
+        start = turn_position()
+        page.keyboard.press("}")
+        forward = turn_position()
+        page.screenshot(path=str(OUT / "17-turn-jump.png"))
+        page.keyboard.press("{")
+        back = turn_position()
+        outer = ("page", "header", "rail")
+        check(
+            "braces jump to the next turn and back inside the transcript pane",
+            abs(forward["top"] - min(start["next"], start["max"])) <= 1
+            and back["top"] == 0
+            and all(start[key] == forward[key] == back[key] for key in outer),
+            [start, forward, back],
+        )
         page.set_viewport_size({"width": 1280, "height": 860})
 
         page.fill("#find", "glob matched nothing")

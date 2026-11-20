@@ -93,6 +93,7 @@ const reader = { get, ref: () => current, cwd: () => meta?.cwd, live: isLive }
 const tx = new Transcript(reader)
 const search = setupSearch({
   ...reader,
+  fetch: (path, signal) => fetch(`${BASE}/api/${path}`, { signal }),
   tx,
   scroll,
   showThinking: () => {
@@ -484,11 +485,14 @@ function toggleThink() {
 
 function turn(direction: 1 | -1, times: number) {
   const turns = [...tx.el.querySelectorAll<HTMLElement>(":scope > .turn")]
+  const { scrollTop } = scroll
   const top = scroll.getBoundingClientRect().top
-  const offsets = turns.map((t) => t.getBoundingClientRect().top - top)
-  const from = direction > 0 ? offsets.findIndex((o) => o > 12) : offsets.findLastIndex((o) => o < -12)
-  const target = from < 0 ? undefined : turns[Math.min(turns.length - 1, Math.max(0, from + direction * (times - 1)))]
-  if (target) target.scrollIntoView({ block: "start" })
+  const inset = Number.parseFloat(getComputedStyle(scroll).scrollPaddingTop) || 0
+  const limit = scroll.scrollHeight - scroll.clientHeight
+  const stops = turns.map((el, i) => i === 0 ? 0 : Math.min(limit, scrollTop + el.getBoundingClientRect().top - top - inset))
+  const from = direction > 0 ? stops.findIndex((y) => y > scrollTop + 1) : stops.findLastIndex((y) => y < scrollTop - 1)
+  const target = from < 0 ? undefined : stops[Math.min(stops.length - 1, Math.max(0, from + direction * (times - 1)))]
+  if (target !== undefined) scroll.scrollTop = target
   else if (direction > 0) toBottom()
 }
 

@@ -1,12 +1,13 @@
 import { existsSync } from "node:fs"
 import { realpath, stat } from "node:fs/promises"
-import { homedir } from "node:os"
+import { homedir, platform } from "node:os"
 import { basename, dirname, isAbsolute, join, resolve, sep } from "node:path"
 import { RG } from "./search"
 
 const HOME = homedir()
 const MAX_BYTES = 2_000_000
-const INDEX_TTL_MS = 30_000
+const INDEX_TTL_MS = 120_000
+const MDFIND = platform() === "darwin" && existsSync("/usr/bin/mdfind") ? "/usr/bin/mdfind" : undefined
 const MARKDOWN = /\.(?:md|markdown)$/i
 
 export interface Note {
@@ -16,7 +17,7 @@ export interface Note {
   updatedAt: number
 }
 
-const indexes = new Map<string, { at: number; files: string[] }>()
+const indexes = new Map<string, { at: number; files?: string[]; building?: Promise<string[]> }>()
 
 function vault(cwd: string | undefined): string | undefined {
   for (let dir = cwd; dir?.startsWith(HOME) && dir !== HOME; dir = dirname(dir)) {
@@ -25,21 +26,47 @@ function vault(cwd: string | undefined): string | undefined {
   return cwd?.startsWith(HOME) ? cwd : undefined
 }
 
-async function files(root: string): Promise<string[]> {
-  const hit = indexes.get(root)
-  if (hit && Date.now() - hit.at < INDEX_TTL_MS) return hit.files
-  let list: string[] = []
+async function scan(root: string): Promise<string[]> {
   if (RG) {
     const proc = Bun.spawn([RG, "--files", "--null", "--glob", "*.md", "--glob", "*.markdown", "--", root], { stdout: "pipe", stderr: "ignore" })
-    list = (await new Response(proc.stdout).text()).split("\0").filter(Boolean)
+    const list = (await new Response(proc.stdout).text()).split("\0").filter(Boolean)
     await proc.exited
-  } else {
-    for await (const rel of new Bun.Glob("**/*.{md,markdown}").scan({ cwd: root })) {
-      if (!rel.includes("node_modules/")) list.push(join(root, rel))
-    }
+    return list
   }
-  indexes.set(root, { at: Date.now(), files: list })
+  const list: string[] = []
+  for await (const rel of new Bun.Glob("**/*.{md,markdown}").scan({ cwd: root })) {
+    if (!rel.includes("node_modules/")) list.push(join(root, rel))
+  }
   return list
+}
+
+function files(root: string): Promise<string[]> {
+  const hit = indexes.get(root) ?? { at: 0 }
+  indexes.set(root, hit)
+  if (!hit.building && (!hit.files || Date.now() - hit.at > INDEX_TTL_MS)) {
+    hit.building = scan(root)
+      .catch(() => [] as string[])
+      .then((list) => {
+        hit.files = list
+        hit.at = Date.now()
+        hit.building = undefined
+        return list
+      })
+  }
+  return hit.files ? Promise.resolve(hit.files) : hit.building!
+}
+
+async function spotlight(root: string, leaf: string): Promise<string[]> {
+  if (!MDFIND) return []
+  const proc = Bun.spawn([MDFIND, "-onlyin", root, "-name", leaf], { stdout: "pipe", stderr: "ignore" })
+  const found = (await new Response(proc.stdout).text()).split("\n").filter((path) => basename(path).toLowerCase() === leaf)
+  await proc.exited
+  return found
+}
+
+export function warmNotes(cwd: string | undefined): void {
+  const root = vault(cwd)
+  if (root) void files(root)
 }
 
 async function allowed(path: string): Promise<string | undefined> {
@@ -73,20 +100,38 @@ export async function findNote(target: string, cwd: string | undefined, from: st
   if (isAbsolute(withExt)) return { tried }
   const wanted = withExt.toLowerCase()
   const leaf = basename(wanted)
-  const pools = [root && (await files(root)), memoryDir(cwd) && (await files(memoryDir(cwd)!).catch(() => []))].filter((p): p is string[] => !!p)
-  for (const pool of pools) {
+  const near = [from && dirname(from) + sep, cwd && cwd + sep]
+  const rank = (path: string) => {
+    const at = near.findIndex((dir) => dir && path.startsWith(dir))
+    return at < 0 ? near.length : at
+  }
+  const pick = async (pool: string[]) => {
     const matches = pool
       .filter((path) => {
         const lower = path.toLowerCase()
         return wanted.includes("/") ? lower.endsWith(`/${wanted}`) : basename(lower) === leaf
       })
-      .sort((a, b) => a.length - b.length)
+      .sort((a, b) => rank(a) - rank(b) || a.length - b.length)
     for (const path of matches) {
       const real = await allowed(path)
-      if (real) return { note: await load(real), tried }
+      if (real) return load(real)
     }
+    return undefined
   }
-  if (root) tried.push(`${root}/**/${basename(withExt)}`)
+  const memory = memoryDir(cwd)
+  if (root) {
+    const ready = indexes.get(root)?.files
+    const listing = files(root)
+    const quick = ready ? undefined : await pick(await spotlight(root, leaf))
+    const note = quick ?? (await pick(await listing))
+    if (note) return { note, tried }
+    tried.push(`${root}/**/${basename(withExt)}`)
+  }
+  if (memory && existsSync(memory)) {
+    const note = await pick(await scan(memory))
+    if (note) return { note, tried }
+    tried.push(`${memory}/${basename(withExt)}`)
+  }
   return { tried }
 }
 
