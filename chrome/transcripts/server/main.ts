@@ -7,7 +7,7 @@ import { findNote } from "./notes"
 import { EXT, PORT, ROOT } from "./paths"
 import * as claude from "./claude"
 import * as codex from "./codex"
-import { type SessionHit, filesWith, parseQuery, recall, remember, searchItems } from "./search"
+import { type SessionHit, compile, filesWith, isEmpty, recall, remember, searchLines } from "./search"
 import type { Item, Reader, SessionMeta, SessionsDelta, Snapshot, Source } from "./types"
 import { slim } from "./util"
 
@@ -207,20 +207,31 @@ async function itemsOf(meta: SessionMeta): Promise<Item[]> {
   return items
 }
 
-async function searchAll(q: string, signal: AbortSignal) {
-  const terms = parseQuery(q)
-  if (!terms.some((t) => t.text.length >= 2)) return { sessions: [], scanned: 0, total: sessions.size }
+async function searchAll(params: URLSearchParams, signal: AbortSignal) {
+  const query = compile(params)
+  if ("error" in query) return { error: query.error, sessions: [], scanned: 0, total: sessions.size }
+  if (isEmpty(query)) return { sessions: [], scanned: 0, total: sessions.size }
+  const detail = Math.min(8, Number(params.get("detail") ?? 0) || 0)
   await scan()
   const all = [...sessions.values()].sort((a, b) => b.updatedAt - a.updatedAt)
-  const files = await filesWith(terms, [{ dir: claude.ROOT, depth: 2 }, { dir: join(codex.ROOT, "sessions") }])
+  const files = query.literal ? await filesWith(query.terms, [{ dir: claude.ROOT, depth: 2 }, { dir: join(codex.ROOT, "sessions") }]) : undefined
   const candidates = (files ? all.filter((m) => m.source === "argon" || files.has(m.path)) : all).slice(0, SEARCH_LIMIT)
   const found: SessionHit[] = []
   for (const meta of candidates) {
     if (signal.aborted) break
-    const hits = searchItems(await itemsOf(meta), terms)
-    if (hits.length) found.push({ source: meta.source, id: meta.id, hits: hits.length, snippet: hits[0].snippet })
+    const result = searchLines(await itemsOf(meta), query, 2, Math.max(1, detail))
+    if (!result.total) continue
+    const lines = result.groups.flatMap((g) => g.lines.map((line) => ({ ...line, id: g.id, k: g.k }))).slice(0, Math.max(1, detail))
+    found.push({ source: meta.source, id: meta.id, hits: result.items, total: result.total, snippet: lines[0]?.text ?? "", lines: detail ? lines : undefined })
   }
   return { sessions: found, scanned: candidates.length, total: all.length }
+}
+
+function scoped(items: Item[], from: string | null, to: string | null): Item[] {
+  if (!from) return items
+  const start = items.findIndex((item) => item.id === from)
+  const end = items.findIndex((item) => item.id === (to ?? from))
+  return start < 0 || end < start ? [] : items.slice(start, end + 1)
 }
 
 const encoder = new TextEncoder()
@@ -293,7 +304,7 @@ async function handle(req: Request): Promise<Response> {
       await scan()
       return json({ sessions: [...sessions.values()] })
     }
-    if (parts[1] === "search" && parts.length === 2) return json(await searchAll(url.searchParams.get("q") ?? "", req.signal))
+    if (parts[1] === "search" && parts.length === 2) return json(await searchAll(url.searchParams, req.signal))
     if (parts[1] === "note") {
       const found = await findNote(url.searchParams.get("target") ?? "", url.searchParams.get("cwd") || undefined, url.searchParams.get("from") || undefined)
       return json({ note: found.note ?? null, tried: found.tried })
@@ -315,7 +326,11 @@ async function handle(req: Request): Promise<Response> {
       })
     }
     if (verb === "items") return json(session.snapshot())
-    if (verb === "search") return json({ hits: searchItems(session.reader.items.values(), parseQuery(url.searchParams.get("q") ?? "")) })
+    if (verb === "search") {
+      const query = compile(url.searchParams)
+      if ("error" in query) return json({ error: query.error })
+      return json(searchLines(scoped([...session.reader.items.values()], url.searchParams.get("from"), url.searchParams.get("to")), query))
+    }
     if (verb === "item") {
       const item = session.reader.items.get(itemId ?? "")
       return item ? json(item) : json({ error: "not found" }, 404)

@@ -1,5 +1,6 @@
 import type { Item, NoteItem, Patch, ToolItem, UserItem } from "../server/types"
 import { type Child, clamp, h } from "./dom"
+import { patchView } from "./diff"
 import { markdown } from "./render"
 import { ansi, plain } from "./ansi"
 import { clock, commandOf, diffstat, duration, fields, kind, label, pathOf, rel, stamp, stepName, summary } from "./tools"
@@ -23,6 +24,7 @@ export class Transcript {
   steps = 0
   private items = new Map<string, Item>()
   private where = new Map<string, Run | HTMLElement>()
+  private turnOf = new Map<string, number>()
   private runs: Run[] = []
   private body: HTMLElement | undefined
   private run: Run | undefined
@@ -35,6 +37,7 @@ export class Transcript {
     this.el.replaceChildren()
     this.items.clear()
     this.where.clear()
+    this.turnOf.clear()
     this.runs = []
     this.body = undefined
     this.run = undefined
@@ -59,6 +62,11 @@ export class Transcript {
     for (const run of this.runs) run.refresh()
   }
 
+  info(id: string): { item: Item; turn: number } | undefined {
+    const item = this.items.get(id)
+    return item ? { item, turn: this.turnOf.get(id) ?? 0 } : undefined
+  }
+
   anchor(id: string): HTMLElement | undefined {
     const at = this.where.get(id)
     return at instanceof Run ? at.el : at
@@ -79,7 +87,7 @@ export class Transcript {
       this.body.append(prompt)
       this.where.set(item.id, prompt)
     }
-    this.el.append(h("section", { class: "turn", "aria-label": `turn ${this.turns}` }, mark, this.body))
+    this.el.append(h("section", { class: "turn", "aria-label": `turn ${this.turns}`, "data-turn": this.turns }, mark, this.body))
     this.run = undefined
   }
 
@@ -92,8 +100,13 @@ export class Transcript {
 
   private add(item: Item, fresh: boolean) {
     this.items.set(item.id, item)
-    if (item.k === "user") return this.turn(item)
+    if (item.k === "user") {
+      this.turn(item)
+      this.turnOf.set(item.id, this.turns)
+      return
+    }
     if (!this.body) this.turn(undefined)
+    this.turnOf.set(item.id, this.turns)
     if (item.k === "text" || (item.k === "note" && RULES.has(item.kind))) {
       const el = item.k === "text" ? prose(item.id, item.text) : rule(item)
       if (fresh) el.classList.add("fresh")
@@ -141,8 +154,9 @@ export class Transcript {
     const input = fields(item.input)
     const what = kind(item.name)
     const out: Child[] = []
-    if (what === "shell") out.push(block("command", clamp(commandOf(item), 12)))
-    else if (what === "edit" && item.patch?.length) out.push(...item.patch.map((p) => diff(p, this.host.cwd())))
+    const patches = item.patch?.map((p) => diff(p, this.host.cwd())) ?? []
+    if (what === "shell") out.push(block("command", clamp(commandOf(item), 12)), ...patches)
+    else if (patches.length) out.push(...patches)
     else if (what === "write" && typeof input.content === "string") out.push(block(rel(pathOf(item) ?? "content", this.host.cwd()), clamp(input.content, OUTPUT_LINES)))
     else if (what === "todo") out.push(todo(input))
     else if (what === "agent") {
@@ -179,11 +193,8 @@ function statNode(patch: Patch[] | undefined): HTMLElement | undefined {
 }
 
 function diff(patch: Patch, cwd?: string): HTMLElement {
-  const lines = patch.hunks.flatMap((hunk) => [
-    h("span", { class: "l hunk" }, `@@ -${hunk.o} +${hunk.n} @@`),
-    ...hunk.lines.map((line) => h("span", { class: `l ${line[0] === "+" ? "add" : line[0] === "-" ? "del" : ""}` }, line || " ")),
-  ])
-  return block(rel(patch.file, cwd), h("pre", { class: "pre diff" }, ...lines), statNode([patch]))
+  const name = rel(patch.file, cwd)
+  return block(name, patchView(patch, name), statNode([patch]))
 }
 
 function table(input: Record<string, unknown>): HTMLElement {
@@ -276,6 +287,9 @@ class Run {
 
   private paint() {
     const single = this.items.length === 1
+    this.el.dataset.from = this.items[0]?.id
+    this.el.dataset.to = this.items[this.items.length - 1]?.id
+    this.el.dataset.steps = String(this.items.length)
     this.el.toggleAttribute("data-single", single)
     this.el.toggleAttribute("data-open", this.open && !single)
     if (this.items.every((i) => i.k === "think")) this.el.setAttribute("data-only", "think")

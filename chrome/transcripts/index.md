@@ -18,7 +18,7 @@ A reader for agent sessions on this machine. A bun server reads the stores and t
 
 ## Run it
 
-1. Register the native host once. It installs the page's packages with `pnpm install --frozen-lockfile` when `node_modules` is missing, builds `ext/view.js`, the icons and the KaTeX files, writes the launcher `~/.local/state/transcripts/native-host`, and writes `dev.aarnphm.transcripts.json` into the `NativeMessagingHosts` folder of each browser.
+1. Register the native host once. It installs the page's packages with `pnpm install --frozen-lockfile` when needed, builds the page bundle, diff chunks, icons and KaTeX files, writes the launcher `~/.local/state/transcripts/native-host`, and writes `dev.aarnphm.transcripts.json` into the `NativeMessagingHosts` folder of each browser.
 
    ```bash
    bun server/install.ts --browsers chrome,helium
@@ -69,6 +69,10 @@ Replies and notes go through one remark and rehype pipeline in `ui/render.ts`: G
 - Raw HTML in a reply is shown as its source text. A remote image is shown as its alt text and is not fetched.
 - Rendering the largest session here (250 replies, 120,000 characters) takes 106 ms.
 
+## Tool patches
+
+Open a tool step to see its recorded patches. Each file has a unified diff with line numbers, addition and deletion signs, and syntax colours inferred from the filename. Pierre Diffs and its grammars ship with the extension and load when a patch opens. Patches that cannot be rendered with syntax colours stay readable as plain text.
+
 ## The side panel
 
 A wikilink, or a link to a `.md` file, opens that note in a panel on the right. The server finds the file (`GET /api/note`): a path is tried against the note that holds the link, the session's directory and the vault; a bare name is matched by file name anywhere in the vault, then in the Claude memory folder of that directory. The vault is the nearest parent folder with `.obsidian`. Only `.md` files under the home folder are read, up to 2 MB.
@@ -77,14 +81,26 @@ The panel shows the frontmatter as a table, then the note. Links inside it open 
 
 ## The rail of bars
 
-The left edge of the transcript has the table of contents from aarnphm.xyz (`quartz/components/TableOfContents.tsx`, minimal layout), ported in `ui/toc.ts`. It has one bar for each turn and a half-width bar for each heading in a reply. Bars for what is on screen are darker. Under the pointer the bars widen, one label names the nearest turn, and the page behind is veiled. A click scrolls to that turn. The rail is hidden when the pane is narrower than 56rem and on a device with no hover; `j` and `k` do the same job from the keyboard.
+The left edge of the transcript has the table of contents from aarnphm.xyz (`quartz/components/TableOfContents.tsx`, minimal layout), ported in `ui/toc.ts`. It has one bar for each turn and a half-width bar for each heading in a reply. Bars for what is on screen are darker. Under the pointer the bars widen, one label names the nearest turn, and the page behind is veiled. A click scrolls to that turn. The rail is hidden when the pane is narrower than 56rem and on a device with no hover; `{` and `}` do the same job from the keyboard.
+
+## Keys
+
+The page scrolls like vim. `j` and `k` scroll the pane that has focus (the transcript, the side panel or the session list), `d` and `u` move half a page (`ctrl d`, `ctrl u` too), `gg` goes to the top and `G` to the latest item. A count works: `5j`. `{` and `}` go to the previous and next turn. `[` and `]` select the previous and next block (a prompt, a reply or a group of steps); option-click selects one with the mouse, `enter` opens or folds a selected group, and `esc` clears the selection. `?` lists every key.
 
 ## Search
 
-- `⌘F` (or `ctrl F`) opens find for the open session. The server searches the parsed items in memory, so a match inside a folded group or a clamped output is found; the page then opens that step, scrolls to it and marks the text. `enter` and `shift enter` step through; `⌘G` does the same.
-- A query is a list of terms. Every term must occur in the same item, in any order. A term with a capital letter is matched with its case; `"two words"` in quotes is one term.
-- The rail filter searches titles at once and, from three characters, what was said. `rg` lists the session files that contain every term, then the server parses only those and counts the items that match. A row with matches shows the count and one line of context, and opens with find filled in.
-- `GET /api/search/<source>/<id>?q=` returns the items that match in one session. `GET /api/search?q=` returns the sessions that match, newest first, from at most 80 candidates.
+`/` or `⌘F` opens search in the side panel. It has four fields, after spectre in neovim:
+
+- `search`: a list of terms. Every term must occur in the same item, in any order. A term with a capital letter is matched with its case; `"two words"` in quotes is one term.
+- `filter`: which items to read. `reply`, `prompt`, `thinking`, `tool` and `note` name a kind; any other word names a tool (`bash`, `edit`). A leading `-` drops it: `-read`.
+- `flags`: `case` matches capitals exactly, `word` matches whole words, `regex` reads the search as a regular expression, `fuzzy` matches letters in order with gaps (`glbmtch` finds `glob matched`) and lists the best lines first.
+- `scope`: `block` is the selected block, `session` is the open session, `all sessions` is every session on this machine.
+
+Results are lines, grouped under the item that holds them, with the line number and the match marked. `enter` in the field, or a click on a line, opens the step that holds it, scrolls there and marks the text. `n` and `N` step through the lines from the transcript; `j` and `k` move through them when the list has focus. A line from another session opens that session and goes to the line.
+
+- The server searches the parsed items in memory, so a match inside a folded group or a clamped output is found. `GET /api/search/<source>/<id>` takes `q`, `mode` (`terms`, `regex`, `fuzzy`), `case`, `word`, `filter`, and `from` and `to` item ids for a block. It returns up to 500 lines, 6 for each item.
+- `GET /api/search` takes the same query and returns the sessions that match, newest first, from at most 80 candidates. For plain terms `rg` first lists the session files that contain every term, and only those are parsed.
+- The rail filter still searches titles at once and, from three characters, what was said.
 - The daemon gets the path of `rg` from `TRANSCRIPTS_RG`, which the installer writes into the launcher, because Chrome starts it with a bare `PATH`. With no `rg` the server parses every session instead.
 
 ## Files
@@ -98,9 +114,9 @@ The left edge of the transcript has the table of contents from aarnphm.xyz (`qua
 | `server/search.ts` | query terms, item text, the `rg` file filter and a parsed-session cache |
 | `server/build.ts` | bundles `ui/` and draws the icons |
 | `server/host.ts`, `install.ts` | the native host (`start`, `stop`, `status`) and the script that registers it |
-| `ui/` | the page: `render.ts` (the remark and rehype pipeline), `panel.ts` (the side panel for notes and subagent transcripts), `ansi.ts` (terminal escapes to styled spans), `find.ts` (find bar, reveal and marks), `toc.ts` (the rail of bars), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
-| `ext/` | the unpacked extension; `view.js`, `icon-*.png` and `katex/` are build output |
-| `package.json`, `pnpm-lock.yaml` | the page's pinned packages (unified, remark, rehype, katex) |
+| `ui/` | the page: `render.ts` (the remark and rehype pipeline), `panel.ts` (the side panel for notes and subagent transcripts), `ansi.ts` (terminal escapes to styled spans), `search.ts` (the search view in the side panel, reveal and marks), `toc.ts` (the rail of bars), `transcript.ts` (turns, groups, step tree), `main.ts` (list, routing, keys) |
+| `ext/` | the unpacked extension; `view.js`, `chunks/`, `icon-*.png` and `katex/` are build output |
+| `package.json`, `pnpm-lock.yaml` | the page's pinned packages (unified, remark, rehype, KaTeX, Pierre Diffs) |
 | `e2e.py` | headless check of the extension against a fixture transcript that grows during the run |
 
 ## Check it

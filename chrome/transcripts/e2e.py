@@ -22,6 +22,7 @@ import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from playwright.sync_api import sync_playwright
@@ -29,7 +30,7 @@ from playwright.sync_api import sync_playwright
 HERE = pathlib.Path(__file__).resolve().parent
 EXT = HERE / "ext"
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else HERE / "evidence").resolve()
-PORT = 4599
+PORT = int(os.environ.get("TRANSCRIPTS_E2E_PORT", "4599"))
 BASE = f"http://127.0.0.1:{PORT}"
 VAULT = OUT / "fixture" / "vault"
 BROWSER = os.environ.get("BROWSER_PATH", "/Applications/Helium.app/Contents/MacOS/Helium")
@@ -66,7 +67,7 @@ def main() -> int:
         return 2
     work = pathlib.Path(os.path.realpath(tempfile.mkdtemp(prefix="transcripts-e2e-")))
     ext = work / "ext"
-    shutil.copytree(EXT, ext, ignore=shutil.ignore_patterns("view.js", "icon-*.png", "katex"))
+    shutil.copytree(EXT, ext, ignore=shutil.ignore_patterns("view.js", "chunks", "icon-*.png", "katex"))
     env = {**os.environ, "TRANSCRIPTS_PORT": str(PORT), "TRANSCRIPTS_EXT": str(ext), "TRANSCRIPTS_STATE": str(work / "state")}
 
     fixture = OUT / "fixture" / "live.jsonl"
@@ -187,19 +188,76 @@ def main() -> int:
         page.screenshot(path=str(OUT / "02-live-tree-light.png"))
 
         page.click(".run-head")
-        page.keyboard.press("ControlOrMeta+f")
-        page.fill("#find-in", '"matches found"')
-        page.wait_for_function("() => document.getElementById('find-count').textContent === '1 / 1'", timeout=5000)
+        page.keyboard.press("/")
+        page.wait_for_selector("#seek-q:focus", timeout=3000)
+
+        def sums(text: str) -> None:
+            page.wait_for_function("want => document.querySelector('.seek-sum').textContent === want", arg=text, timeout=5000)
+
+        page.fill("#seek-q", '"matches found"')
+        sums("1 match in 1 item")
+        page.press("#seek-q", "Enter")
+        page.wait_for_function("() => CSS.highlights.has('find')", timeout=3000)
         marked = page.evaluate("(() => { const r = [...CSS.highlights.get('find') ?? []]; return [r.length, r[0]?.toString(), !!r[0]?.startContainer.parentElement.closest('.run[data-open]')] })()")
-        check("find opens the folded step that holds the match and marks it", marked == [1, "matches found", True], marked)
-        page.screenshot(path=str(OUT / "07-find.png"))
-        page.fill("#find-in", "DOCS try")
-        page.wait_for_function("() => document.getElementById('find-count').textContent === 'no matches'", timeout=5000)
-        page.fill("#find-in", "docs try")
-        page.wait_for_function("() => document.getElementById('find-count').textContent === '1 / 1'", timeout=5000)
+        check("search in the side panel opens the folded step that holds the match and marks it", marked == [1, "matches found", True], marked)
+        page.screenshot(path=str(OUT / "07-search.png"))
+
+        page.fill("#seek-q", "DOCS try")
+        sums("no matches")
+        page.fill("#seek-q", "docs try")
+        sums("1 match in 1 item")
         check("terms match in any order, and capitals make a term exact", True)
+        page.click(".seek [data-flag=regex]")
+        page.fill("#seek-q", "^[ac]\\.md$")
+        sums("2 matches in 1 item")
+        page.fill("#seek-q", "(")
+        page.wait_for_function("() => document.querySelector('.seek-sum').textContent.startsWith('not a valid regular expression')", timeout=5000)
+        check("the regex flag matches by pattern and a bad pattern is explained", True)
+        page.click(".seek [data-flag=fuzzy]")
+        page.fill("#seek-q", "glbmtch")
+        page.wait_for_function("() => document.querySelector('.seek-line .tx')?.textContent.includes('glob matched')", timeout=5000)
+        check("the fuzzy flag finds letters in order with gaps", page.get_attribute(".seek [data-flag=regex]", "aria-pressed") == "false")
+        page.click(".seek [data-flag=fuzzy]")
+        page.fill("#seek-q", "md")
+        page.fill("#seek-filter", "reply")
+        page.wait_for_function("() => { const w = [...document.querySelectorAll('.seek-file .where')]; return w.length > 0 && w.every(e => e.textContent.endsWith('reply')) }", timeout=5000)
+        page.fill("#seek-filter", "-reply -prompt")
+        page.wait_for_function("() => { const w = [...document.querySelectorAll('.seek-file .where')]; return w.length > 0 && w.every(e => !/reply|prompt/.test(e.textContent)) }", timeout=5000)
+        check("the filter keeps or drops kinds of item", True)
+        page.fill("#seek-filter", "")
+
+        page.press("#seek-q", "Escape")
+        for _ in range(8):
+            page.keyboard.press("]")
+            if page.locator(".run.picked").count():
+                break
+        page.keyboard.press("/")
+        page.fill("#seek-q", "md")
+        page.wait_for_function("() => { const w = [...document.querySelectorAll('.seek-file .where')]; return w.length > 0 && w.every(e => e.textContent.endsWith('bash')) }", timeout=5000)
+        scope = page.evaluate("[document.querySelector('.seek [data-scope=block]').getAttribute('aria-pressed'), document.querySelector('.seek-where').textContent, document.getElementById('side-sub').textContent]")
+        check("a block picked with ] narrows the search to its steps", scope == ["true", "turn 1 · 2 steps", "in turn 1 · 2 steps"], scope)
+        page.screenshot(path=str(OUT / "16-search-block.png"))
+        page.click(".seek [data-scope=all]")
+        page.fill("#seek-q", "glob matched nothing")
+        page.wait_for_function("() => /^\\d+ match(es)? in \\d+ sessions?$/.test(document.querySelector('.seek-sum').textContent)", timeout=10000)
+        check("the all sessions scope lists sessions with their lines", page.locator(".seek-group").count() >= 1, page.inner_text(".seek-sum"))
+        page.press("#seek-q", "Escape")
         page.keyboard.press("Escape")
-        check("escape closes find and clears the marks", page.locator("#finder").is_hidden() and page.evaluate("!CSS.highlights.has('find')"))
+        cleared = page.locator(".picked").count() == 0 and page.locator("#side").is_visible()
+        page.keyboard.press("Escape")
+        check("escape clears the selection, then closes the panel and the marks", cleared and page.locator("#side").is_hidden() and page.evaluate("!CSS.highlights.has('find')"))
+
+        page.set_viewport_size({"width": 1280, "height": 420})
+        page.evaluate("document.getElementById('scroll').scrollTop = 0")
+        page.focus("#scroll")
+        tops = []
+        for keys in (["j"], ["3", "j"], ["G"], ["g", "g"], ["d"]):
+            for key in keys:
+                page.keyboard.press(key)
+            tops.append(page.evaluate("Math.round(document.getElementById('scroll').scrollTop)"))
+        half = page.evaluate("Math.round(document.getElementById('scroll').clientHeight / 2)")
+        check("vim keys scroll: j, a count, G, gg and d", tops[0] == 48 and tops[1] == 192 and tops[2] > 192 and tops[3] == 0 and tops[4] == half, [tops, half])
+        page.set_viewport_size({"width": 1280, "height": 860})
 
         page.fill("#find", "glob matched nothing")
         page.wait_for_function("() => /with matches/.test(document.getElementById('conn').textContent)", timeout=8000)
@@ -241,7 +299,7 @@ def main() -> int:
         page.keyboard.press("Escape")
         page.locator("body").press("?")
         rows = page.locator("#keys:popover-open dl div").count()
-        check("? opens one page with every shortcut", rows == 9, rows)
+        check("? opens one page with every shortcut", rows == 13, rows)
         page.wait_for_timeout(300)
         solid = page.evaluate("(() => { const s = getComputedStyle(document.getElementById('keys')); return [s.opacity, s.backgroundColor] })()")
         check("the shortcuts page is opaque paper", solid == ["1", "rgb(255, 252, 240)"], solid)
@@ -274,6 +332,65 @@ def main() -> int:
         check("a subagent transcript opens in the side panel and follows new records", page.inner_text("#side-title") == "Count files in docs", page.inner_text("#side-title"))
         page.screenshot(path=str(OUT / "12-subagent-panel.png"))
         page.keyboard.press("Escape")
+
+        # Open an older-style structured edit in its own transcript.
+        edit = OUT / "fixture" / "edit.jsonl"
+        file = str(VAULT / "code sample.ts")
+        long_value = "x" * 160
+        edit.write_text(
+            record("user", "du", "update the count", origin={"kind": "human"})
+            + record("assistant", "da", [{"type": "tool_use", "id": "toolu_edit", "name": "Edit", "input": {"file_path": file}}])
+            + record(
+                "user", "dr", [{"type": "tool_result", "tool_use_id": "toolu_edit", "content": "updated"}],
+                toolUseResult={"filePath": file, "structuredPatch": [
+                    {"oldStart": 37, "newStart": 37, "lines": ["-const count = 1", "+const count = 2", " // retained context"]},
+                    {"oldStart": 91, "newStart": 91, "lines": [f'+const text = "<script>{long_value}</script>"']},
+                ]},
+            )
+        )
+        # The literal script is source text in the patch, including its angle brackets.
+        page.goto(f"chrome-extension://{ext_id}/view.html#q=" + urllib.parse.quote(str(edit), safe=""))
+        page.wait_for_selector('[data-id="toolu_edit"] > .step-head', timeout=6000)
+        page.keyboard.press("ControlOrMeta+f")
+        page.locator('.seek [data-scope="session"]').click()
+        page.fill("#seek-q", "retained")
+        page.locator(".seek-line").filter(has_text="retained").click(timeout=6000)
+        page.wait_for_function("""() => [...CSS.highlights.get('find') ?? []].some(
+            r => r.startContainer.parentElement.closest('[data-id="toolu_edit"] .diff code') && r.toString() === 'retained'
+        )""", timeout=6000)
+        check("search opens a recorded edit and marks its syntax-highlighted code", True)
+        page.keyboard.press("Escape")
+        patch_view = page.locator('[data-id="toolu_edit"] .diff')
+        added = patch_view.locator('[data-line-type="change-addition"]').first
+        removed = patch_view.locator('[data-line-type="change-deletion"]')
+        added.wait_for(timeout=8000)
+        check(
+            "Pierre renders the recorded hunk positions and explicit add and remove markers",
+            added.locator(".diff-number").inner_text() == "37"
+            and removed.locator(".diff-sign").inner_text() == "−"
+            and added.locator(".diff-sign").inner_text() == "+"
+            and patch_view.locator('[data-line="91"] code').inner_text().endswith(f'{long_value}</script>"'),
+        )
+        token = added.locator("code span").first
+        light_token = token.evaluate("(el) => getComputedStyle(el).color")
+        check(
+            "TypeScript tokens are highlighted and markup in source stays text",
+            light_token != added.locator("code").evaluate("(el) => getComputedStyle(el).color")
+            and patch_view.locator("script").count() == 0,
+            light_token,
+        )
+        patch_block = page.locator('[data-id="toolu_edit"] .blk').filter(has=page.locator(".diff"))
+        patch_block.screenshot(path=str(OUT / "13-diff-light.png"))
+        page.emulate_media(color_scheme="dark")
+        dark_token = token.evaluate("(el) => getComputedStyle(el).color")
+        check("diff code follows the dark Garden palette", dark_token != light_token, [light_token, dark_token])
+        patch_block.screenshot(path=str(OUT / "14-diff-dark.png"))
+        page.set_viewport_size({"width": 320, "height": 700})
+        diff_width = patch_view.evaluate("(el) => [el.scrollWidth, el.clientWidth, document.documentElement.scrollWidth, innerWidth]")
+        check("long diff lines wrap inside the 320px viewport", diff_width[0] <= diff_width[1] and diff_width[2] <= diff_width[3], diff_width)
+        patch_block.screenshot(path=str(OUT / "15-diff-phone.png"))
+        page.emulate_media(color_scheme="light")
+        page.set_viewport_size({"width": 1280, "height": 860})
 
         pages = len(context.pages)
         worker.evaluate("id => show('#q=' + encodeURIComponent(id))", "live.jsonl-missing")

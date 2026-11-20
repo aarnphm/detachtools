@@ -5,11 +5,12 @@ import { note as renderNote } from "./render"
 import { rel, stamp } from "./tools"
 import { type Host, Transcript } from "./transcript"
 
-export type View = { kind: "note"; target: string; anchor?: string; from?: string } | { kind: "agent"; agent: string; title: string }
+export type View = { kind: "note"; target: string; anchor?: string; from?: string } | { kind: "agent"; agent: string; title: string } | { kind: "search" }
 
 export interface PanelHost extends Host {
   base: string
   copy(button: HTMLButtonElement, text: string, rest: string): void
+  search: { el: HTMLElement; hidden(): void }
 }
 
 export function setupPanel(host: PanelHost) {
@@ -104,20 +105,29 @@ export function setupPanel(host: PanelHost) {
   function show(view: View) {
     stream?.close()
     stream = undefined
+    if (current?.kind === "search" && view.kind !== "search") host.search.hidden()
     current = view
     side.hidden = false
+    copy.disabled = view.kind === "search"
     if (view.kind === "note") void showNote(view)
-    else showAgent(view)
+    else if (view.kind === "agent") showAgent(view)
+    else {
+      seq++
+      head("search", "", "")
+      body.replaceChildren(host.search.el)
+    }
   }
 
   function open(view: View) {
+    if (view.kind === "search" && current?.kind === "search" && !side.hidden) return
     if (current && !side.hidden) stack.push(current)
     show(view)
-    body.focus({ preventScroll: true })
+    if (view.kind !== "search") body.focus({ preventScroll: true })
   }
 
   function close() {
     if (side.hidden) return
+    if (current?.kind === "search") host.search.hidden()
     seq++
     stream?.close()
     stream = undefined
@@ -134,5 +144,17 @@ export function setupPanel(host: PanelHost) {
   copy.addEventListener("click", () => host.copy(copy, copyText, "copy"))
   $("side-close").addEventListener("click", close)
 
-  return { open, close, isOpen: () => !side.hidden }
+  return {
+    open,
+    close,
+    isOpen: () => !side.hidden,
+    detail(text: string) {
+      if (current?.kind === "search") sub.textContent = text
+    },
+    sessionChanged() {
+      stack.length = 0
+      back.disabled = true
+      if (current?.kind !== "search") close()
+    },
+  }
 }

@@ -57,7 +57,7 @@ if (process.argv.includes("--uninstall")) {
   process.exit(0)
 }
 
-if (!existsSync(join(import.meta.dir, "..", "node_modules", "katex"))) {
+if (["katex", "@pierre/diffs"].some((pkg) => !existsSync(join(import.meta.dir, "..", "node_modules", pkg)))) {
   const pnpm = Bun.which("pnpm")
   if (!pnpm) {
     console.error("the page needs its packages. run `pnpm install --frozen-lockfile` in chrome/transcripts, then run this again.")

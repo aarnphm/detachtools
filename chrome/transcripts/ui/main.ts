@@ -1,8 +1,8 @@
 import type { SessionHit } from "../server/search"
 import type { Item, SessionMeta, SessionsDelta, Snapshot, Source } from "../server/types"
 import { h } from "./dom"
-import { setupFind } from "./find"
 import { setupPanel } from "./panel"
+import { setupSearch } from "./search"
 import { setupToc } from "./toc"
 import { age, dayGroup, rel, stamp } from "./tools"
 import { Transcript } from "./transcript"
@@ -69,6 +69,9 @@ let wokeAt = 0
 let hostMissing = false
 let listStream: EventSource | undefined
 let pendingFind: string | undefined
+let picked: HTMLElement | undefined
+let count = ""
+let leader = 0
 let contentQuery = ""
 let contentHits = new Map<string, SessionHit>()
 let contentBusy = false
@@ -88,17 +91,22 @@ async function get(path: string, signal?: AbortSignal): Promise<any> {
 
 const reader = { get, ref: () => current, cwd: () => meta?.cwd, live: isLive }
 const tx = new Transcript(reader)
-const panel = setupPanel({ ...reader, base: BASE, copy: (button, text, rest) => void flash(button, text, rest) })
-const toc = setupToc({ stage: $("stage"), scroll, content: () => tx.el })
-const finder = setupFind({
-  get,
-  ref: () => current,
+const search = setupSearch({
+  ...reader,
   tx,
   scroll,
   showThinking: () => {
     if (!think) toggleThink()
   },
+  selection,
+  sessions: () => sessions,
+  go: (source, id) => {
+    location.hash = hrefOf({ source, id })
+  },
+  detail: (text) => panel.detail(text),
 })
+const panel = setupPanel({ ...reader, base: BASE, copy: (button, text, rest) => void flash(button, text, rest), search })
+const toc = setupToc({ stage: $("stage"), scroll, content: () => tx.el })
 
 function show(heading: string, ...body: (Node | string)[]) {
   mount.replaceChildren()
@@ -315,8 +323,8 @@ function arrived(items: Item[]) {
 }
 
 function close() {
-  finder.close()
-  panel.close()
+  pick(undefined)
+  panel.sessionChanged()
   stream?.close()
   stream = undefined
   streamUp = false
@@ -327,7 +335,7 @@ function close() {
 
 function open(next: { source: Source; id: string }, query?: string) {
   if (current && keyOf(current) === keyOf(next) && stream) {
-    if (query && meta) finder.open(query)
+    if (query && meta) openSearch(query)
     return
   }
   close()
@@ -364,14 +372,15 @@ function open(next: { source: Source; id: string }, query?: string) {
     renderBar()
     if (first) toBottom()
     else scroll.scrollTop = top
-    if (first && pendingFind) finder.open(pendingFind)
-    else finder.refresh()
+    if (first && pendingFind) openSearch(pendingFind)
+    else if (first) search.sessionChanged()
+    else search.refresh()
     pendingFind = undefined
   })
   es.addEventListener("upsert", (event) => {
     arrived(JSON.parse((event as MessageEvent).data).items)
     renderBar()
-    finder.refresh()
+    search.refresh()
   })
   es.addEventListener("meta", (event) => {
     meta = JSON.parse((event as MessageEvent).data)
@@ -473,13 +482,60 @@ function toggleThink() {
   paintControls()
 }
 
-function step(direction: 1 | -1) {
+function turn(direction: 1 | -1, times: number) {
   const turns = [...tx.el.querySelectorAll<HTMLElement>(":scope > .turn")]
   const top = scroll.getBoundingClientRect().top
   const offsets = turns.map((t) => t.getBoundingClientRect().top - top)
-  const target = direction > 0 ? turns[offsets.findIndex((o) => o > 12)] : turns[offsets.findLastIndex((o) => o < -12)]
+  const from = direction > 0 ? offsets.findIndex((o) => o > 12) : offsets.findLastIndex((o) => o < -12)
+  const target = from < 0 ? undefined : turns[Math.min(turns.length - 1, Math.max(0, from + direction * (times - 1)))]
   if (target) target.scrollIntoView({ block: "start" })
   else if (direction > 0) toBottom()
+}
+
+const blocks = () => [...tx.el.querySelectorAll<HTMLElement>(":scope > .turn > .turn-body > :is(.prompt, .prose, .run, .rule)")]
+
+function selection() {
+  if (!picked?.isConnected) return undefined
+  const from = picked.dataset.from ?? picked.dataset.id
+  if (!from) return undefined
+  const steps = Number(picked.dataset.steps ?? 0)
+  const kind = picked.matches(".run") ? `${steps} ${steps === 1 ? "step" : "steps"}` : picked.matches(".prompt") ? "prompt" : picked.matches(".prose") ? "reply" : "note"
+  return { from, to: picked.dataset.to ?? from, label: `turn ${picked.closest<HTMLElement>(".turn")?.dataset.turn ?? "?"} · ${kind}` }
+}
+
+function pick(el: HTMLElement | undefined) {
+  if (picked === el) return
+  picked?.classList.remove("picked")
+  picked = el
+  el?.classList.add("picked")
+  el?.scrollIntoView({ block: "nearest" })
+  search.selectionChanged()
+}
+
+function move(direction: 1 | -1, times: number) {
+  const all = blocks()
+  if (!all.length) return
+  let at = picked?.isConnected ? all.indexOf(picked) : -1
+  if (at < 0) {
+    const view = scroll.getBoundingClientRect()
+    at = all.findIndex((el) => el.getBoundingClientRect().bottom > view.top + 8)
+    if (at < 0) at = all.length - 1
+    times--
+  }
+  pick(all[Math.min(all.length - 1, Math.max(0, at + direction * times))])
+}
+
+function openSearch(query?: string) {
+  panel.open({ kind: "search" })
+  search.focus(query, query !== undefined ? "session" : selection() ? "block" : undefined)
+}
+
+function pane(): HTMLElement {
+  const active = document.activeElement
+  const side = $("side-body")
+  if (active && side.contains(active) && !active.closest(".seek")) return side
+  if (active && list.contains(active)) return list
+  return scroll
 }
 
 followButton.addEventListener("click", toggleFollow)
@@ -529,46 +585,90 @@ $("sources").addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   const target = event.target as HTMLElement
-  if ((event.metaKey || event.ctrlKey) && !event.altKey && current && meta) {
-    const key = event.key.toLowerCase()
-    if (key === "f" && !event.shiftKey) {
-      event.preventDefault()
-      return finder.open()
-    }
-    if (key === "g" && finder.isOpen()) {
-      event.preventDefault()
-      return finder.step(event.shiftKey ? -1 : 1)
-    }
-  }
-  if (event.metaKey || event.ctrlKey || event.altKey || target.closest("input, textarea, select, [contenteditable]")) return
-  if (event.key === "Escape" && panel.isOpen() && !keymap.matches(":popover-open")) {
+  const typing = !!target.closest("input, textarea, select, [contenteditable]")
+  const ready = !!current && !!meta
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "f" && ready) {
     event.preventDefault()
-    return panel.close()
+    return openSearch()
+  }
+  if (event.ctrlKey && !event.metaKey && !event.altKey && !typing && ready && (event.key === "d" || event.key === "u")) {
+    event.preventDefault()
+    const area = pane()
+    return area.scrollBy({ top: (event.key === "d" ? 1 : -1) * area.clientHeight * 0.5 })
+  }
+  if (event.metaKey || event.ctrlKey || event.altKey || typing) return
+  if (event.key === "Escape" && !keymap.matches(":popover-open")) {
+    if (picked) {
+      event.preventDefault()
+      return pick(undefined)
+    }
+    if (panel.isOpen()) {
+      event.preventDefault()
+      return panel.close()
+    }
+    return
   }
   if (event.key === "?") {
     event.preventDefault()
     return keymap.togglePopover()
   }
   if (keymap.matches(":popover-open")) return
+  if (/^[0-9]$/.test(event.key) && (count || event.key !== "0")) {
+    count += event.key
+    return
+  }
+  const times = Math.min(999, Number(count) || 1)
+  count = ""
+  const twice = event.key === "g" && Date.now() - leader < 700
+  leader = event.key === "g" && !twice ? Date.now() : 0
+  if (event.key === "s") {
+    event.preventDefault()
+    setRail(true)
+    find.focus()
+    return find.select()
+  }
+  if (!ready) return
+  const area = pane()
+  const line = 48 * times
   const actions: Record<string, () => void> = {
-    "/": () => {
-      setRail(true)
-      find.focus()
-      find.select()
+    j: () => area.scrollBy({ top: line }),
+    k: () => area.scrollBy({ top: -line }),
+    d: () => area.scrollBy({ top: area.clientHeight * 0.5 * times }),
+    u: () => area.scrollBy({ top: -area.clientHeight * 0.5 * times }),
+    g: () => {
+      if (twice) area.scrollTo({ top: 0 })
     },
-    j: () => step(1),
-    k: () => step(-1),
-    g: () => scroll.scrollTo({ top: 0 }),
-    G: toBottom,
+    G: () => (area === scroll ? toBottom() : area.scrollTo({ top: area.scrollHeight })),
+    "}": () => turn(1, times),
+    "{": () => turn(-1, times),
+    "]": () => move(1, times),
+    "[": () => move(-1, times),
+    Enter: () => picked?.querySelector<HTMLButtonElement>(":scope > .run-head, :scope > .tree > .node > button.step-head")?.click(),
+    "/": () => openSearch(),
+    n: () => search.step(1),
+    N: () => search.step(-1),
     e: toggleExpand,
     f: toggleFollow,
     t: toggleThink,
   }
   const action = actions[event.key]
-  if (!action || (!current && event.key !== "/")) return
+  if (!action || (event.key === "Enter" && (!picked || target.closest("button, a")))) return
   event.preventDefault()
   action()
 })
+
+document.addEventListener(
+  "click",
+  (event) => {
+    if (!event.altKey) return
+    const block = (event.target as HTMLElement).closest<HTMLElement>(".turn-body > :is(.prompt, .prose, .run, .rule)")
+    if (!block || !tx.el.contains(block)) return
+    event.preventDefault()
+    event.stopPropagation()
+    pick(block === picked ? undefined : block)
+  },
+  true,
+)
 
 document.addEventListener("click", (event) => {
   const origin = event.target as HTMLElement

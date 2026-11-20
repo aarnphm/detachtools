@@ -1,4 +1,4 @@
-import { join } from "node:path"
+import { basename, join } from "node:path"
 import { deflateSync } from "node:zlib"
 import { EXT, HOST, PORT, ROOT } from "./paths"
 
@@ -59,6 +59,8 @@ export async function build() {
     entrypoints: [join(ROOT, "ui", "main.ts")],
     target: "browser",
     format: "esm",
+    splitting: true,
+    naming: { entry: "view.[ext]", chunk: "chunks/[name]-[hash].[ext]" },
     minify: true,
     define: {
       SERVER_COMMAND: JSON.stringify(`bun ${tilde(join(ROOT, "server", "main.ts"))}`),
@@ -68,7 +70,13 @@ export async function build() {
     },
   })
   if (!result.success) throw new AggregateError(result.logs, "ui build failed")
-  await Bun.write(join(EXT, "view.js"), await result.outputs[0].text())
+  const entry = result.outputs.find((output) => output.kind === "entry-point")
+  if (!entry) throw new Error("ui build produced no entry point")
+  await Promise.all(result.outputs.filter((output) => output !== entry).map(async (output) => {
+    const file = Bun.file(join(EXT, "chunks", basename(output.path)))
+    if (!(await file.exists())) await Bun.write(file, output)
+  }))
+  await Bun.write(join(EXT, "view.js"), entry)
   await Promise.all([16, 32, 48, 128].map((size) => Bun.write(join(EXT, `icon-${size}.png`), icon(size))))
   const katex = join(ROOT, "node_modules", "katex", "dist")
   await Bun.write(join(EXT, "katex", "katex.min.css"), Bun.file(join(katex, "katex.min.css")))

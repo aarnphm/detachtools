@@ -507,7 +507,7 @@ kbd {
   }
 
   .find input,
-  .finder input {
+  .seek-form input {
     height: 2.75rem;
     font-size: 1rem;
   }
@@ -606,54 +606,6 @@ kbd {
 }
 
 .readout [data-state="offline"] dd {
-  color: var(--alert);
-}
-
-.finder {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  padding: 0.5rem 1.5rem;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.finder[hidden] {
-  display: none;
-}
-
-.finder input {
-  appearance: none;
-  flex: 1;
-  min-width: 10rem;
-  height: var(--control);
-  padding: 0 0.5rem;
-  border: 1px solid var(--darkgray);
-  background: var(--light);
-  color: var(--dark);
-  font: var(--meta) / 1 var(--code);
-}
-
-.finder input::placeholder {
-  color: var(--darkgray);
-  opacity: 1;
-}
-
-.finder input::-webkit-search-cancel-button {
-  appearance: none;
-}
-
-.find-count {
-  flex: none;
-  min-width: 11ch;
-  font: var(--meta) / 1.4 var(--code);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.find-count[data-state="none"] {
   color: var(--alert);
 }
 
@@ -762,6 +714,157 @@ kbd {
 
 .side-body .turn-mark {
   display: none;
+}
+
+.seek-form {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 1.5ch;
+  font: var(--meta) / 1.6 var(--code);
+}
+
+.seek-form input {
+  appearance: none;
+  min-width: 0;
+  height: var(--control);
+  padding: 0 0.5rem;
+  border: 1px solid var(--darkgray);
+  background: var(--light);
+  color: var(--dark);
+  font: var(--meta) / 1 var(--code);
+}
+
+.seek-form input::placeholder {
+  color: var(--darkgray);
+  opacity: 1;
+}
+
+.seek-form input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.seek-form .inst {
+  justify-self: start;
+}
+
+.seek-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.5ch;
+  min-width: 0;
+}
+
+.seek-where {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seek-sum {
+  min-height: 1.6em;
+  margin: 1rem 0 0;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--dark);
+  font: var(--meta) / 1.6 var(--code);
+  font-variant-numeric: tabular-nums;
+}
+
+.seek-sum[data-state="none"] {
+  color: var(--alert);
+}
+
+.seek-group {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.seek-file {
+  display: flex;
+  gap: 1.5ch;
+  margin: 0 0 0.125rem;
+  font: 400 var(--meta) / 1.6 var(--code);
+  font-variant-numeric: tabular-nums;
+}
+
+.seek-file .where {
+  flex: none;
+  color: var(--dark);
+}
+
+.seek-file .what {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seek-line {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 4ch minmax(0, 1fr);
+  gap: 1.5ch;
+  width: 100%;
+  padding: 0.125rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--darkgray);
+  font: var(--meta) / 1.6 var(--code);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+}
+
+.seek-line:has(.wide) {
+  grid-template-columns: 13ch minmax(0, 1fr);
+}
+
+.seek-line:focus-visible {
+  outline-offset: -2px;
+}
+
+.seek-line[aria-current="true"] {
+  background: var(--selected);
+  color: var(--dark);
+}
+
+.seek-line .ln {
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seek-line .ln.wide {
+  text-align: left;
+}
+
+.seek-line .tx {
+  min-width: 0;
+  color: var(--dark);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.seek mark {
+  background: var(--mark);
+  color: var(--mark-ink);
+}
+
+.seek-more {
+  margin: 0;
+  padding: 0.125rem 0.25rem 0 calc(4ch + 1.5ch + 0.25rem);
+  font: var(--meta) / 1.6 var(--code);
+}
+
+.picked {
+  outline: 1px solid var(--dark);
+  outline-offset: 3px;
 }
 
 .side-lead {
@@ -1390,6 +1493,10 @@ kbd {
     text-decoration-color: var(--dark);
   }
 
+  .seek-line:hover:not([aria-current="true"]) {
+    background: var(--surface);
+  }
+
   .prose a[data-footnote-ref]:hover,
   .prose a[data-footnote-backref]:hover {
     text-decoration: underline;
@@ -1630,25 +1737,78 @@ body[data-think="off"] .run[data-only="think"] {
 }
 
 .diff {
-  padding: 0.375rem 0;
+  --diff-muted: color-mix(in srgb, var(--darkgray) 80%, var(--dark));
+  --diff-keyword: color-mix(in srgb, var(--ansi-green) 75%, var(--dark));
+  --diff-string: color-mix(in srgb, var(--ansi-cyan) 75%, var(--dark));
+  --diff-constant: color-mix(in srgb, var(--ansi-magenta) 55%, var(--dark));
+  --diff-name: color-mix(in srgb, var(--ansi-blue) 55%, var(--dark));
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--dark);
+  font: var(--meta) / 1.6 var(--code);
+  tab-size: 2;
 }
 
-.diff .l {
-  display: block;
-  min-height: 1.6em;
-  padding: 0 0.625rem;
+.diff:empty {
+  border: 0;
 }
 
-.diff .add {
+.diff [data-line] {
+  display: grid;
+  grid-template-columns: var(--diff-number-width) 1ch minmax(0, 1fr);
+  gap: 0.75ch;
+  padding-inline: 0.5rem;
+}
+
+.diff [data-line-type="change-addition"] {
   background: var(--add);
 }
 
-.diff .del {
+.diff [data-line-type="change-deletion"] {
   background: var(--del);
 }
 
-.diff .hunk {
-  color: var(--darkgray);
+.diff-number,
+.diff-sign,
+.diff [data-no-newline] {
+  color: var(--diff-muted);
+}
+
+.diff-number {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.diff code,
+.diff-plain {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.diff [data-separator] {
+  padding: 0.125rem 0.5rem;
+  border-block: 1px solid var(--line);
+  color: var(--diff-muted);
+}
+
+.diff [data-separator]:first-child {
+  border-block-start: 0;
+}
+
+.diff [data-no-newline] {
+  padding-inline: 0.5rem;
+}
+
+.diff [data-diff-span] {
+  background: color-mix(in srgb, var(--dark) 8%, transparent);
+}
+
+.diff-plain {
+  padding: 0.375rem 0.5rem;
 }
 
 .fields {
@@ -1852,10 +2012,6 @@ body[data-think="off"] .run[data-only="think"] {
 
   .tools {
     justify-content: flex-start;
-  }
-
-  .finder {
-    padding: 0.5rem 1rem;
   }
 
   .side {

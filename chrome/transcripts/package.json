@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@pierre/diffs": "1.6.4",
     "hast-util-to-dom": "4.0.1",
     "katex": "0.16.47",
     "mdast-util-find-and-replace": "3.0.4",

@@ -51,16 +51,6 @@
         </div>
         <dl class="readout" id="readout"></dl>
       </header>
-      <div class="finder" id="finder" role="search" hidden>
-        <label class="sr" for="find-in">find in this transcript</label>
-        <input id="find-in" type="search" placeholder="find in transcript" autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <span class="find-count" id="find-count" role="status"></span>
-        <div class="inst" role="group" aria-label="matches">
-          <button type="button" id="find-prev" title="previous match (shift enter)">prev</button>
-          <button type="button" id="find-next" title="next match (enter)">next</button>
-          <button type="button" id="find-close" title="close find (esc)">close</button>
-        </div>
-      </div>
       <div class="work">
         <div class="stage" id="stage">
           <div class="scroll" id="scroll" tabindex="-1">
@@ -86,15 +76,19 @@
     <div class="keymap" id="keys" popover aria-labelledby="keys-title">
       <h2 id="keys-title">keyboard</h2>
       <dl>
-        <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>next turn, previous turn</dd></div>
-        <div><dt><kbd>g</kbd> <kbd>G</kbd></dt><dd>first turn, latest item</dd></div>
-        <div><dt><kbd>/</kbd></dt><dd>filter the sessions by title or by what was said, or open an id or a path</dd></div>
-        <div><dt><kbd>⌘</kbd> <kbd>f</kbd></dt><dd>find in this transcript; enter and shift enter step through</dd></div>
+        <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>scroll down, up. a count works: <kbd>5</kbd><kbd>j</kbd></dd></div>
+        <div><dt><kbd>d</kbd> <kbd>u</kbd></dt><dd>half a page down, up</dd></div>
+        <div><dt><kbd>g</kbd><kbd>g</kbd> <kbd>G</kbd></dt><dd>first turn, latest item</dd></div>
+        <div><dt><kbd>{</kbd> <kbd>}</kbd></dt><dd>previous turn, next turn</dd></div>
+        <div><dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>select the previous, next block. <kbd>enter</kbd> opens or folds a selected group</dd></div>
+        <div><dt><kbd>/</kbd> <kbd>⌘</kbd><kbd>f</kbd></dt><dd>search the selected block, or the session</dd></div>
+        <div><dt><kbd>n</kbd> <kbd>N</kbd></dt><dd>next match, previous match</dd></div>
+        <div><dt><kbd>s</kbd></dt><dd>filter the sessions by title or by what was said, or open an id or a path</dd></div>
         <div><dt><kbd>e</kbd></dt><dd>open or fold every group of steps</dd></div>
         <div><dt><kbd>f</kbd></dt><dd>follow the newest item</dd></div>
         <div><dt><kbd>t</kbd></dt><dd>show or hide thinking</dd></div>
         <div><dt><kbd>?</kbd></dt><dd>this page</dd></div>
-        <div><dt><kbd>esc</kbd></dt><dd>clear the filter, close find, this page or the side panel</dd></div>
+        <div><dt><kbd>esc</kbd></dt><dd>clear the selection, then close the side panel</dd></div>
       </dl>
     </div>
     <script type="module" src="view.js"></script>
