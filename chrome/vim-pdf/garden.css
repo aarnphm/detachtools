@@ -315,7 +315,7 @@ menu,
 #viewsManager #viewsManagerHeader #viewsManagerTitle {
   justify-content: flex-start;
   gap: 4px;
-  padding: 4px 6px;
+  padding: 4px 10px;
   min-height: 32px;
   box-sizing: border-box;
 }
@@ -391,7 +391,7 @@ menu,
 .treeView.withNesting .treeItemToggler::before {
   width: 12px;
   height: 12px;
-  inset-inline: 7px auto;
+  inset-inline: 8px auto;
   inset-block-start: 5px;
 }
 
