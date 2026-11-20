@@ -1,6 +1,34 @@
 {
     "profiles": [
         {
+            "complex_modifications": {
+                "rules": [
+                    {
+                        "description": "Helium and Chrome: control option c sends control shift c (Copy URL extension, URLs separated by spaces)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": ["^net\\.imput\\.helium$", "^com\\.google\\.Chrome$"],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "c",
+                                    "modifiers": { "mandatory": ["control", "option"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "c",
+                                        "modifiers": ["left_control", "left_shift"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
             "devices": [
                 {
                     "identifiers": {
