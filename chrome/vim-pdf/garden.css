@@ -447,7 +447,6 @@ menu,
   --g-frame: color-mix(in srgb, var(--g-sage) 30%, var(--g-light));
   --g-side: var(--viewsManager-width, 230px);
   --g-panel-gap: 8px;
-  --g-panel-radius: 10px;
   --g-panel-left: var(--g-panel-gap);
 }
 
@@ -509,7 +508,6 @@ body,
   border: 0;
   border-inline-start: 1px solid var(--g-line);
   border-block-start: 1px solid var(--g-line);
-  border-start-start-radius: var(--g-panel-radius) !important;
 }
 
 #outerContainer #viewsManager {
@@ -540,8 +538,7 @@ body,
 }
 
 #outerContainer #loadingBar {
-  inset-inline: calc(var(--g-panel-left) + var(--g-panel-radius))
-    var(--progressBar-end-offset, 0px);
+  inset-inline-start: var(--g-panel-left);
 }
 
 #viewerContainer::-webkit-scrollbar,
