@@ -14,6 +14,7 @@ Usage:
   @pname@ --rm <project> <worktree> [-- <git-args>...]
   @pname@ cd <project> <worktree>
   @pname@ sync [-- <git-args>...]
+  @pname@ reclone [<project> [<worktree>]]
   @pname@ <project> <worktree> [--remote URL] [--base BRANCH] [-- <git-args>...] [command ...]
 
 Arguments after -- are passed directly to the underlying git command.
@@ -28,6 +29,10 @@ Environment overrides:
   WORKTREE_COW              1 (default) clones files from the project checkout
                             (APFS clonefile, reflink on Linux) so worktrees share
                             disk blocks until edited; 0 does a plain checkout
+
+`reclone` turns existing worktrees (all projects by default) into clones of the
+project checkout: a file is replaced only when both copies hold the same
+committed blob and neither is modified.
 
 Existing projects are kept offline by default. Use `@pname@ sync` from inside a
 worktree when you want to fetch and rebase.
@@ -411,6 +416,10 @@ main() {
             shift
             cd_worktree "${1:-}" "${2:-}"
             exit $?
+            ;;
+        reclone)
+            shift
+            exec "@reclone@" "$(projects_dir)" "$@"
             ;;
         sync)
             shift

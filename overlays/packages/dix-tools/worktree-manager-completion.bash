@@ -98,7 +98,7 @@ _w() {
 
     case "$npos" in
         0)
-            local -a candidates=( --list --rm --help cd sync )
+            local -a candidates=( --list --rm --help cd sync reclone )
             local dir
             while IFS= read -r dir; do
                 candidates+=( "${dir##*/}" )
@@ -108,7 +108,7 @@ _w() {
         1)
             local first="${positionals[0]}"
             case "$first" in
-                --rm)
+                --rm|reclone)
                     local -a projects=()
                     while IFS= read -r dir; do
                         projects+=( "${dir##*/}" )
@@ -139,7 +139,7 @@ _w() {
             local first="${positionals[0]}"
             local second="${positionals[1]}"
             case "$first" in
-                --rm)
+                --rm|reclone)
                     local -a worktrees=()
                     local wt
                     while IFS= read -r wt; do

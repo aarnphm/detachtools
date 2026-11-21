@@ -16,6 +16,7 @@
   bash,
   nix,
   git,
+  python3,
   jq,
   zsh,
   apt,
@@ -92,6 +93,15 @@ in {
     ./gvim.sh;
 
   worktree-manager = let
+    reclone =
+      writeProgram "w-reclone" {
+        inherit version;
+        replacements = {
+          python3 = getExe python3;
+          git = getExe git;
+        };
+      }
+      ./worktree-reclone.py;
     script =
       writeProgram "w" {
         inherit version;
@@ -99,6 +109,7 @@ in {
           shell = getExe zsh;
           pname = "w";
           git = getExe git;
+          reclone = getExe reclone;
         };
       }
       ./worktree-manager.zsh;

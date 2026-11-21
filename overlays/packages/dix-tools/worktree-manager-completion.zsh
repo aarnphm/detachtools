@@ -219,6 +219,7 @@ _w() {
                 '--help:show usage'
                 'cd:cd into existing worktree'
                 'sync:fetch and rebase onto base branch'
+                'reclone:turn existing worktrees into copy-on-write clones'
             )
             _describe -t actions 'action' actions && ret=0
             projects=($(_w_list_projects "$projects_dir"))
@@ -232,6 +233,13 @@ _w() {
             positional=($(_w_collect_positionals))
             local project=${positional[1]}
             if [[ -z $project ]]; then
+                return 0
+            fi
+
+            if [[ $project == "reclone" ]]; then
+                local -a rc_projects
+                rc_projects=($(_w_list_projects "$projects_dir"))
+                _describe -t projects 'project (default: all)' rc_projects
                 return 0
             fi
 
@@ -268,6 +276,12 @@ _w() {
             fi
             local -a positional_cmd
             positional_cmd=($(_w_collect_positionals))
+            if [[ ${positional_cmd[1]} == "reclone" ]]; then
+                local -a rc_worktrees
+                rc_worktrees=($(_w_list_worktrees "$worktrees_dir" "${positional_cmd[2]}"))
+                _describe -t worktrees 'worktree (default: all)' rc_worktrees
+                return 0
+            fi
             if [[ ${positional_cmd[1]} == "cd" && -n ${positional_cmd[2]} ]]; then
                 local -a cd_worktrees
                 cd_worktrees=($(_w_list_worktrees "$worktrees_dir" "${positional_cmd[2]}"))
