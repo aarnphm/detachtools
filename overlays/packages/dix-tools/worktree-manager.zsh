@@ -25,6 +25,9 @@ Environment overrides:
   WORKTREE_BRANCH_PREFIX    Branch prefix when creating new worktrees (default: $USER)
   WORKTREE_REMOTE           Default git remote URL when bootstrapping a missing project
   WORKTREE_BASE_BRANCH      Base branch used when creating new worktrees (default: main)
+  WORKTREE_COW              1 (default) clones files from the project checkout
+                            (APFS clonefile, reflink on Linux) so worktrees share
+                            disk blocks until edited; 0 does a plain checkout
 
 Existing projects are kept offline by default. Use `@pname@ sync` from inside a
 worktree when you want to fetch and rebase.
@@ -198,17 +201,105 @@ create_worktree_if_missing() {
 
     mkdir -p "$(dirname "$target")"
 
+    local -a cow_args=()
+    local cow=0
+    if cow_enabled "${git_args[@]}"; then
+        cow=1
+        cow_args=(--no-checkout)
+    fi
+
     if "$GIT" -C "$repo_dir" rev-parse --verify --quiet "$branch_name" >/dev/null 2>&1; then
-        "$GIT" -C "$repo_dir" worktree add "${git_args[@]}" "$target" "$branch_name"
-        return $?
+        "$GIT" -C "$repo_dir" worktree add "${cow_args[@]}" "${git_args[@]}" "$target" "$branch_name" || return $?
+    elif "$GIT" -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$branch_name"; then
+        "$GIT" -C "$repo_dir" worktree add "${cow_args[@]}" --track -b "$branch_name" "${git_args[@]}" "$target" "origin/$branch_name" || return $?
+    else
+        "$GIT" -C "$repo_dir" worktree add "${cow_args[@]}" -b "$branch_name" "${git_args[@]}" "$target" "$base_ref" || return $?
     fi
 
-    if "$GIT" -C "$repo_dir" show-ref --verify --quiet "refs/remotes/origin/$branch_name"; then
-        "$GIT" -C "$repo_dir" worktree add --track -b "$branch_name" "${git_args[@]}" "$target" "origin/$branch_name"
-        return $?
-    fi
+    [ "$cow" -eq 1 ] || return 0
 
-    "$GIT" -C "$repo_dir" worktree add -b "$branch_name" "${git_args[@]}" "$target" "$base_ref"
+    if ! cow_populate "$repo_dir" "$target"; then
+        warn "copy-on-write checkout failed; falling back to a full checkout"
+        "$GIT" -C "$target" reset --hard -q
+    fi
+}
+
+# Clone files from the project checkout (APFS clonefile, reflink on Linux) so
+# worktrees share disk blocks with it until a file is written.
+cow_enabled() {
+    [ "${WORKTREE_COW:-1}" != 0 ] || return 1
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            --no-checkout | --checkout) return 1 ;;
+        esac
+    done
+    return 0
+}
+
+cow_populate() {
+    local donor="$1"
+    local target="$2"
+    local -a clone
+    case "$OSTYPE" in
+        darwin*) clone=(cp -c -p) ;;
+        linux*) clone=(cp --reflink=always -p) ;;
+        *) return 1 ;;
+    esac
+
+    # Symlinks and submodules are left to git. `path` is zsh's PATH, hence `p`.
+    local -A by_dir=()
+    local entry mode p dir
+    for entry in "${(@0)$("$GIT" -C "$target" ls-tree -r -z --full-tree HEAD)}"; do
+        [ -n "$entry" ] || continue
+        mode="${entry%% *}"
+        p="${entry#*$'\t'}"
+        case "$mode" in
+            100644 | 100755) ;;
+            *) continue ;;
+        esac
+        [ -f "$donor/$p" ] && [ ! -L "$donor/$p" ] || continue
+        dir="${p:h}"
+        by_dir[$dir]+="$p"$'\0'
+    done
+
+    local -a dirs=("$target"/${^${(k)by_dir}})
+    [ "${#dirs}" -eq 0 ] || mkdir -p -- "${dirs[@]}" || return 1
+
+    # One cp per directory, 16 at a time: a clone is ~0.5 ms of latency here.
+    local -a srcs pids
+    local pid failed=0
+    for dir in "${(@k)by_dir}"; do
+        srcs=("$donor"/${^${(@0)${by_dir[$dir]%$'\0'}}})
+        "${clone[@]}" -- "${srcs[@]}" "$target/$dir/" &
+        pids+=($!)
+        if [ "${#pids}" -ge 16 ]; then
+            for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
+            pids=()
+        fi
+    done
+    for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
+    [ "$failed" -eq 0 ] || return 1
+
+    # Hashing fresh clones costs 6-18 s on vllm (first open of a new file is
+    # ~1.4 ms), so reuse the donor's stat data instead. Clones keep mtime and
+    # size but not inode or ctime, hence checkStat=minimal. The index keeps its
+    # mtime so racy-git still smudges same-second entries; read-tree -m keeps
+    # stat only where the blob matches HEAD, and checkout fixes the rest.
+    "$GIT" -C "$donor" config extensions.worktreeConfig true || return 1
+    "$GIT" -C "$target" config --worktree core.checkStat minimal || return 1
+    "$GIT" -C "$target" config --worktree core.trustctime false || return 1
+    local donor_index target_index
+    donor_index="$("$GIT" -C "$donor" rev-parse --path-format=absolute --git-path index)" || return 1
+    target_index="$("$GIT" -C "$target" rev-parse --path-format=absolute --git-path index)" || return 1
+    if [ -f "$donor_index" ]; then
+        cp -p "$donor_index" "$target_index" || return 1
+        "$GIT" -C "$target" read-tree -m HEAD || return 1
+    else
+        "$GIT" -C "$target" read-tree HEAD || return 1
+    fi
+    "$GIT" -C "$target" update-index -q --refresh >/dev/null 2>&1
+    "$GIT" -C "$target" checkout -q -- . || return 1
 }
 
 copy_extra_directories() {
