@@ -124,6 +124,7 @@
             computerName = "G1WLYJLVP6";
             enableOpam = false;
             gitSigningKey = "AAA80A6DDDB165C0";
+            claudeAutoCompactWindow = 324000;
           };
           bentoml.user = "aarnphm";
         };
