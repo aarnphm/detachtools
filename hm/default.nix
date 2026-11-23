@@ -341,6 +341,7 @@ in {
         # ai
         cl1m = ''cl "opus[1m]"'';
         clf = ''cl "fable"'';
+        cla = "cl opus -- agents";
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --approve-for-me";
         cch = "codex --dangerously-bypass-approvals-and-sandbox";
