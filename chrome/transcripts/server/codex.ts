@@ -8,7 +8,8 @@ export const ROOT = join(homedir(), ".codex")
 const SESSIONS = join(ROOT, "sessions")
 const STRING = '((?:[^"\\\\]|\\\\.)*)'
 
-const peeked = new Map<string, { key: string; cwd?: string; prompt?: string }>()
+const AUTO_REVIEW = /"thread_source":"guardian_review"|"model":"codex-auto-review"/
+const peeked = new Map<string, { key: string; cwd?: string; prompt?: string; review: boolean }>()
 
 async function names(): Promise<Map<string, string>> {
   const out = new Map<string, string>()
@@ -38,7 +39,7 @@ export async function list(): Promise<SessionMeta[]> {
     let hit = peeked.get(path)
     if (hit?.key !== key) {
       const head = await Bun.file(path).slice(0, Math.min(s.size, 262144)).text()
-      hit = { key, cwd: unquote(lastMatch(head.slice(0, 16384), new RegExp(`"cwd":"${STRING}"`, "g"))) }
+      hit = { key, cwd: unquote(lastMatch(head.slice(0, 16384), new RegExp(`"cwd":"${STRING}"`, "g"))), review: AUTO_REVIEW.test(head) }
       if (!titles.has(id)) {
         const line = head.split("\n").find((l) => l.includes('"type":"UserMessage"'))
         const text = line ? texts(parse(line)?.payload?.item?.content) : ""
@@ -46,6 +47,7 @@ export async function list(): Promise<SessionMeta[]> {
       }
       peeked.set(path, hit)
     }
+    if (hit.review) continue
     out.push({ source: "codex", id, title: titles.get(id) ?? hit.prompt ?? id.slice(0, 8), path, updatedAt: s.mtimeMs, cwd: hit.cwd })
   }
   return out

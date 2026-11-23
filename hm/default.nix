@@ -342,7 +342,8 @@ in {
         cl1m = ''cl "opus[1m]"'';
         clf = ''cl "fable"'';
         ge = "agy --dangerously-skip-permissions";
-        ch = "codex --dangerously-bypass-approvals-and-sandbox";
+        ch = "codex --approve-for-me";
+        cch = "codex --dangerously-bypass-approvals-and-sandbox";
         o = "opencode";
         ki = "kimi --thinking --yolo";
         auto-commit = ''argon --stream-format human --flash --conversation e7e9b4b6-b734-4927-a9a0-05927db22cb2 "now look at the current staged files, and with all of the changes from both Argon/Gemini Flash, Astra/Sol, and Opus/Haiku/Sonnet, Grok 4.7/Composer please write atomic commits following conventional commits for better history tracking here"'';

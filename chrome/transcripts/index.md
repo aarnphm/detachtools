@@ -49,7 +49,7 @@ To run the server by hand: `bun server/main.ts`. `--watch` rebuilds the page whe
 | --- | --- | --- |
 | claude | `~/.claude/projects/*/<id>.jsonl`, subagents in `<id>/subagents/` | JSONL, one record per content block |
 | argon | `~/.gemini/antigravity-cli/conversations/<id>.db` | SQLite `steps` table, protobuf payloads, decoded without a schema in `server/argon.ts` |
-| codex | `~/.codex/sessions/**/rollout-*-<id>.jsonl` | JSONL, `item_completed` events |
+| codex | `~/.codex/sessions/**/rollout-*-<id>.jsonl` | JSONL, `item_completed` events; a guardian review session (model `codex-auto-review`) is left out of the list |
 
 A path to any `.jsonl` or `.db` transcript opens the same way as an id. Ids match from their first four characters.
 
