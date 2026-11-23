@@ -9,7 +9,7 @@ path() {
 cl() {
     emulate -L zsh
 
-    local model="opus[1m]"
+    local model="opus"
 
     if (( $# > 0 )); then
         if [[ "$1" == "--" ]]; then
@@ -31,7 +31,7 @@ cl() {
         --allow-dangerously-skip-permissions \
         --model "$model" \
         --chrome \
-        --effort max \
+        --effort high \
         "$@"
 }
 

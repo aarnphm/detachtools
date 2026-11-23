@@ -130,7 +130,8 @@
   security = {
     pam.services.sudo_local = {
       touchIdAuth = true;
-      watchIdAuth = true;
+      # pam-watchid needs nixpkgs Swift 6.4; swiftc-bootstrap's NixCC patch is malformed
+      watchIdAuth = false;
     };
   };
 
