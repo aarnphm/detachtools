@@ -4,7 +4,7 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Helium and Chrome: control option c sends control shift c (Copy URL extension, URLs separated by spaces)",
+                        "description": "Helium and Chrome: control option command c sends control shift c (Copy URL extension, URLs separated by spaces); control option c stays with Rectangle",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -15,7 +15,7 @@
                                 ],
                                 "from": {
                                     "key_code": "c",
-                                    "modifiers": { "mandatory": ["control", "option"] }
+                                    "modifiers": { "mandatory": ["control", "option", "command"] }
                                 },
                                 "to": [
                                     {
