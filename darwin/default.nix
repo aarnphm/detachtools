@@ -23,47 +23,47 @@
       extraFlags = ["--verbose"];
       autoUpdate = false;
     };
-    brews =
-      [
-        "ast-grep"
-        "gnu-tar"
-        "pngpaste"
-        "asciidoctor"
-        "plantuml"
-        "ddclient"
-        "openconnect"
-        "mas"
-        "bitwarden-cli"
-        "monolith"
-        "mole"
-        "rtk"
-        "ripgrep"
-        "gmp"
-        "gnupg"
-        "cargo-binstall"
-      ]
-      ++ lib.optionals enableSbx ["docker/tap/sbx"];
+    brews = [
+      "ast-grep"
+      "gnu-tar"
+      "pngpaste"
+      "asciidoctor"
+      "plantuml"
+      "ddclient"
+      "openconnect"
+      "mas"
+      "bitwarden-cli"
+      "monolith"
+      "mole"
+      "rtk"
+      "ripgrep"
+      "gmp"
+      "gnupg"
+      "cargo-binstall"
+    ];
     extraConfig = ''
       brew "stripe/stripe-cli/stripe", trusted: true
     '';
-    casks = [
-      "google-chrome"
-      "zotero"
-      "discord"
-      "zoom"
-      "ollama-app"
-      "codex"
-      "chatgpt"
-      "claude"
-      "obsidian"
-      "rectangle"
-      "steam"
-      "nvidia-nsight-systems"
-      "karabiner-elements"
-      "zed@preview"
-      "zed"
-      "middleclick"
-    ];
+    casks =
+      [
+        "google-chrome"
+        "zotero"
+        "discord"
+        "zoom"
+        "ollama-app"
+        "codex"
+        "chatgpt"
+        "claude"
+        "obsidian"
+        "rectangle"
+        "steam"
+        "nvidia-nsight-systems"
+        "karabiner-elements"
+        "zed@preview"
+        "zed"
+        "middleclick"
+      ]
+      ++ lib.optionals enableSbx ["docker/tap/sbx"];
     # nix run nixpkgs#mas -- search <apps>
     masApps = {
       # Bitwarden = 1352778147;
