@@ -74,13 +74,14 @@
             hostName ? computerName,
             dns ? [],
             enableOpam ? true,
+            enableSbx ? false,
             gitSigningKey ? null,
             claudeAutoCompactWindow ? null,
           }:
             nix-darwin.lib.darwinSystem rec {
               system = "aarch64-darwin";
               pkgs = forPackages system;
-              specialArgs = {inherit self inputs pkgs user computerName hostName dns enableOpam;};
+              specialArgs = {inherit self inputs pkgs user computerName hostName dns enableOpam enableSbx;};
               modules = [
                 home-manager.darwinModules.home-manager
                 {
@@ -123,6 +124,7 @@
             user = "aapham";
             computerName = "G1WLYJLVP6";
             enableOpam = false;
+            enableSbx = true;
             gitSigningKey = "AAA80A6DDDB165C0";
             claudeAutoCompactWindow = 324000;
           };

@@ -6,6 +6,7 @@
   computerName,
   hostName,
   dns,
+  enableSbx ? false,
   ...
 }: {
   imports = [./modules];
@@ -22,24 +23,26 @@
       extraFlags = ["--verbose"];
       autoUpdate = false;
     };
-    brews = [
-      "ast-grep"
-      "gnu-tar"
-      "pngpaste"
-      "asciidoctor"
-      "plantuml"
-      "ddclient"
-      "openconnect"
-      "mas"
-      "bitwarden-cli"
-      "monolith"
-      "mole"
-      "rtk"
-      "ripgrep"
-      "gmp"
-      "gnupg"
-      "cargo-binstall"
-    ];
+    brews =
+      [
+        "ast-grep"
+        "gnu-tar"
+        "pngpaste"
+        "asciidoctor"
+        "plantuml"
+        "ddclient"
+        "openconnect"
+        "mas"
+        "bitwarden-cli"
+        "monolith"
+        "mole"
+        "rtk"
+        "ripgrep"
+        "gmp"
+        "gnupg"
+        "cargo-binstall"
+      ]
+      ++ lib.optionals enableSbx ["docker/tap/sbx"];
     extraConfig = ''
       brew "stripe/stripe-cli/stripe", trusted: true
     '';
