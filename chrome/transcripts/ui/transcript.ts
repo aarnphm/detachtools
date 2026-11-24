@@ -67,6 +67,15 @@ export class Transcript {
     return item ? { item, turn: this.turnOf.get(id) ?? 0 } : undefined
   }
 
+  raw(turn: number): { id: string; who: "prompt" | "reply"; text: string }[] {
+    const out: { id: string; who: "prompt" | "reply"; text: string }[] = []
+    for (const item of this.items.values()) {
+      if (this.turnOf.get(item.id) !== turn || !(item.k === "user" || item.k === "text") || !item.text.trim()) continue
+      out.push({ id: item.id, who: item.k === "user" ? "prompt" : "reply", text: item.text })
+    }
+    return out
+  }
+
   anchor(id: string): HTMLElement | undefined {
     const at = this.where.get(id)
     return at instanceof Run ? at.el : at
@@ -79,8 +88,10 @@ export class Transcript {
 
   private turn(item: UserItem | undefined) {
     this.turns++
-    const mark = h("div", { class: "turn-mark" }, h("b", null, String(this.turns).padStart(2, "0")))
-    if (item?.t) mark.append(h("time", { datetime: new Date(item.t).toISOString(), title: stamp(item.t) }, clock(item.t)))
+    const no = String(this.turns).padStart(2, "0")
+    const raw = h("button", { type: "button", class: "turn-raw", "data-turn": this.turns, "aria-label": `turn ${no}: show the markdown source` }, h("b", null, no))
+    if (item?.t) raw.append(h("time", { datetime: new Date(item.t).toISOString(), title: stamp(item.t) }, clock(item.t)))
+    const mark = h("div", { class: "turn-mark" }, raw)
     this.body = h("div", { class: "turn-body" })
     if (item) {
       const prompt = this.prompt(item)

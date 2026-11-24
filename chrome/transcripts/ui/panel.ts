@@ -5,12 +5,13 @@ import { note as renderNote } from "./render"
 import { rel, stamp } from "./tools"
 import { type Host, Transcript } from "./transcript"
 
-export type View = { kind: "note"; target: string; anchor?: string; from?: string } | { kind: "agent"; agent: string; title: string } | { kind: "search" }
+export type View = { kind: "note"; target: string; anchor?: string; from?: string } | { kind: "agent"; agent: string; title: string } | { kind: "raw"; turn: number } | { kind: "search" }
 
 export interface PanelHost extends Host {
   base: string
   copy(button: HTMLButtonElement, text: string, rest: string): void
   search: { el: HTMLElement; hidden(): void }
+  raw(turn: number): { id: string; who: "prompt" | "reply"; text: string }[]
 }
 
 export function setupPanel(host: PanelHost) {
@@ -102,6 +103,32 @@ export function setupPanel(host: PanelHost) {
     })
   }
 
+  function showRaw(view: Extract<View, { kind: "raw" }>) {
+    seq++
+    const parts = host.raw(view.turn)
+    const name = `turn ${String(view.turn).padStart(2, "0")}`
+    const all = parts.map((part) => part.text.trim()).join("\n\n")
+    const replies = parts.filter((part) => part.who === "reply").length
+    const detail = ["markdown source", parts.length > replies ? "prompt" : "", replies ? `${replies} ${replies === 1 ? "reply" : "replies"}` : "", `${all.length.toLocaleString()} characters`]
+    head(name, detail.filter(Boolean).join(" · "), all)
+    copy.disabled = !parts.length
+    if (!parts.length) return message("this turn has no text", "it holds tool steps only.")
+    let reply = 0
+    body.replaceChildren(
+      h(
+        "div",
+        { class: "raw" },
+        ...parts.map((part) => {
+          const one = h("button", { type: "button", class: "lone w-copy" }, "copy")
+          one.addEventListener("click", () => host.copy(one, part.text.trim(), "copy"))
+          const label = part.who === "prompt" ? "prompt" : replies > 1 ? `reply ${++reply}` : "reply"
+          return h("section", { class: "raw-part", "data-id": part.id }, h("div", { class: "raw-head" }, h("span", null, label), one), h("pre", { class: "pre", tabindex: 0 }, part.text.trim()))
+        }),
+      ),
+    )
+    body.scrollTop = 0
+  }
+
   function show(view: View) {
     stream?.close()
     stream = undefined
@@ -111,6 +138,7 @@ export function setupPanel(host: PanelHost) {
     copy.disabled = view.kind === "search"
     if (view.kind === "note") void showNote(view)
     else if (view.kind === "agent") showAgent(view)
+    else if (view.kind === "raw") showRaw(view)
     else {
       seq++
       head("search", "", "")

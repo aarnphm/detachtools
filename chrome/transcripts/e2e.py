@@ -365,6 +365,29 @@ def main() -> int:
         page.screenshot(path=str(OUT / "12-subagent-panel.png"))
         page.keyboard.press("Escape")
 
+        # A click on a turn number shows that turn's markdown source.
+        before = page.evaluate("() => { const r = document.querySelector('.turn .turn-mark').getBoundingClientRect(); return [r.x, r.y, r.width, r.height] }")
+        page.click(".turn:nth-child(1) .turn-raw")
+        page.wait_for_selector("#side-body .raw-part", timeout=3000)
+        raw = page.evaluate("""() => ({
+          title: document.getElementById('side-title').textContent,
+          sub: document.getElementById('side-sub').textContent,
+          labels: [...document.querySelectorAll('#side-body .raw-head span')].map((el) => el.textContent),
+          texts: [...document.querySelectorAll('#side-body .raw-part .pre')].map((el) => el.textContent),
+          shown: document.querySelector('.turn:nth-child(1) .turn-body').innerText,
+        })""")
+        source = "\n\n".join(raw["texts"])
+        check("a turn number opens the markdown source of its prompt and replies", raw["title"] == "turn 01" and raw["labels"][0] == "prompt" and len(raw["texts"]) >= 2, f"{raw['labels']} · {raw['sub']}")
+        check("the source keeps markdown syntax that the page renders away", any(mark in source and mark not in raw["shown"] for mark in ("**", "`", "[[", "$")), source[:120])
+        after = page.evaluate("() => { const r = document.querySelector('.turn .turn-mark').getBoundingClientRect(); return [r.x, r.y, r.width, r.height] }")
+        check("the turn mark keeps its box when the source opens", before[2:] == after[2:], f"{before} -> {after}")
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+        page.click("#side-copy")
+        page.wait_for_function("() => document.getElementById('side-copy').textContent === 'copied'", timeout=3000)
+        check("copy puts the whole turn's source on the clipboard", page.evaluate("() => navigator.clipboard.readText()") == source, "")
+        page.screenshot(path=str(OUT / "17-turn-source.png"))
+        page.keyboard.press("Escape")
+
         # Open an older-style structured edit in its own transcript.
         edit = OUT / "fixture" / "edit.jsonl"
         file = str(VAULT / "code sample.ts")

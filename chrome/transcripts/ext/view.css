@@ -1119,10 +1119,66 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+.turn-raw {
+  appearance: none;
+  display: block;
+  margin: -0.25rem -0.375rem;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.turn-raw:focus-visible {
+  outline: 1px solid var(--dark);
+  outline-offset: -1px;
+}
+
+.turn-raw:active {
+  background: var(--selected);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .turn-raw:hover {
+    background: var(--surface);
+    color: var(--dark);
+  }
+}
+
 .turn-mark b {
   display: block;
   color: var(--dark);
   font-weight: 400;
+}
+
+.turn-mark time {
+  display: block;
+}
+
+.raw {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.raw-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  background: var(--light);
+  font: var(--meta) / 1.4 var(--code);
+}
+
+.raw .pre:focus-visible {
+  outline: 1px solid var(--dark);
+  outline-offset: -1px;
 }
 
 .turn-body {
@@ -2023,9 +2079,12 @@ body[data-think="off"] .run[data-only="think"] {
 
   .turn-mark {
     position: static;
+    padding: 0 0 0.375rem;
+  }
+
+  .turn-raw {
     display: flex;
     gap: 1ch;
-    padding: 0 0 0.375rem;
   }
 
   .name {

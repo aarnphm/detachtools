@@ -106,7 +106,7 @@ const search = setupSearch({
   },
   detail: (text) => panel.detail(text),
 })
-const panel = setupPanel({ ...reader, base: BASE, copy: (button, text, rest) => void flash(button, text, rest), search })
+const panel = setupPanel({ ...reader, base: BASE, copy: (button, text, rest) => void flash(button, text, rest), search, raw: (turn) => tx.raw(turn) })
 const toc = setupToc({ stage: $("stage"), scroll, content: () => tx.el })
 
 function show(heading: string, ...body: (Node | string)[]) {
@@ -680,6 +680,8 @@ document.addEventListener("click", (event) => {
   if (noteLink) {
     return panel.open({ kind: "note", target: noteLink.dataset.note ?? "", anchor: noteLink.dataset.anchor, from: noteLink.closest<HTMLElement>("[data-path]")?.dataset.path })
   }
+  const raw = origin.closest<HTMLElement>(".turn-raw")
+  if (raw && tx.el.contains(raw)) return panel.open({ kind: "raw", turn: Number(raw.dataset.turn) })
   const agent = origin.closest<HTMLElement>(".agent-open")
   if (agent) return panel.open({ kind: "agent", agent: agent.dataset.agent ?? "", title: agent.dataset.title ?? "" })
   const link = origin.closest<HTMLAnchorElement>("a[data-jump]")

@@ -79,6 +79,8 @@ A wikilink, or a link to a `.md` file, opens that note in a panel on the right. 
 
 The panel shows the frontmatter as a table, then the note. Links inside it open in the same panel and `back` returns. An `agent` step has `open the subagent transcript`, which shows that transcript in the panel and follows it while the subagent runs. `esc` closes the panel.
 
+A click on a turn's number (`02`, beside the time) shows the markdown source of that turn in the panel: the prompt and each reply as written, before rendering. Each part has its own `copy`; the `copy` in the panel header takes the whole turn, parts joined by a blank line. Tool steps are left out.
+
 ## The rail of bars
 
 The left edge of the transcript has the table of contents from aarnphm.xyz (`quartz/components/TableOfContents.tsx`, minimal layout), ported in `ui/toc.ts`. It has one bar for each turn and a half-width bar for each heading in a reply. Bars for what is on screen are darker. Under the pointer the bars widen, one label names the nearest turn, and the page behind is veiled. A click scrolls to that turn. The rail is hidden when the pane is narrower than 56rem and on a device with no hover; `{` and `}` do the same job from the keyboard.
