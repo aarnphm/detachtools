@@ -17,7 +17,7 @@ const HELP = [
   ["+ -  0", "zoom in / out / reset"],
   ["zw zf za", "fit width / fit page / actual size"],
   ["r  R", "rotate clockwise / counterclockwise"],
-  ["t", "toggle sidebar"],
+  ["t  ctrl+/ cmd+/", "toggle sidebar"],
   ["m{a-z}  '{a-z}  ''", "set mark, jump to mark, jump back"],
   ["yy", "copy the PDF's URL"],
   ["gN", "open in Chrome's native viewer"],
@@ -137,6 +137,7 @@ const openFind = () => {
 };
 
 const copySource = () => src && navigator.clipboard.writeText(src);
+const toggleSidebar = () => app.viewsManager.toggle();
 
 const sequences = {
   j: (n) => scrollBy(0, STEP * n),
@@ -169,7 +170,7 @@ const sequences = {
   za: () => (app.pdfViewer.currentScaleValue = "page-actual"),
   r: () => app.rotatePages(90),
   R: () => app.rotatePages(-90),
-  t: () => app.viewsManager.toggle(),
+  t: toggleSidebar,
   yy: copySource,
   gN: () => src && location.replace(`${src}#native`),
   "?": () => (help.hidden = !help.hidden),
@@ -200,13 +201,20 @@ const mark = (key, kind) => {
 window.addEventListener(
   "keydown",
   (e) => {
+    const consume = () => (e.preventDefault(), e.stopImmediatePropagation());
+    if (e.key === "/" && e.ctrlKey !== e.metaKey && !e.altKey) {
+      consume();
+      if (e.repeat) return;
+      if (hints.active) endHints();
+      reset();
+      return toggleSidebar();
+    }
     if (typing(e.target)) {
       if (e.key === "Escape" && e.target === findInput) setTimeout(() => container.focus());
       if (e.key === "Enter" && e.target === findInput) setTimeout(() => (findInput.blur(), container.focus()));
       return;
     }
     if (e.metaKey || e.altKey || ["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(e.key)) return;
-    const consume = () => (e.preventDefault(), e.stopImmediatePropagation());
 
     if (hints.active) {
       consume();
