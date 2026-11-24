@@ -1137,14 +1137,15 @@ kbd {
   outline-offset: -1px;
 }
 
-.turn-raw:active {
-  background: var(--selected);
+.turn-raw:active b {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .turn-raw:hover {
-    background: var(--surface);
-    color: var(--dark);
+  .turn-raw:hover b {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 }
 
