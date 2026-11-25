@@ -271,6 +271,8 @@ in {
 
   home = {
     inherit sessionVariables;
+    # nixpkgs and home-manager both track master; nixpkgs bumps its version at branch-off, weeks before home-manager does.
+    enableNixpkgsReleaseCheck = false;
     packages =
       filterNone
       (packages
