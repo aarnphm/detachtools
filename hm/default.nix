@@ -316,6 +316,30 @@ in {
         ".local/bin/rex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Rex.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex";
         ".local/bin/obsidian".source = config.lib.file.mkOutOfStoreSymlink "/usr/local/bin/obsidian";
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
+        # Chrome shows "<extension> started debugging this browser" for every
+        # chrome.debugger attach (TabFS); the flag only applies at launch.
+        "Applications/Chrome.app/Contents/MacOS/chrome" = {
+          executable = true;
+          text = ''
+            #!/bin/sh
+            exec /usr/bin/open -a "Google Chrome" --args --silent-debugger-extension-api "$@"
+          '';
+        };
+        "Applications/Chrome.app/Contents/Resources/app.icns".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Google Chrome.app/Contents/Resources/app.icns";
+        "Applications/Chrome.app/Contents/Info.plist".text = ''
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key><string>chrome</string>
+            <key>CFBundleIdentifier</key><string>xyz.aarnphm.chrome-launcher</string>
+            <key>CFBundleName</key><string>Chrome</string>
+            <key>CFBundleIconFile</key><string>app</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>1.0</string>
+          </dict>
+          </plist>
+        '';
       };
 
     # shells related

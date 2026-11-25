@@ -178,6 +178,7 @@
         show-recents = false;
         mru-spaces = true;
         persistent-apps = [
+          "/Users/${user}/Applications/Chrome.app"
           "/Applications/Claude.app"
           "/Applications/ChatGPT.app"
         ];
