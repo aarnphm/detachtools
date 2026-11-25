@@ -1166,13 +1166,13 @@ kbd {
 
 .raw-head {
   position: sticky;
-  top: 0;
+  top: -1rem;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.25rem 0;
+  padding: 0.375rem 0;
   background: var(--light);
   font: var(--meta) / 1.4 var(--code);
 }
