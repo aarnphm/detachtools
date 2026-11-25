@@ -222,6 +222,7 @@ in {
   direnv.enable = true;
   git.enable = true;
   ghostty.enable = true;
+  rex.enable = pkgs.stdenv.hostPlatform.isDarwin;
   gpg.enable = true;
   ssh.enable = false;
   tmux.enable = true;
