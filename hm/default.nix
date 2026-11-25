@@ -313,7 +313,8 @@ in {
         '';
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-        ".local/bin/rex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Rex Beta.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex";
+        ".local/bin/rex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Rex.app/Contents/Helpers/Rex Server.rex/Contents/MacOS/rex";
+        ".local/bin/obsidian".source = config.lib.file.mkOutOfStoreSymlink "/usr/local/bin/obsidian";
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
       };
 
@@ -344,8 +345,9 @@ in {
         cla = "cl opus -- agents";
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --approve-for-me";
-        cha = "codex --dangerously-bypass-approvals-and-sandbox --model gpt-6.2-sol";
+        cha = "codex --dangerously-bypass-approvals-and-sandbox --model gpt-6.1-sol -c model_reasoning_effort=xhigh";
         o = "opencode";
+        obs = "obsidian";
         ki = "kimi --thinking --yolo";
         auto-commit = ''argon --stream-format human --flash --conversation e7e9b4b6-b734-4927-a9a0-05927db22cb2 "now look at the current staged files, and with all of the changes from both Argon/Gemini Flash, Astra/Sol, and Opus/Haiku/Sonnet, Grok 4.7/Composer please write atomic commits following conventional commits for better history tracking here"'';
 

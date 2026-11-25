@@ -74,7 +74,8 @@ _dix_register_completions() {
   autoload -Uz _claude _cl _chat _awake
   compdef _claude claude
   compdef _cl cl
-  compdef _chat chat
+  compdef _codex cha
+  compdef _chat ch
   compdef _awake awake
 }
 
