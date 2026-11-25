@@ -320,12 +320,31 @@ in {
         ".local/bin/obsidian".source = config.lib.file.mkOutOfStoreSymlink "/usr/local/bin/obsidian";
         "/Library/Application Support/gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
         # Chrome shows "<extension> started debugging this browser" for every
-        # chrome.debugger attach (TabFS); the flag only applies at launch.
+        # chrome.debugger attach (TabFS); the flag only applies at launch, so a
+        # Chrome started without it (Spotlight, links) gets offered a restart.
         "Applications/Chrome.app/Contents/MacOS/chrome" = {
           executable = true;
           text = ''
             #!/bin/sh
-            exec /usr/bin/open -a "Google Chrome" --args --silent-debugger-extension-api "$@"
+            flag=--silent-debugger-extension-api
+            bin="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+            mainChrome() {
+              /bin/ps -axww -o args= | /usr/bin/awk -v b="$bin" 'index($0, b) == 1 && (length($0) == length(b) || substr($0, length(b) + 1, 1) == " ") && !/--headless|--type=/'
+            }
+            running=$(mainChrome)
+            if [ -n "$running" ] && ! printf '%s\n' "$running" | /usr/bin/grep -q -- "$flag"; then
+              answer=$(/usr/bin/osascript -e 'button returned of (display dialog "Chrome is running without --silent-debugger-extension-api, so TabFS shows the debugging bar. Restart it? Open windows come back." buttons {"Focus", "Restart"} default button "Restart" with title "Chrome")' 2>/dev/null)
+              if [ "$answer" = Restart ]; then
+                /usr/bin/osascript -e 'quit app id "com.google.Chrome"'
+                i=0
+                while [ -n "$(mainChrome)" ] && [ $i -lt 60 ]; do
+                  sleep 0.5
+                  i=$((i + 1))
+                done
+                [ -z "$(mainChrome)" ] && exec /usr/bin/open -a "Google Chrome" --args "$flag" --restore-last-session "$@"
+              fi
+            fi
+            exec /usr/bin/open -a "Google Chrome" --args "$flag" "$@"
           '';
         };
         "Applications/Chrome.app/Contents/Resources/app.icns".source = config.lib.file.mkOutOfStoreSymlink "/Applications/Google Chrome.app/Contents/Resources/app.icns";
