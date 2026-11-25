@@ -345,7 +345,7 @@ in {
         cla = "cl opus -- agents";
         ge = "agy --dangerously-skip-permissions";
         ch = "codex --approve-for-me";
-        cha = "codex --dangerously-bypass-approvals-and-sandbox --model gpt-6.1-sol -c model_reasoning_effort=xhigh";
+        cha = "codex --no-daemon --dangerously-bypass-approvals-and-sandbox --model gpt-6.1-sol -c model_reasoning_effort=xhigh";
         o = "opencode";
         obs = "obsidian";
         ki = "kimi --thinking --yolo";
