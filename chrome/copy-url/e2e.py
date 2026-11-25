@@ -9,7 +9,9 @@ Run: uv run e2e.py [OUT_DIR]      (from chrome/copy-url; OUT_DIR defaults to ./e
 Loads this folder as an unpacked extension in headless Chromium, opens three
 local pages, selects tabs the way a shift-click does, and runs the extension's
 copy for one tab, for three tabs as a Markdown list, and for three tabs as
-space-separated URLs (the ctrl shift c command; Karabiner maps ctrl option c to it). Each result is read back from the clipboard. The macOS
+space-separated URLs (the ctrl shift c command; Karabiner maps ctrl option command c to it).
+With vim-pdf built at VIM_PDF (default: its deployed copy), a PDF that opens in
+its viewer must copy as the PDF's own URL, with #page=N kept. Each result is read back from the clipboard. The macOS
 clipboard is saved first and put back at the end. Writes result.json and a
 screenshot to OUT_DIR. Exit 1 on any failed check.
 """
@@ -30,7 +32,28 @@ from playwright.sync_api import sync_playwright
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else HERE / "evidence").resolve()
 BROWSER = os.environ.get("BROWSER_PATH", "/Applications/Helium.app/Contents/MacOS/Helium")
+VIM_PDF = pathlib.Path(os.environ.get("VIM_PDF", pathlib.Path.home() / ".local/share/chrome-extensions/vim-pdf"))
 PAGES = {"/alpha": "Alpha", "/notes (draft)": "Plan [draft] \\ v2", "/gamma": ""}
+
+
+def tiny_pdf() -> bytes:
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] >>",
+    ]
+    out, offsets = bytearray(b"%PDF-1.4\n"), []
+    for i, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % i + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    out += b"".join(b"%010d 00000 n \n" % o for o in offsets)
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, xref)
+    return bytes(out)
+
+
 results: list[dict] = []
 
 
@@ -41,6 +64,14 @@ def check(name: str, ok: bool, detail: object = "") -> None:
 
 class Pages(BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.path.startswith("/paper.pdf"):
+            body = tiny_pdf()
+            self.send_response(200)
+            self.send_header("content-type", "application/pdf")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         title = PAGES.get(unquote(self.path), "")
         body = f"<!doctype html><title>{title}</title><p>{unquote(self.path)}</p>".encode()
         self.send_response(200)
@@ -67,6 +98,7 @@ def main() -> int:
     work = pathlib.Path(tempfile.mkdtemp(prefix="copy-url-e2e-"))
     ext = work / "ext"
     shutil.copytree(HERE, ext, ignore=shutil.ignore_patterns("e2e.py", "install.sh", "evidence", "index.md"))
+    loads = [str(ext)] + ([str(VIM_PDF)] if (VIM_PDF / "web/viewer.html").exists() else [])
 
     with sync_playwright() as pw:
         context = pw.chromium.launch_persistent_context(
@@ -74,7 +106,7 @@ def main() -> int:
             executable_path=BROWSER,
             headless=True,
             ignore_default_args=["--disable-extensions"],
-            args=[f"--load-extension={ext}", f"--disable-extensions-except={ext}"],
+            args=[f"--load-extension={','.join(loads)}", f"--disable-extensions-except={','.join(loads)}"],
             viewport={"width": 900, "height": 600},
         )
         context.grant_permissions(["clipboard-read", "clipboard-write"], origin=base)
@@ -150,6 +182,27 @@ def main() -> int:
         select(["/alpha"])
         shown = menu()
         check("with one tab selected the entry is hidden", shown["visible"] is False, shown)
+
+        if len(loads) > 1:
+            pdf = context.new_page()
+            pdf.goto(f"{base}/paper.pdf", wait_until="commit")
+            pdf.wait_for_url("chrome-extension://*/web/viewer.html?src=*", timeout=15000)
+            pdf.wait_for_timeout(1000)
+            viewer = pdf.url
+            tab = worker.evaluate("u => chrome.tabs.query({}).then(all => all.find(t => t.url === u))", viewer)
+            worker.evaluate("t => chrome.tabs.highlight({ windowId: t.windowId, tabs: [t.index] })", tab)
+            text = worker.evaluate("tab => copyUrls(tab, 'markdown')", tab)
+            check("a pdf open in the vim-pdf viewer copies the pdf's own url", text == f"{base}/paper.pdf" and read() == text, {"viewer": viewer, "copied": text})
+            pdf.goto(viewer.split("#")[0] + "#page=2")
+            pdf.wait_for_timeout(1500)
+            viewer = pdf.url
+            tab = worker.evaluate("u => chrome.tabs.query({}).then(all => all.find(t => t.url === u))", viewer)
+            text = worker.evaluate("tab => copyUrls(tab, 'markdown')", tab)
+            check("the page open in the viewer is kept as #page=2", text == f"{base}/paper.pdf#page=2", {"viewer": viewer, "copied": text})
+            pdf.screenshot(path=str(OUT / "vim-pdf.png"))
+            pdf.close()
+        else:
+            check("vim-pdf is built at VIM_PDF so the viewer case can run", False, str(VIM_PDF))
 
         (OUT / "copied-markdown.txt").write_text(worker.evaluate("tab => copyUrls(tab, 'markdown')", select(list(PAGES))) + "\n")
         (OUT / "copied-plain.txt").write_text(worker.evaluate("tab => copyUrls(tab, 'plain')", select(list(PAGES))) + "\n")

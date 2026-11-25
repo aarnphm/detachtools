@@ -19,6 +19,16 @@ const escapeLabel = (text) => text.replace(/[\\[\]]/g, "\\$&").replace(/\s+/g, "
 const escapeTarget = (url) =>
   url.replace(/[()\s<>]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`);
 
+const sourceUrl = (url) => {
+  if (!url.startsWith("chrome-extension://")) return url;
+  const view = new URL(url);
+  if (!view.pathname.endsWith("/web/viewer.html")) return url;
+  const src = view.searchParams.get("src") ?? view.searchParams.get("file");
+  if (!src) return url;
+  const page = new URLSearchParams(view.hash.slice(1)).get("page");
+  return page && page !== "1" ? `${src.replace(/#.*/, "")}#page=${page}` : src;
+};
+
 const markdownList = (tabs) =>
   tabs.map((tab) => `- [${escapeLabel(tab.title || tab.url)}](${escapeTarget(tab.url)})`).join("\n");
 
@@ -27,7 +37,9 @@ const selectedTabs = async (tab) => {
     tab ?? (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
   if (!active) return { active, tabs: [] };
   const highlighted = await chrome.tabs.query({ highlighted: true, windowId: active.windowId });
-  const tabs = (highlighted.length > 1 ? highlighted : [active]).filter((t) => t.url);
+  const tabs = (highlighted.length > 1 ? highlighted : [active])
+    .filter((t) => t.url)
+    .map((t) => ({ ...t, url: sourceUrl(t.url) }));
   return { active, tabs: tabs.sort((a, b) => a.index - b.index) };
 };
 

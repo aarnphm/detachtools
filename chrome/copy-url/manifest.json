@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Copy URL",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Copy the active tab's URL with Cmd+Shift+C, or every selected tab as a Markdown list. Ctrl+Shift+C copies the URLs separated by spaces. The right-click menu offers Copy N tabs.",
   "permissions": ["tabs", "offscreen", "clipboardWrite", "contextMenus"],
   "background": {
