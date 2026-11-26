@@ -1,0 +1,13 @@
+# Personal Python layout. Loose files and projects without a Ruff table use this.
+# Project pyproject.toml / ruff.toml still wins when present (vLLM and the rest).
+#
+# 2-space indent follows aarnphm's default and Jeremy's hindsight on
+# https://docs.fast.ai/dev/style.md (the published fastai tree stayed at 4).
+# 119 columns is the editor ruler; the guide's "no sideways scroll" cap is ~160.
+indent-width = 2
+line-length = 119
+preview = true
+
+[format]
+indent-style = "space"
+preview = true

@@ -15,6 +15,7 @@
     # gvim
     bun
     uv
+    ruff
     ty
     lua
 
@@ -245,6 +246,10 @@ in {
       };
       "zed/keymap.json".source = ./modules/config/zed/keymap.json;
       "zed/settings.json".source = ./modules/config/zed/settings.json;
+      "ruff/ruff.toml" = {
+        source = ./modules/config/ruff/ruff.toml;
+        force = true;
+      };
     };
   };
 
@@ -481,7 +486,7 @@ in {
         nsp = "nix-shell --pure";
         nstr = "nix-store --gc --print-roots";
 
-        python-format = ''ruff format --config "indent-width=2" --config "line-length=119" --config "preview=true"'';
+        python-format = ''${lib.getExe' pkgs.uv "uvx"} ruff format'';
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         obsidian = "/Applications/Obsidian.app/Contents/MacOS/Obsidian";

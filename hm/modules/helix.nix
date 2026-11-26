@@ -63,6 +63,14 @@ in {
           ruff = {
             command = "ruff";
             args = ["server"];
+            config.settings = {
+              configuration = "${config.xdg.configHome}/ruff/ruff.toml";
+              configurationPreference = "filesystemFirst";
+              format = {
+                backend = "uv";
+                preview = true;
+              };
+            };
           };
           ty = {
             command = "ty";
