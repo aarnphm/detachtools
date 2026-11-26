@@ -7,7 +7,7 @@ We use alejandra and statix for format and lint respectively.
 
 Build commands:
 
-- Darwin: `nix run nix-darwin/master#darwin-rebuild -- switch --flake ".#appl-mbp16" -v --show-trace -L`
+- Darwin: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake ".#appl-mbp16" -v --show-trace -L` (`.#appl-nv` on the NVIDIA Mac)
 - Linux: `nix run home-manager -- switch --flake .#ubuntu --show-trace -L`
 
 Lint commands:
