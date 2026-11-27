@@ -5,6 +5,7 @@ import { setupPanel } from "./panel"
 import { setupSearch } from "./search"
 import { setupToc } from "./toc"
 import { age, dayGroup, rel, stamp } from "./tools"
+import { sourceIcon } from "./icons"
 import { Transcript } from "./transcript"
 
 declare const SERVER_COMMAND: string
@@ -239,14 +240,14 @@ function renderRail() {
       rows.set(key, row)
     }
     const live = now - m.updatedAt < LIVE_MS
-    const project = m.cwd ? m.cwd.slice(m.cwd.lastIndexOf("/") + 1) : ""
+    const project = m.cwd ? rel(m.cwd) : ""
     const hit = contentHit(m)
     row.href = hit ? `${hrefOf(m)}?find=${encodeURIComponent(contentQuery)}` : hrefOf(m)
     row.children[0].textContent = m.title
     row.title = m.title
     row.children[1].replaceChildren(
-      h("span", null, m.source),
-      h("span", { class: "proj" }, project),
+      sourceIcon(m.source),
+      h("span", { class: "proj", title: project || undefined }, h("bdi", null, project)),
       hit
         ? h("span", null, `${hit.hits} ${hit.hits === 1 ? "match" : "matches"}`)
         : live
@@ -287,7 +288,7 @@ function renderBar() {
     value ? h("div", extra, h("dt", { class: "sr" }, name), h("dd", { title: value }, value)) : ""
   const live = isLive()
   readout.replaceChildren(
-    cell("source", meta.source),
+    h("div", null, h("dt", { class: "sr" }, "source"), h("dd", { class: "src-cell" }, sourceIcon(meta.source), meta.source)),
     cell("directory", meta.cwd ? rel(meta.cwd) : undefined),
     cell("branch", meta.branch && meta.branch !== "HEAD" ? meta.branch : undefined),
     cell("model", meta.model),

@@ -373,6 +373,27 @@ input {
   text-overflow: ellipsis;
 }
 
+.proj {
+  direction: rtl;
+  text-align: left;
+}
+
+.src {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: currentColor;
+}
+
+.sess-meta {
+  align-items: center;
+}
+
+.src-cell .src {
+  margin-right: 0.75ch;
+  vertical-align: -0.125rem;
+}
+
 .live {
   color: var(--dark);
 }

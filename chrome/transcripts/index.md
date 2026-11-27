@@ -51,6 +51,8 @@ To run the server by hand: `bun server/main.ts`. `--watch` rebuilds the page whe
 | argon | `~/.gemini/antigravity-cli/conversations/<id>.db` | SQLite `steps` table, protobuf payloads, decoded without a schema in `server/argon.ts` |
 | codex | `~/.codex/sessions/**/rollout-*-<id>.jsonl` | JSONL, `item_completed` events; a guardian review session (model `codex-auto-review`) is left out of the list |
 
+In the session list each row shows the mark of its source (Claude, OpenAI for Codex, Gemini for Argon; the paths are in `ui/icons.ts`, from simple-icons 13.21.0) and the session's directory as a path from `~`. A path too long for the row loses its start, so the last folders stay readable.
+
 A path to any `.jsonl` or `.db` transcript opens the same way as an id. Ids match from their first four characters.
 
 ## Live updates
