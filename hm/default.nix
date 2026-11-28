@@ -238,9 +238,18 @@ in {
   # include neovim and vimrc symlinks
   xdg = {
     enable = true;
+    # Karabiner watches and rewrites the live JSON; only the baseline belongs in the store.
+    dataFile."karabiner/karabiner.json" = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+      source = ./modules/config/karabiner/karabiner.json;
+      onChange = ''
+        run mkdir -p -m 700 "${config.xdg.configHome}/karabiner"
+        run /usr/bin/install -b -m 600 "${config.xdg.dataHome}/karabiner/karabiner.json" "${config.xdg.configHome}/karabiner/karabiner.json"
+      '';
+    };
     configFile = {
       "gpg-tui/gpg-tui.toml".source = tomlFormat.generate "gpg-tui-config" gpgTuiConfig;
       "karabiner/karabiner.json" = {
+        enable = !pkgs.stdenv.hostPlatform.isDarwin;
         source = ./modules/config/karabiner/karabiner.json;
         force = true;
       };
